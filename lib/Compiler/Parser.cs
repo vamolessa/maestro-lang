@@ -58,7 +58,7 @@ namespace Rain
 				onError(currentToken.slice, consumeError, null);
 		}
 
-		public void Consume<C>(TokenKind tokenKind, CompileErrorType consumeError, C context) where C : ICompileErrorContext
+		public void Consume<C>(TokenKind tokenKind, CompileErrorType consumeError, C context) where C : struct, ICompileErrorContext
 		{
 			if (currentToken.kind == tokenKind)
 				Next();
