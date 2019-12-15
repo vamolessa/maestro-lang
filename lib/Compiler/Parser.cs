@@ -3,12 +3,12 @@ namespace Rain
 	internal sealed class Parser
 	{
 		public readonly Tokenizer tokenizer;
-		private readonly System.Action<Slice, string, object[]> onError;
+		private readonly System.Action<Slice, CompileErrorType, ICompileErrorContext> onError;
 
 		public Token previousToken;
 		public Token currentToken;
 
-		public Parser(Tokenizer tokenizer, System.Action<Slice, string, object[]> onError)
+		public Parser(Tokenizer tokenizer, System.Action<Slice, CompileErrorType, ICompileErrorContext> onError)
 		{
 			this.tokenizer = tokenizer;
 			this.onError = onError;
@@ -32,7 +32,7 @@ namespace Rain
 				if (currentToken.kind != TokenKind.Error)
 					break;
 
-				onError(currentToken.slice, "Invalid char", new object[0]);
+				onError(currentToken.slice, CompileErrorType.InvalidChar, null);
 			}
 		}
 
@@ -50,12 +50,20 @@ namespace Rain
 			return true;
 		}
 
-		public void Consume(TokenKind tokenKind, string errorFormat, params object[] args)
+		public void Consume(TokenKind tokenKind, CompileErrorType consumeError)
 		{
 			if (currentToken.kind == tokenKind)
 				Next();
 			else
-				onError(currentToken.slice, errorFormat, args);
+				onError(currentToken.slice, consumeError, null);
+		}
+
+		public void Consume<C>(TokenKind tokenKind, CompileErrorType consumeError, C context) where C : ICompileErrorContext
+		{
+			if (currentToken.kind == tokenKind)
+				Next();
+			else
+				onError(currentToken.slice, consumeError, context);
 		}
 	}
 }
