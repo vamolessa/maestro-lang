@@ -1,0 +1,2 @@
+# rain
+Rain scripting language
