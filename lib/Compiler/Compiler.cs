@@ -22,12 +22,12 @@ namespace Rain
 			//var finishedModuleImports = false;
 			io.parser.Next();
 			while (!io.parser.Match(TokenKind.End))
-				Flow();
+				SubGraph();
 
 			//io.EndSource();
 		}
 
-		private TransformNode Flow()
+		private TransformNode SubGraph()
 		{
 			(var previousNode, var previousIndentation) = Node();
 			var firstNode = previousNode;
@@ -44,7 +44,7 @@ namespace Rain
 				{
 					while (true)
 					{
-						var n = Flow();
+						var n = SubGraph();
 						n.source.PushBack(previousNode);
 					}
 				}
