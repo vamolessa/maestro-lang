@@ -2,7 +2,9 @@ namespace Rain
 {
 	public enum CompileErrorType
 	{
-		InvalidChar,
+		InvalidToken,
+		ExpectedNodeName,
+		ExpectedNewLine,
 	}
 
 	public interface ICompileErrorContext

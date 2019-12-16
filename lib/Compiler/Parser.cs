@@ -32,7 +32,7 @@ namespace Rain
 				if (currentToken.kind != TokenKind.Error)
 					break;
 
-				onError(currentToken.slice, CompileErrorType.InvalidChar, null);
+				onError(currentToken.slice, CompileErrorType.InvalidToken, null);
 			}
 		}
 
