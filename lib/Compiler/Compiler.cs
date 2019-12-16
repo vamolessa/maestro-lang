@@ -1,3 +1,5 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("rain")]
+
 namespace Rain
 {
 	internal sealed class Compiler
