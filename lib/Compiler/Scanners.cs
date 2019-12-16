@@ -36,11 +36,25 @@ namespace Rain
 
 	internal sealed class WhiteSpaceScanner : Scanner
 	{
+		public readonly string except;
+
+		public WhiteSpaceScanner(string except)
+		{
+			this.except = except;
+		}
+
 		public override int Scan(string input, int index)
 		{
 			var startIndex = index;
-			while (index < input.Length && char.IsWhiteSpace(input, index))
+			while (
+				index < input.Length &&
+				char.IsWhiteSpace(input, index) &&
+				except.IndexOf(input[index]) < 0
+			)
+			{
 				index += 1;
+			}
+
 			return index - startIndex;
 		}
 	}

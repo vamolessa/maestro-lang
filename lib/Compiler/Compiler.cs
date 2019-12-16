@@ -18,7 +18,7 @@ namespace Rain
 
 		private void Compile(Source source)
 		{
-			//io.BeginSource(source.content, compiledSources.count);
+			io.BeginSource(source.content, compiledSources.count);
 			compiledSources.PushBack(source);
 
 			//var finishedModuleImports = false;
@@ -26,56 +26,71 @@ namespace Rain
 			while (!io.parser.Match(TokenKind.End))
 				SubGraph();
 
-			//io.EndSource();
+			io.EndSource();
 		}
 
 		private TransformNode SubGraph()
 		{
-			(var previousNode, var previousIndentation) = Node();
-			var firstNode = previousNode;
+			return SubGraph(null, 0);
+		}
 
-			while (!io.parser.Match(TokenKind.NewLine))
+		private TransformNode SubGraph(TransformNode source, int indentation)
+		{
+			var node = Node(indentation);
+			if (source != null)
+				node.source.PushBack(source);
+
+			while (!io.parser.Match(TokenKind.NewLine) && !io.parser.Match(TokenKind.End))
 			{
-				(var node, var indentation) = Node();
+				var newIndentation = Indentation();
 
-				if (indentation < previousIndentation)
+				if (newIndentation < indentation)
 				{
-
+					break;
 				}
-				else if (indentation > previousIndentation)
+				else if (newIndentation > indentation)
 				{
-					while (true)
+					var subIndentation = newIndentation;
+					do
 					{
-						var n = SubGraph();
-						n.source.PushBack(previousNode);
-					}
+						var newNode = SubGraph(node, newIndentation);
+						newIndentation = Indentation();
+					} while (newIndentation == subIndentation);
 				}
 				else
 				{
-					node.source.PushBack(previousNode);
+					var newNode = Node(newIndentation);
+					newNode.source.PushBack(node);
+					node = newNode;
 				}
-
-				previousNode = node;
 			}
 
-			while (io.parser.Match(TokenKind.NewLine))
+			while (io.parser.Match(TokenKind.NewLine) || io.parser.Match(TokenKind.Tab))
 				continue;
 
-			return firstNode;
+			return node;
 		}
 
-		private (TransformNode, int) Node()
+		private int Indentation()
 		{
 			var indentation = 0;
 			while (io.parser.Match(TokenKind.Tab))
 				indentation += 1;
 
+			return indentation;
+		}
+
+		private TransformNode Node(int indentation)
+		{
 			io.parser.Consume(TokenKind.Identifier, CompileErrorType.ExpectedNodeName);
-			io.parser.Consume(TokenKind.NewLine, CompileErrorType.ExpectedNewLine);
 			var slice = io.parser.previousToken.slice;
 			var node = new TransformNode(slice);
 
-			return (node, indentation);
+			io.parser.Consume(TokenKind.NewLine, CompileErrorType.ExpectedNewLine);
+
+			System.Console.WriteLine("NODE: '{0}' INDENT: {1}", io.parser.tokenizer.source.Substring(slice.index, slice.length), indentation);
+
+			return node;
 		}
 	}
 }

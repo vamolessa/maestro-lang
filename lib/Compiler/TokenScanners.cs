@@ -16,7 +16,7 @@ namespace Rain
 
 			new ExactScanner("do").ForToken(TokenKind.Do),
 
-			new WhiteSpaceScanner().Ignore(),
+			new WhiteSpaceScanner("\n\t").Ignore(),
 			new EnclosedScanner("#", "\n").Ignore(),
 		};
 	}

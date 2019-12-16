@@ -49,6 +49,12 @@ namespace Rain
 				return token;
 			}
 
+			if (nextIndex == source.Length)
+			{
+				nextIndex += 1;
+				return new Token(TokenKind.NewLine, new Slice(source.Length, 0));
+			}
+
 			return new Token(TokenKind.End, new Slice(source.Length, 0));
 		}
 	}

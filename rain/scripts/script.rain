@@ -1,4 +1,4 @@
 trigger
 not
-delay
-actor
+	delay
+	actor
