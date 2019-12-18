@@ -1,7 +1,8 @@
 trigger
 not
-	delay
-	actor
+	something
+		delay
+		actor
 
 	hold
 and

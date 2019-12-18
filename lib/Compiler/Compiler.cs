@@ -7,6 +7,8 @@ namespace Rain
 		public readonly CompilerIO io = new CompilerIO();
 		public Buffer<Source> compiledSources = new Buffer<Source>(1);
 
+		private int indentation;
+
 		public Buffer<CompileError> CompileSource(Source source)
 		{
 			compiledSources.count = 0;
@@ -22,84 +24,72 @@ namespace Rain
 			compiledSources.PushBack(source);
 
 			//var finishedModuleImports = false;
+			indentation = 0;
 			io.parser.Next();
 			while (!io.parser.Match(TokenKind.End))
-				SubGraph();
+				SubGraph(0);
 
 			io.EndSource();
 		}
 
-		private TransformNode SubGraph()
+		private void ConsumeIndentation()
 		{
-			var node = SubGraph(null, 0);
-			return node;
+			indentation = 0;
+			while (io.parser.Match(TokenKind.Tab))
+				indentation += 1;
 		}
 
-		private TransformNode SubGraph(IParseNode source, int indentation)
+		private void SubGraph(int argCount)
 		{
-			var node = Node(indentation);
-			if (source != null)
-				node.source.PushBack(source);
+			System.Console.WriteLine("SUBGRAPH WITH {0} ARGS", argCount);
+			Node(argCount);
+			argCount = 1;
 
-			var sources = new Buffer<IParseNode>();
-			sources.PushBack(node);
+			var graphIndentation = indentation;
 
 			while (!io.parser.Match(TokenKind.NewLine) && !io.parser.Match(TokenKind.End))
 			{
-				var newIndentation = Indentation();
+				ConsumeIndentation();
 
-				if (newIndentation < indentation)
+				if (indentation < graphIndentation)
 				{
-					break;
+					if (indentation < graphIndentation - 1)
+						System.Console.WriteLine("POP {0} UNUSED VALUES", argCount);
+					return;
 				}
-				else if (newIndentation > indentation)
+				else if (indentation > graphIndentation)
 				{
-					sources.count = 0;
-					var subIndentation = newIndentation;
+					argCount = 0;
+					var subIndentation = indentation;
 					do
 					{
-						var lastNode = SubGraph(node, newIndentation);
-						sources.PushBack(lastNode);
-						newIndentation = Indentation();
-					} while (newIndentation == subIndentation);
+						System.Console.WriteLine("COPY VALUE AT OFFSET -{0}", argCount + 1);
+						SubGraph(1);
+						ConsumeIndentation();
+						argCount += 1;
+					} while (subIndentation == indentation);
+
+					System.Console.WriteLine("DELETE VALUE AT OFFSET -{0}", argCount + 1);
 				}
 				else
 				{
-					var newNode = Node(newIndentation);
-					for (var i = 0; i < sources.count; i++)
-						newNode.source.PushBack(sources.buffer[i]);
-					sources.count = 0;
-					sources.PushBack(newNode);
-					node = newNode;
+					Node(argCount);
+					argCount = 1;
 				}
 			}
 
-			while (io.parser.Match(TokenKind.NewLine) || io.parser.Match(TokenKind.Tab))
-				continue;
-
-			return node;
+			if (indentation == 0)
+				System.Console.WriteLine("POP {0} VALUES AT INDENT 0", argCount);
 		}
 
-		private int Indentation()
-		{
-			var indentation = 0;
-			while (io.parser.Match(TokenKind.Tab))
-				indentation += 1;
-
-			return indentation;
-		}
-
-		private TransformNode Node(int indentation)
+		private void Node(int argCount)
 		{
 			io.parser.Consume(TokenKind.Identifier, CompileErrorType.ExpectedNodeName);
 			var slice = io.parser.previousToken.slice;
-			var node = new TransformNode(io.parser.tokenizer.source.Substring(slice.index, slice.length), slice);
 
 			io.parser.Consume(TokenKind.NewLine, CompileErrorType.ExpectedNewLine);
 
-			System.Console.WriteLine("NODE: '{0}' INDENT: {1}", io.parser.tokenizer.source.Substring(slice.index, slice.length), indentation);
-
-			return node;
+			System.Console.WriteLine("NODE: '{0}' WITH {1} ARGS", io.parser.tokenizer.source.Substring(slice.index, slice.length), argCount);
 		}
 	}
 }
