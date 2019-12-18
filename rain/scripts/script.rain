@@ -2,3 +2,6 @@ trigger
 not
 	delay
 	actor
+
+	hold
+and

@@ -5,7 +5,7 @@ namespace Rain
 	[DebuggerTypeProxy(typeof(BufferDebugView<>))]
 	public struct Buffer<T>
 	{
-		public const int MinCapacity = 2;
+		public const int MinCapacity = 1;
 
 		public int count;
 		public T[] buffer;
@@ -87,8 +87,10 @@ namespace Rain
 
 		public BufferDebugView(Buffer<T> buffer)
 		{
-			elements = new T[buffer.count];
-			System.Array.Copy(buffer.buffer, elements, buffer.count);
+			var count = buffer.count >= 0 ? buffer.count : 0;
+			elements = new T[count];
+			if (buffer.buffer != null)
+				System.Array.Copy(buffer.buffer, elements, count);
 		}
 	}
 }

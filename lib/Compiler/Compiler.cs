@@ -31,14 +31,18 @@ namespace Rain
 
 		private TransformNode SubGraph()
 		{
-			return SubGraph(null, 0);
+			var node = SubGraph(null, 0);
+			return node;
 		}
 
-		private TransformNode SubGraph(TransformNode source, int indentation)
+		private TransformNode SubGraph(IParseNode source, int indentation)
 		{
 			var node = Node(indentation);
 			if (source != null)
 				node.source.PushBack(source);
+
+			var sources = new Buffer<IParseNode>();
+			sources.PushBack(node);
 
 			while (!io.parser.Match(TokenKind.NewLine) && !io.parser.Match(TokenKind.End))
 			{
@@ -50,17 +54,22 @@ namespace Rain
 				}
 				else if (newIndentation > indentation)
 				{
+					sources.count = 0;
 					var subIndentation = newIndentation;
 					do
 					{
-						var newNode = SubGraph(node, newIndentation);
+						var lastNode = SubGraph(node, newIndentation);
+						sources.PushBack(lastNode);
 						newIndentation = Indentation();
 					} while (newIndentation == subIndentation);
 				}
 				else
 				{
 					var newNode = Node(newIndentation);
-					newNode.source.PushBack(node);
+					for (var i = 0; i < sources.count; i++)
+						newNode.source.PushBack(sources.buffer[i]);
+					sources.count = 0;
+					sources.PushBack(newNode);
 					node = newNode;
 				}
 			}
@@ -84,7 +93,7 @@ namespace Rain
 		{
 			io.parser.Consume(TokenKind.Identifier, CompileErrorType.ExpectedNodeName);
 			var slice = io.parser.previousToken.slice;
-			var node = new TransformNode(slice);
+			var node = new TransformNode(io.parser.tokenizer.source.Substring(slice.index, slice.length), slice);
 
 			io.parser.Consume(TokenKind.NewLine, CompileErrorType.ExpectedNewLine);
 
