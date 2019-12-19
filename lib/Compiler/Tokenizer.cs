@@ -2,60 +2,53 @@ namespace Rain
 {
 	internal sealed class Tokenizer
 	{
-		public string source;
-		public int nextIndex;
-
-		private readonly Scanner[] scanners;
-
-		public Tokenizer(Scanner[] scanners)
-		{
-			this.scanners = scanners;
-			Reset(string.Empty, 0);
-		}
+		public readonly TokenizerIO io = new TokenizerIO();
+		private Option<Token> pendingToken = Option.None;
 
 		public void Reset(string source, int nextIndex)
 		{
-			this.source = source;
-			this.nextIndex = nextIndex;
+			io.Reset(source, nextIndex);
 		}
 
 		public Token Next()
 		{
-			while (nextIndex < source.Length)
+			if (pendingToken.isSome)
 			{
-				var tokenLength = 0;
-				var tokenKind = TokenKind.Error;
-				foreach (var scanner in scanners)
-				{
-					var length = scanner.Scan(source, nextIndex);
-					if (tokenLength >= length)
-						continue;
-
-					tokenLength = length;
-					tokenKind = scanner.tokenKind;
-				}
-
-				if (tokenKind == TokenKind.End)
-				{
-					nextIndex += tokenLength;
-					continue;
-				}
-
-				if (tokenLength == 0)
-					tokenLength = 1;
-
-				var token = new Token(tokenKind, new Slice(nextIndex, tokenLength));
-				nextIndex += tokenLength;
+				var token = pendingToken.value;
+				pendingToken = Option.None;
 				return token;
 			}
 
-			if (nextIndex == source.Length)
+			io.IgnoreChars(" \r");
+
+			if (io.nextIndex == io.source.Length)
 			{
-				nextIndex += 1;
-				return new Token(TokenKind.NewLine, new Slice(source.Length, 0));
+				io.NextChar();
+				return new Token(TokenKind.NewLine, new Slice(io.source.Length, 0));
+			}
+			else if (io.nextIndex > io.source.Length)
+			{
+				return new Token(TokenKind.End, new Slice(io.source.Length, 0));
 			}
 
-			return new Token(TokenKind.End, new Slice(source.Length, 0));
+			while (!io.IsAtEnd())
+			{
+				var startIndex = io.nextIndex;
+				var ch = io.NextChar();
+				switch (ch)
+				{
+				case '\n':
+					return io.MakeToken(TokenKind.NewLine, startIndex);
+				case '#':
+					while (io.Peek() != '\n')
+						io.NextChar();
+					break;
+				default:
+					break;
+				}
+			}
+
+			return io.MakeToken(TokenKind.Error, startIndex);
 		}
 	}
 }

@@ -4,7 +4,7 @@ namespace Rain
 	{
 		public static readonly Scanner[] scanners = new Scanner[] {
 			new ExactScanner("\n").ForToken(TokenKind.NewLine),
-			new ExactScanner("\t").ForToken(TokenKind.Tab),
+			new ExactScanner("\t").ForToken(TokenKind.Indent),
 
 			new RealNumberScanner().ForToken(TokenKind.FloatLiteral),
 			new IntegerNumberScanner().ForToken(TokenKind.IntLiteral),

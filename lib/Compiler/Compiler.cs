@@ -13,6 +13,29 @@ namespace Rain
 		{
 			compiledSources.count = 0;
 
+			System.Console.WriteLine("==== TOKENS ====");
+			io.parser.tokenizer.Reset(source.content, 0);
+			while (true)
+			{
+				var token = io.parser.tokenizer.Next();
+				switch (token.kind)
+				{
+				case TokenKind.NewLine:
+				case TokenKind.Indent:
+				case TokenKind.Dedent:
+				case TokenKind.End:
+					System.Console.WriteLine("{0}", token.kind);
+					break;
+				default:
+					System.Console.WriteLine("{0}: '{1}'", token.kind, source.content.Substring(token.slice.index, token.slice.length));
+					break;
+				}
+				if (token.kind == TokenKind.End)
+					break;
+			}
+			System.Console.WriteLine("==== END ====");
+			System.Console.WriteLine();
+
 			io.Reset();
 			Compile(source);
 			return io.errors;
@@ -35,7 +58,7 @@ namespace Rain
 		private void ConsumeIndentation()
 		{
 			indentation = 0;
-			while (io.parser.Match(TokenKind.Tab))
+			while (io.parser.Match(TokenKind.Indent))
 				indentation += 1;
 		}
 
@@ -89,7 +112,7 @@ namespace Rain
 
 			io.parser.Consume(TokenKind.NewLine, CompileErrorType.ExpectedNewLine);
 
-			System.Console.WriteLine("NODE: '{0}' WITH {1} ARGS", io.parser.tokenizer.source.Substring(slice.index, slice.length), argCount);
+			System.Console.WriteLine("NODE: '{0}' WITH {1} ARGS", io.parser.tokenizer.io.source.Substring(slice.index, slice.length), argCount);
 		}
 	}
 }

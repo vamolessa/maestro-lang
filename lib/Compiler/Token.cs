@@ -2,7 +2,7 @@ namespace Rain
 {
 	internal enum TokenKind
 	{
-		NewLine, Tab,
+		NewLine, Indent, Dedent,
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable,
 		Do,

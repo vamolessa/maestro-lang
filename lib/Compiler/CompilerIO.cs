@@ -36,8 +36,7 @@ namespace Rain
 				AddHardError(slice, errorType, context);
 			}
 
-			var tokenizer = new Tokenizer(TokenScanners.scanners);
-			parser = new Parser(tokenizer, AddTokenizerError);
+			parser = new Parser(AddTokenizerError);
 		}
 
 		public void Reset()
@@ -57,10 +56,10 @@ namespace Rain
 		public void BeginSource(string source, int sourceIndex)
 		{
 			stateFrameStack.PushBack(new StateFrame(
-				parser.tokenizer.source,
+				parser.tokenizer.io.source,
 				this.sourceIndex,
 
-				parser.tokenizer.nextIndex,
+				parser.tokenizer.io.nextIndex,
 				parser.previousToken,
 				parser.currentToken
 			));

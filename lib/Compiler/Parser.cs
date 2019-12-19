@@ -2,15 +2,14 @@ namespace Rain
 {
 	internal sealed class Parser
 	{
-		public readonly Tokenizer tokenizer;
+		public readonly Tokenizer tokenizer = new Tokenizer();
 		private readonly System.Action<Slice, CompileErrorType, ICompileErrorContext> onError;
 
 		public Token previousToken;
 		public Token currentToken;
 
-		public Parser(Tokenizer tokenizer, System.Action<Slice, CompileErrorType, ICompileErrorContext> onError)
+		public Parser(System.Action<Slice, CompileErrorType, ICompileErrorContext> onError)
 		{
-			this.tokenizer = tokenizer;
 			this.onError = onError;
 
 			Reset(new Token(TokenKind.End, new Slice()), new Token(TokenKind.End, new Slice()));
