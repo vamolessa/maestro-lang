@@ -3,23 +3,33 @@ namespace Rain
 	internal sealed class Tokenizer
 	{
 		public readonly TokenizerIO io = new TokenizerIO();
-		private Option<Token> pendingToken = Option.None;
+		private bool atBeginingOfLine = true;
+		private int indentation = 0;
+		private int pendingIndentationTokens = 0;
 
 		public void Reset(string source, int nextIndex)
 		{
+			atBeginingOfLine = true;
+			indentation = 0;
+			pendingIndentationTokens = 0;
 			io.Reset(source, nextIndex);
 		}
 
 		public Token Next()
 		{
-			if (pendingToken.isSome)
+			if (pendingIndentationTokens > 0)
 			{
-				var token = pendingToken.value;
-				pendingToken = Option.None;
-				return token;
+				pendingIndentationTokens -= 1;
+				return io.MakeToken(TokenKind.Indent, io.nextIndex - 1);
+			}
+			else if (pendingIndentationTokens < 0)
+			{
+				pendingIndentationTokens += 1;
+				return io.MakeToken(TokenKind.Dedent, io.nextIndex - 1);
 			}
 
-			io.IgnoreChars(" \r");
+			if (!atBeginingOfLine)
+				io.IgnoreChars(" \r\t");
 
 			if (io.nextIndex == io.source.Length)
 			{
@@ -38,12 +48,43 @@ namespace Rain
 				switch (ch)
 				{
 				case '\n':
+					atBeginingOfLine = true;
 					return io.MakeToken(TokenKind.NewLine, startIndex);
+				case '\t':
+					if (atBeginingOfLine)
+					{
+						var indentCount = 0;
+						while (io.Peek() == '\t')
+						{
+							io.NextChar();
+							indentCount += 1;
+						}
+
+						io.IgnoreChars(" \r\t");
+						if (io.Peek() != '\n' && indentCount != indentation)
+						{
+							pendingIndentationTokens = indentCount - indentation;
+							indentation = indentCount;
+
+							if (pendingIndentationTokens > 0)
+							{
+								pendingIndentationTokens -= 1;
+								return io.MakeToken(TokenKind.Indent, io.nextIndex - 1);
+							}
+							else
+							{
+								pendingIndentationTokens += 1;
+								return io.MakeToken(TokenKind.Dedent, io.nextIndex - 1);
+							}
+						}
+					}
+					break;
 				case '#':
-					while (io.Peek() != '\n')
+					while (io.Peek() != '\n' && !io.IsAtEnd())
 						io.NextChar();
 					break;
 				default:
+					atBeginingOfLine = false;
 					break;
 				}
 			}

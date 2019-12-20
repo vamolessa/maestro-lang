@@ -23,8 +23,8 @@ namespace Rain
 
 		public void IgnoreChars(string ignored)
 		{
-			while (ignored.IndexOf(source[nextIndex]) >= 0)
-				nextIndex += 1;
+			while (ignored.IndexOf(Peek()) >= 0)
+				NextChar();
 		}
 
 		public bool IsAtEnd()
