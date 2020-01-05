@@ -89,7 +89,7 @@ namespace Rain
 				}
 			}
 
-			return io.MakeToken(TokenKind.Error, startIndex);
+			return io.MakeToken(TokenKind.Error, io.nextIndex - 1);
 		}
 	}
 }
