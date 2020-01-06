@@ -4,16 +4,13 @@ namespace Rain
 	{
 		public string source;
 		public int nextIndex;
+		public int indentationLevel;
+		public bool atBeginingOfLine;
+		public int pendingIndentation;
 
 		public TokenizerIO()
 		{
-			Reset(string.Empty, 0);
-		}
-
-		public void Reset(string source, int nextIndex)
-		{
-			this.source = source;
-			this.nextIndex = nextIndex;
+			source = string.Empty;
 		}
 
 		public Token MakeToken(TokenKind tokenKind, int index)
@@ -32,14 +29,36 @@ namespace Rain
 			return nextIndex >= source.Length;
 		}
 
-		public char NextChar()
+		public Char NextChar()
 		{
-			return source[nextIndex++];
+			var c = Peek();
+			if (pendingIndentation > 0)
+				pendingIndentation--;
+			else if (pendingIndentation < 0)
+				pendingIndentation++;
+			else
+				nextIndex++;
+			return c;
 		}
 
-		public char Peek()
+		public Char Peek()
 		{
-			return source[nextIndex];
+			if (pendingIndentation > 0)
+				return new Char(CharKind.Indent);
+			else if (pendingIndentation < 0)
+				return new Char(CharKind.Dedent);
+
+			if (atBeginingOfLine)
+			{
+				var indent = 0;
+				while (source[nextIndex] == '\t')
+				{
+					indent += 1;
+					nextIndex += 1;
+				}
+			}
+
+			return new Char(CharKind.Char, source[nextIndex]);
 		}
 	}
 }

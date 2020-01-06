@@ -12,7 +12,12 @@ namespace Rain
 			atBeginingOfLine = true;
 			indentation = 0;
 			pendingIndentationTokens = 0;
-			io.Reset(source, nextIndex);
+
+			io.source = source;
+			io.nextIndex = nextIndex;
+			io.indentationLevel = 0;
+			io.atBeginingOfLine = true;
+			io.pendingIndentation = 0;
 		}
 
 		public Token Next()
@@ -33,7 +38,7 @@ namespace Rain
 
 			if (io.nextIndex == io.source.Length)
 			{
-				io.NextChar();
+				io.nextIndex++;
 				return new Token(TokenKind.NewLine, new Slice(io.source.Length, 0));
 			}
 			else if (io.nextIndex > io.source.Length)

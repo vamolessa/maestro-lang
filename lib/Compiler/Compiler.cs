@@ -35,6 +35,7 @@ namespace Rain
 			}
 			System.Console.WriteLine("==== END ====");
 			System.Console.WriteLine();
+			return new Buffer<CompileError>();
 
 			io.Reset();
 			Compile(source);
