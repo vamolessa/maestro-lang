@@ -5,8 +5,8 @@ namespace Rain
 		public struct State
 		{
 			public int nextIndex;
-			public int indentationLevel;
 			public bool atBeginingOfLine;
+			public int indentation;
 			public int pendingIndentation;
 		}
 
@@ -16,11 +16,12 @@ namespace Rain
 		public TokenizerIO()
 		{
 			source = string.Empty;
+			state.atBeginingOfLine = true;
 		}
 
 		public bool IsAtEnd()
 		{
-			return state.indentationLevel == 0 && state.nextIndex >= source.Length;
+			return state.indentation == 0 && state.nextIndex >= source.Length;
 		}
 
 		public char NextChar()
@@ -33,8 +34,8 @@ namespace Rain
 			else
 				state.nextIndex++;
 
-			if (state.nextIndex >= source.Length && state.indentationLevel > 0)
-				state.indentationLevel--;
+			if (state.nextIndex >= source.Length && state.indentation > 0)
+				state.indentation--;
 
 			return c;
 		}
@@ -48,15 +49,45 @@ namespace Rain
 
 			if (state.atBeginingOfLine)
 			{
+			BeginingOfLine:
+				state.atBeginingOfLine = false;
+
 				var indent = 0;
 				while (source[state.nextIndex] == '\t')
 				{
 					indent += 1;
 					state.nextIndex += 1;
 				}
+
+				while (true)
+				{
+					var c = source[state.nextIndex];
+					if (!char.IsWhiteSpace(c))
+						break;
+
+					state.nextIndex += 1;
+					if (c == '\n')
+						goto BeginingOfLine;
+				}
+
+				state.pendingIndentation = indent - state.indentation;
+				if (state.pendingIndentation == 0 && indent > 0)
+					state.nextIndex -= 1;
+
+				state.indentation = indent;
+
+				if (state.pendingIndentation > 0)
+					return '\t';
+				else if (state.pendingIndentation < 0)
+					return '\b';
 			}
 
-			return source[state.nextIndex];
+			{
+				var c = source[state.nextIndex];
+				state.atBeginingOfLine = c == '\n';
+
+				return c;
+			}
 		}
 	}
 }

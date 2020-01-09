@@ -15,7 +15,7 @@ namespace Rain
 		{
 			io.source = source;
 			io.state.nextIndex = nextIndex;
-			io.state.indentationLevel = 0;
+			io.state.indentation = 0;
 			io.state.atBeginingOfLine = true;
 			io.state.pendingIndentation = 0;
 		}
