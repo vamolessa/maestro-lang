@@ -1,30 +1,5 @@
 namespace Rain
 {
-	internal enum CharKind
-	{
-		Char,
-		Indent,
-		Dedent
-	}
-
-	internal readonly struct Char
-	{
-		public readonly CharKind kind;
-		public readonly char value;
-
-		public Char(CharKind kind, char value)
-		{
-			this.kind = kind;
-			this.value = value;
-		}
-
-		public Char(CharKind kind)
-		{
-			this.kind = kind;
-			this.value = default;
-		}
-	}
-
 	internal enum TokenKind
 	{
 		NewLine, Indent, Dedent,

@@ -4,22 +4,18 @@ namespace Rain
 	{
 		public TokenKind tokenKind;
 
-		public static bool StartsWith(string str, int index, string match)
+		public static bool MatchStart(TokenizerIO io, string match)
 		{
-			var count = str.Length;
-			if (str.Length - index < match.Length)
-				return false;
-
 			for (var i = 0; i < match.Length; i++)
 			{
-				if (str[index + i] != match[i])
+				if (io.IsAtEnd() || io.NextChar() != match[i])
 					return false;
 			}
 
 			return true;
 		}
 
-		public abstract int Scan(string input, int index);
+		public abstract bool Scan(TokenizerIO io);
 
 		public Scanner ForToken(TokenKind tokenKind)
 		{
@@ -43,19 +39,37 @@ namespace Rain
 			this.except = except;
 		}
 
-		public override int Scan(string input, int index)
+		public override bool Scan(TokenizerIO io)
 		{
-			var startIndex = index;
-			while (
-				index < input.Length &&
-				char.IsWhiteSpace(input, index) &&
-				except.IndexOf(input[index]) < 0
-			)
+			while (!io.IsAtEnd())
 			{
-				index += 1;
+				var c = io.NextChar();
+				if (!char.IsWhiteSpace(c) || except.IndexOf(c) >= 0)
+					break;
 			}
 
-			return index - startIndex;
+			return true;
+		}
+	}
+
+	internal sealed class LineCommentScanner : Scanner
+	{
+		public readonly string prefix;
+
+		public LineCommentScanner(string prefix)
+		{
+			this.prefix = prefix;
+		}
+
+		public override bool Scan(TokenizerIO io)
+		{
+			if (!MatchStart(io, prefix))
+				return false;
+
+			while (!io.IsAtEnd() && io.Peek() != '\n')
+				io.NextChar();
+
+			return true;
 		}
 	}
 
@@ -68,141 +82,99 @@ namespace Rain
 			this.match = match;
 		}
 
-		public override int Scan(string input, int index)
+		public override bool Scan(TokenizerIO io)
 		{
-			return StartsWith(input, index, match) ? match.Length : 0;
-		}
-	}
-
-	internal sealed class EnclosedScanner : Scanner
-	{
-		public readonly string beginMatch;
-		public readonly string endMatch;
-
-		public EnclosedScanner(string beginMatch, string endMatch)
-		{
-			this.beginMatch = beginMatch;
-			this.endMatch = endMatch;
-		}
-
-		public override int Scan(string input, int index)
-		{
-			if (!StartsWith(input, index, beginMatch))
-				return 0;
-
-			for (var i = index + beginMatch.Length; i < input.Length; i++)
-			{
-				if (StartsWith(input, i, endMatch) && input[i - 1] != '\\')
-					return i - index + endMatch.Length;
-			}
-
-			return 0;
+			return MatchStart(io, match);
 		}
 	}
 
 	internal sealed class IntegerNumberScanner : Scanner
 	{
-		public override int Scan(string input, int index)
+		public override bool Scan(TokenizerIO io)
 		{
-			if (!char.IsDigit(input, index))
-				return 0;
+			if (io.IsAtEnd() || !char.IsDigit(io.NextChar()))
+				return false;
 
-			for (var i = index + 1; i < input.Length; i++)
-			{
-				if (!char.IsDigit(input, i))
-					return i - index;
-			}
+			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
+				continue;
 
-			return input.Length - index;
+			return true;
 		}
 	}
 
 	internal sealed class RealNumberScanner : Scanner
 	{
-		public override int Scan(string input, int index)
+		public override bool Scan(TokenizerIO io)
 		{
-			if (!char.IsDigit(input, index))
-				return 0;
+			if (io.IsAtEnd() || !char.IsDigit(io.NextChar()))
+				return false;
 
-			var i = index + 1;
-			for (; i < input.Length; i++)
+			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
+				continue;
+
+			if (io.IsAtEnd() || io.NextChar() != '.')
+				return false;
+
+			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
+				continue;
+
+			return true;
+		}
+	}
+
+	internal sealed class StringScanner : Scanner
+	{
+		public readonly char delimiter;
+
+		public StringScanner(char delimiter)
+		{
+			this.delimiter = delimiter;
+		}
+
+		public override bool Scan(TokenizerIO io)
+		{
+			if (io.IsAtEnd() || io.NextChar() != delimiter)
+				return false;
+
+			while (!io.IsAtEnd())
 			{
-				if (!char.IsDigit(input, i))
-					break;
+				var c = io.NextChar();
+				if (c == delimiter)
+					return true;
 			}
 
-			if (i >= input.Length || input[i] != '.')
-				return 0;
-			i += 1;
-			if (i >= input.Length || !char.IsDigit(input, i))
-				return 0;
-
-			for (; i < input.Length; i++)
-			{
-				if (!char.IsDigit(input, i))
-					return i - index;
-			}
-
-			return input.Length - index;
+			return false;
 		}
 	}
 
 	internal sealed class IdentifierScanner : Scanner
 	{
-		public readonly string extraChars;
-
-		public IdentifierScanner(string extraChars)
-		{
-			this.extraChars = extraChars;
-		}
-
-		public override int Scan(string input, int index)
-		{
-			var firstCh = input[index];
-			if (!char.IsLetter(firstCh) && extraChars.IndexOf(firstCh) < 0)
-				return 0;
-
-			for (var i = index + 1; i < input.Length; i++)
-			{
-				var ch = input[i];
-				if (!char.IsLetterOrDigit(ch) && extraChars.IndexOf(ch) < 0)
-					return i - index;
-			}
-
-			return input.Length - index;
-		}
-	}
-
-	internal sealed class PrefixedIdentifierScanner : Scanner
-	{
 		public readonly string prefix;
 		public readonly string extraChars;
 
-		public PrefixedIdentifierScanner(string prefix, string extraChars)
+		public IdentifierScanner(string prefix, string extraChars)
 		{
 			this.prefix = prefix;
 			this.extraChars = extraChars;
 		}
 
-		public override int Scan(string input, int index)
+		public override bool Scan(TokenizerIO io)
 		{
-			if (!StartsWith(input, index, prefix))
-				return 0;
+			if (!MatchStart(io, prefix) || io.IsAtEnd())
+				return false;
 
-			for (var i = index + prefix.Length; i < input.Length; i++)
+			var firstCh = io.NextChar();
+			if (!char.IsLetter(firstCh) && extraChars.IndexOf(firstCh) < 0)
+				return false;
+
+			while (io.IsAtEnd())
 			{
-				var ch = input[i];
-				if (!char.IsLetterOrDigit(ch) && extraChars.IndexOf(ch) < 0)
-				{
-					var length = i - index;
-					return length > prefix.Length ? length : 0;
-				}
+				var c = io.NextChar();
+				if (!char.IsLetter(c) && extraChars.IndexOf(c) < 0)
+					break;
 			}
 
-			{
-				var length = input.Length - index;
-				return length > prefix.Length ? length : 0;
-			}
+			return true;
 		}
 	}
 }

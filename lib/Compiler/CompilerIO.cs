@@ -59,7 +59,7 @@ namespace Rain
 				parser.tokenizer.io.source,
 				this.sourceIndex,
 
-				parser.tokenizer.io.nextIndex,
+				parser.tokenizer.io.state.nextIndex,
 				parser.previousToken,
 				parser.currentToken
 			));

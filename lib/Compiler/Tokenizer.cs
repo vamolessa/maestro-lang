@@ -3,98 +3,50 @@ namespace Rain
 	internal sealed class Tokenizer
 	{
 		public readonly TokenizerIO io = new TokenizerIO();
-		private bool atBeginingOfLine = true;
-		private int indentation = 0;
-		private int pendingIndentationTokens = 0;
+		private readonly Scanner[] scanners;
+
+		public Tokenizer(Scanner[] scanners)
+		{
+			this.scanners = scanners;
+			Reset(string.Empty, 0);
+		}
 
 		public void Reset(string source, int nextIndex)
 		{
-			atBeginingOfLine = true;
-			indentation = 0;
-			pendingIndentationTokens = 0;
 
-			io.source = source;
-			io.nextIndex = nextIndex;
-			io.indentationLevel = 0;
-			io.atBeginingOfLine = true;
-			io.pendingIndentation = 0;
 		}
 
 		public Token Next()
 		{
-			if (pendingIndentationTokens > 0)
-			{
-				pendingIndentationTokens -= 1;
-				return io.MakeToken(TokenKind.Indent, io.nextIndex - 1);
-			}
-			else if (pendingIndentationTokens < 0)
-			{
-				pendingIndentationTokens += 1;
-				return io.MakeToken(TokenKind.Dedent, io.nextIndex - 1);
-			}
-
-			if (!atBeginingOfLine)
-				io.IgnoreChars(" \r\t");
-
-			if (io.nextIndex == io.source.Length)
-			{
-				io.nextIndex++;
-				return new Token(TokenKind.NewLine, new Slice(io.source.Length, 0));
-			}
-			else if (io.nextIndex > io.source.Length)
-			{
-				return new Token(TokenKind.End, new Slice(io.source.Length, 0));
-			}
-
 			while (!io.IsAtEnd())
 			{
-				var startIndex = io.nextIndex;
-				var ch = io.NextChar();
-				switch (ch)
+				var tokenLength = 0;
+				var tokenKind = TokenKind.Error;
+				var scanState = default(TokenizerIO.State);
+				var savedState = io.state;
+
+				foreach (var scanner in scanners)
 				{
-				case '\n':
-					atBeginingOfLine = true;
-					return io.MakeToken(TokenKind.NewLine, startIndex);
-				case '\t':
-					if (atBeginingOfLine)
-					{
-						var indentCount = 0;
-						while (io.Peek() == '\t')
-						{
-							io.NextChar();
-							indentCount += 1;
-						}
+					io.state = savedState;
+					scanner.Scan(io);
 
-						io.IgnoreChars(" \r\t");
-						if (io.Peek() != '\n' && indentCount != indentation)
-						{
-							pendingIndentationTokens = indentCount - indentation;
-							indentation = indentCount;
+					var length = io.state.nextIndex - savedState.nextIndex;
+					if (tokenLength >= length)
+						continue;
 
-							if (pendingIndentationTokens > 0)
-							{
-								pendingIndentationTokens -= 1;
-								return io.MakeToken(TokenKind.Indent, io.nextIndex - 1);
-							}
-							else
-							{
-								pendingIndentationTokens += 1;
-								return io.MakeToken(TokenKind.Dedent, io.nextIndex - 1);
-							}
-						}
-					}
-					break;
-				case '#':
-					while (io.Peek() != '\n' && !io.IsAtEnd())
-						io.NextChar();
-					break;
-				default:
-					atBeginingOfLine = false;
-					break;
+					tokenLength = length;
+					tokenKind = scanner.tokenKind;
+					scanState = io.state;
 				}
+
+				if (tokenLength == 0)
+					tokenLength = 1;
+
+				var token = new Token(tokenKind, new Slice(savedState.nextIndex, tokenLength));
+				return token;
 			}
 
-			return io.MakeToken(TokenKind.Error, io.nextIndex - 1);
+			return new Token(TokenKind.End, new Slice(io.source.Length, 0));
 		}
 	}
 }

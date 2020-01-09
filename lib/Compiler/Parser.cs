@@ -2,7 +2,7 @@ namespace Rain
 {
 	internal sealed class Parser
 	{
-		public readonly Tokenizer tokenizer = new Tokenizer();
+		public readonly Tokenizer tokenizer = new Tokenizer(TokenScanners.scanners);
 		private readonly System.Action<Slice, CompileErrorType, ICompileErrorContext> onError;
 
 		public Token previousToken;
