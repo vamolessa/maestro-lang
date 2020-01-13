@@ -3,9 +3,9 @@ namespace Flow
 	internal static class TokenScanners
 	{
 		public static readonly Scanner[] scanners = new Scanner[] {
-			new ExactScanner("\n").ForToken(TokenKind.NewLine),
-			new ExactScanner("\t").ForToken(TokenKind.Indent),
-			new ExactScanner("\b").ForToken(TokenKind.Dedent),
+			new ExactScanner(";").ForToken(TokenKind.SemiColon),
+			new ExactScanner("|").ForToken(TokenKind.Pipe),
+			new ExactScanner("=").ForToken(TokenKind.Equals),
 
 			new RealNumberScanner().ForToken(TokenKind.FloatLiteral),
 			new IntegerNumberScanner().ForToken(TokenKind.IntLiteral),
@@ -15,9 +15,7 @@ namespace Flow
 			new IdentifierScanner("", "_").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_").ForToken(TokenKind.Variable),
 
-			new ExactScanner("do").ForToken(TokenKind.Do),
-
-			new WhiteSpaceScanner("\n\t").Ignore(),
+			new WhiteSpaceScanner().Ignore(),
 			new LineCommentScanner("#").Ignore(),
 		};
 	}

@@ -4,18 +4,22 @@ namespace Flow
 	{
 		public TokenKind tokenKind;
 
-		public static bool MatchStart(TokenizerIO io, string match)
+		public static bool StartsWith(string str, int index, string match)
 		{
+			var count = str.Length;
+			if (str.Length - index < match.Length)
+				return false;
+
 			for (var i = 0; i < match.Length; i++)
 			{
-				if (io.IsAtEnd() || io.NextChar() != match[i])
+				if (str[index + i] != match[i])
 					return false;
 			}
 
 			return true;
 		}
 
-		public abstract bool Scan(TokenizerIO io);
+		public abstract int Scan(string input, int index);
 
 		public Scanner ForToken(TokenKind tokenKind)
 		{
@@ -32,44 +36,27 @@ namespace Flow
 
 	internal sealed class WhiteSpaceScanner : Scanner
 	{
-		public readonly string except;
-
-		public WhiteSpaceScanner(string except)
+		public override int Scan(string input, int index)
 		{
-			this.except = except;
-		}
-
-		public override bool Scan(TokenizerIO io)
-		{
-			while (!io.IsAtEnd())
-			{
-				var c = io.NextChar();
-				if (!char.IsWhiteSpace(c) || except.IndexOf(c) >= 0)
-					break;
-			}
-
-			return true;
+			var startIndex = index;
+			while (index < input.Length && char.IsWhiteSpace(input, index))
+				index += 1;
+			return index - startIndex;
 		}
 	}
 
-	internal sealed class LineCommentScanner : Scanner
+	internal sealed class CharScanner : Scanner
 	{
-		public readonly string prefix;
+		public readonly char ch;
 
-		public LineCommentScanner(string prefix)
+		public CharScanner(char ch)
 		{
-			this.prefix = prefix;
+			this.ch = ch;
 		}
 
-		public override bool Scan(TokenizerIO io)
+		public override int Scan(string input, int index)
 		{
-			if (!MatchStart(io, prefix))
-				return false;
-
-			while (!io.IsAtEnd() && io.Peek() != '\n')
-				io.NextChar();
-
-			return true;
+			return input[index] == ch ? 1 : 0;
 		}
 	}
 
@@ -82,68 +69,104 @@ namespace Flow
 			this.match = match;
 		}
 
-		public override bool Scan(TokenizerIO io)
+		public override int Scan(string input, int index)
 		{
-			return MatchStart(io, match);
-		}
-	}
-
-	internal sealed class IntegerNumberScanner : Scanner
-	{
-		public override bool Scan(TokenizerIO io)
-		{
-			if (io.IsAtEnd() || !char.IsDigit(io.NextChar()))
-				return false;
-
-			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
-				continue;
-
-			return true;
-		}
-	}
-
-	internal sealed class RealNumberScanner : Scanner
-	{
-		public override bool Scan(TokenizerIO io)
-		{
-			if (io.IsAtEnd() || !char.IsDigit(io.NextChar()))
-				return false;
-
-			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
-				continue;
-
-			if (io.IsAtEnd() || io.NextChar() != '.')
-				return false;
-
-			while (!io.IsAtEnd() && char.IsDigit(io.NextChar()))
-				continue;
-
-			return true;
+			return StartsWith(input, index, match) ? match.Length : 0;
 		}
 	}
 
 	internal sealed class StringScanner : Scanner
 	{
-		public readonly char delimiter;
+		public readonly char bracket;
 
-		public StringScanner(char delimiter)
+		public StringScanner(char bracket)
 		{
-			this.delimiter = delimiter;
+			this.bracket = bracket;
 		}
 
-		public override bool Scan(TokenizerIO io)
+		public override int Scan(string input, int index)
 		{
-			if (io.IsAtEnd() || io.NextChar() != delimiter)
-				return false;
+			if (index >= input.Length || input[index] != bracket)
+				return 0;
 
-			while (!io.IsAtEnd())
+			for (var i = index + 1; i < input.Length; i++)
 			{
-				var c = io.NextChar();
-				if (c == delimiter)
-					return true;
+				if (input[i] == bracket && input[i - 1] != '\\')
+					return i - index + 1;
 			}
 
-			return false;
+			return 0;
+		}
+	}
+
+	internal sealed class LineCommentScanner : Scanner
+	{
+		public readonly string prefix;
+
+		public LineCommentScanner(string prefix)
+		{
+			this.prefix = prefix;
+		}
+
+		public override int Scan(string input, int index)
+		{
+			if (!StartsWith(input, index, prefix))
+				return 0;
+
+			for (var i = index + prefix.Length; i < input.Length; i++)
+			{
+				if (input[i] == '\n')
+					return i - index;
+			}
+
+			return input.Length - index;
+		}
+	}
+
+	internal sealed class IntegerNumberScanner : Scanner
+	{
+		public override int Scan(string input, int index)
+		{
+			if (index >= input.Length || !char.IsDigit(input, index))
+				return 0;
+
+			for (var i = index + 1; i < input.Length; i++)
+			{
+				if (!char.IsDigit(input, i))
+					return i - index;
+			}
+
+			return input.Length - index;
+		}
+	}
+
+	internal sealed class RealNumberScanner : Scanner
+	{
+		public override int Scan(string input, int index)
+		{
+			if (index >= input.Length || !char.IsDigit(input, index))
+				return 0;
+
+			var i = index + 1;
+			for (; i < input.Length; i++)
+			{
+				if (!char.IsDigit(input, i))
+					break;
+			}
+
+			if (i >= input.Length || input[i] != '.')
+				return 0;
+			i += 1;
+			if (i >= input.Length || !char.IsDigit(input, i))
+				return 0;
+
+			for (; i < input.Length; i++)
+			{
+				if (!char.IsDigit(input, i))
+					return i - index;
+			}
+
+			return input.Length - index;
 		}
 	}
 
@@ -152,29 +175,33 @@ namespace Flow
 		public readonly string prefix;
 		public readonly string extraChars;
 
-		public IdentifierScanner(string prefix, string extraChars)
+		public IdentifierScanner(string prefix, string additionalChars)
 		{
 			this.prefix = prefix;
-			this.extraChars = extraChars;
+			this.extraChars = additionalChars;
 		}
 
-		public override bool Scan(TokenizerIO io)
+		public override int Scan(string input, int index)
 		{
-			if (!MatchStart(io, prefix) || io.IsAtEnd())
-				return false;
+			if (!StartsWith(input, index, prefix))
+				return 0;
 
-			var firstCh = io.NextChar();
+			index += prefix.Length;
+			if (index >= input.Length)
+				return 0;
+
+			var firstCh = input[index];
 			if (!char.IsLetter(firstCh) && extraChars.IndexOf(firstCh) < 0)
-				return false;
+				return 0;
 
-			while (io.IsAtEnd())
+			for (var i = index + 1; i < input.Length; i++)
 			{
-				var c = io.NextChar();
-				if (!char.IsLetter(c) && extraChars.IndexOf(c) < 0)
-					break;
+				var ch = input[i];
+				if (!char.IsLetterOrDigit(ch) && extraChars.IndexOf(ch) < 0)
+					return i - index + prefix.Length;
 			}
 
-			return true;
+			return input.Length - index + prefix.Length;
 		}
 	}
 }

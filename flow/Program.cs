@@ -5,28 +5,15 @@
 		public static void Main(string[] args)
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.flow");
-			var io = new TokenizerIO();
-			io.source = content;
-			while (!io.IsAtEnd())
+			var tokenizer = new Tokenizer(TokenScanners.scanners);
+			tokenizer.Reset(content, 0);
+			var token = tokenizer.Next();
+			while (token.kind != TokenKind.End)
 			{
-				var c = io.NextChar();
-				switch (c)
-				{
-				case '\t':
-					System.Console.WriteLine("INDENT");
-					break;
-				case '\b':
-					System.Console.WriteLine("DEDENT");
-					break;
-				case '\n':
-					System.Console.WriteLine(" NEWLINE");
-					break;
-				default:
-					System.Console.Write(c);
-					break;
-				}
+				var slice = tokenizer.source.Substring(token.slice.index, token.slice.length);
+				System.Console.WriteLine("{0}: {1}", token.kind, slice);
+				token = tokenizer.Next();
 			}
-			System.Console.WriteLine();
 			System.Console.WriteLine("END");
 			return;
 

@@ -56,10 +56,10 @@ namespace Flow
 		public void BeginSource(string source, int sourceIndex)
 		{
 			stateFrameStack.PushBack(new StateFrame(
-				parser.tokenizer.io.source,
+				parser.tokenizer.source,
 				this.sourceIndex,
 
-				parser.tokenizer.io.state.nextIndex,
+				parser.tokenizer.nextIndex,
 				parser.previousToken,
 				parser.currentToken
 			));

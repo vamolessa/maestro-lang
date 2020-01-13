@@ -2,7 +2,9 @@ namespace Flow
 {
 	internal sealed class Tokenizer
 	{
-		public readonly TokenizerIO io = new TokenizerIO();
+		public string source;
+		public int nextIndex;
+
 		private readonly Scanner[] scanners;
 
 		public Tokenizer(Scanner[] scanners)
@@ -13,44 +15,41 @@ namespace Flow
 
 		public void Reset(string source, int nextIndex)
 		{
-			io.source = source;
-			io.state.nextIndex = nextIndex;
-			io.state.indentation = 0;
-			io.state.atBeginingOfLine = true;
-			io.state.pendingIndentation = 0;
+			this.source = source;
+			this.nextIndex = nextIndex;
 		}
 
 		public Token Next()
 		{
-			while (!io.IsAtEnd())
+			while (nextIndex < source.Length)
 			{
 				var tokenLength = 0;
 				var tokenKind = TokenKind.Error;
-				var scanState = default(TokenizerIO.State);
-				var savedState = io.state;
-
 				foreach (var scanner in scanners)
 				{
-					io.state = savedState;
-					scanner.Scan(io);
-
-					var length = io.state.nextIndex - savedState.nextIndex;
+					var length = scanner.Scan(source, nextIndex);
 					if (tokenLength >= length)
 						continue;
 
 					tokenLength = length;
 					tokenKind = scanner.tokenKind;
-					scanState = io.state;
+				}
+
+				if (tokenKind == TokenKind.End)
+				{
+					nextIndex += tokenLength;
+					continue;
 				}
 
 				if (tokenLength == 0)
 					tokenLength = 1;
 
-				var token = new Token(tokenKind, new Slice(savedState.nextIndex, tokenLength));
+				var token = new Token(tokenKind, new Slice(nextIndex, tokenLength));
+				nextIndex += tokenLength;
 				return token;
 			}
 
-			return new Token(TokenKind.End, new Slice(io.source.Length, 0));
+			return new Token(TokenKind.End, new Slice(source.Length, 0));
 		}
 	}
 }

@@ -2,10 +2,10 @@ namespace Flow
 {
 	internal enum TokenKind
 	{
-		NewLine, Indent, Dedent,
+		SemiColon, Pipe, Equals,
+
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable,
-		Do,
 
 		COUNT,
 		End,

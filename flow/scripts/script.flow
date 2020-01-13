@@ -1,7 +1,4 @@
-trigger
-not
-		something
-		delay
-		actor
-
-and
+# this is a comment
+$var = command "string" | another 234 56.01;
+actor "thing"
+# last line comment
