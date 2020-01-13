@@ -35,13 +35,13 @@ do
 
 ########
 
-$any = [trigger "left", trigger "mid", trigger "right"] | or
-$any | actor "DoorExitPuzzle"
-$any | sfx "PuzzleComplete true
+$any = [trigger "left", trigger "mid", trigger "right"] | or;
+$any | actor "DoorExitPuzzle";
+$any | sfx "PuzzleComplete true;
 
-$navmesh = trigger "NavMesh"
-[$any | not, $navmesh | delay 60] | and | dialog "05b_hint1" true
-$navmesh | delay 7 | dialog "05b_start_1"
+$navmesh = trigger "NavMesh";
+[$any | not, $navmesh | delay 60] | and | dialog "05b_hint1" true;
+$navmesh | delay 7 | dialog "05b_start_1";
 
 
 
