@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Rain
+namespace Flow
 {
 	[DebuggerTypeProxy(typeof(BufferDebugView<>))]
 	public struct Buffer<T>

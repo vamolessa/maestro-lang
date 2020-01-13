@@ -1,6 +1,6 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("rain")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("flow")]
 
-namespace Rain
+namespace Flow
 {
 	internal sealed class Compiler
 	{

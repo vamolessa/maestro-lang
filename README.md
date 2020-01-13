@@ -1,2 +1,2 @@
-# rain
-Rain scripting language
+# Flow
+Flow scripting language

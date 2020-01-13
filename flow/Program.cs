@@ -1,10 +1,10 @@
-﻿namespace Rain
+﻿namespace Flow
 {
 	public static class Program
 	{
 		public static void Main(string[] args)
 		{
-			var content = System.IO.File.ReadAllText("scripts/script.rain");
+			var content = System.IO.File.ReadAllText("scripts/script.flow");
 			var io = new TokenizerIO();
 			io.source = content;
 			while (!io.IsAtEnd())
@@ -31,7 +31,7 @@
 			return;
 
 			var compiler = new Compiler();
-			var errors = compiler.CompileSource(new Source(new Uri("script.rain"), content));
+			var errors = compiler.CompileSource(new Source(new Uri("script.flow"), content));
 
 			System.Console.WriteLine("ERRROR COUNT: {0}", errors.count);
 			for (var i = 0; i < errors.count; i++)
