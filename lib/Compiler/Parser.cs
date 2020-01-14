@@ -3,12 +3,12 @@ namespace Flow
 	internal sealed class Parser
 	{
 		public readonly Tokenizer tokenizer = new Tokenizer(TokenScanners.scanners);
-		private readonly System.Action<Slice, ICompileErrorMessage> onError;
+		private readonly System.Action<Slice, IFormattedMessage> onError;
 
 		public Token previousToken;
 		public Token currentToken;
 
-		public Parser(System.Action<Slice, ICompileErrorMessage> onError)
+		public Parser(System.Action<Slice, IFormattedMessage> onError)
 		{
 			this.onError = onError;
 
@@ -49,7 +49,7 @@ namespace Flow
 			return true;
 		}
 
-		public void Consume<E>(TokenKind tokenKind, E error) where E : struct, ICompileErrorMessage
+		public void Consume<E>(TokenKind tokenKind, E error) where E : struct, IFormattedMessage
 		{
 			if (currentToken.kind == tokenKind)
 				Next();

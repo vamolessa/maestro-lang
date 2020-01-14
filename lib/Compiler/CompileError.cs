@@ -1,17 +1,17 @@
 namespace Flow
 {
-	public interface ICompileErrorMessage
+	public interface IFormattedMessage
 	{
-		string Message();
+		string Format();
 	}
 
 	public readonly struct CompileError
 	{
 		public readonly int sourceIndex;
 		public readonly Slice slice;
-		public readonly ICompileErrorMessage message;
+		public readonly IFormattedMessage message;
 
-		public CompileError(int sourceIndex, Slice slice, ICompileErrorMessage message)
+		public CompileError(int sourceIndex, Slice slice, IFormattedMessage message)
 		{
 			this.sourceIndex = sourceIndex;
 			this.slice = slice;

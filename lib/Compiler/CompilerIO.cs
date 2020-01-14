@@ -31,7 +31,7 @@ namespace Flow
 
 		public CompilerIO()
 		{
-			void AddTokenizerError(Slice slice, ICompileErrorMessage error)
+			void AddTokenizerError(Slice slice, IFormattedMessage error)
 			{
 				AddHardError(slice, error);
 			}
@@ -78,13 +78,13 @@ namespace Flow
 			RestoreState(stateFrameStack.PopLast());
 		}
 
-		public void AddSoftError(Slice slice, ICompileErrorMessage error)
+		public void AddSoftError(Slice slice, IFormattedMessage error)
 		{
 			if (!isInPanicMode)
 				errors.PushBack(new CompileError(sourceIndex, slice, error));
 		}
 
-		public void AddHardError(Slice slice, ICompileErrorMessage error)
+		public void AddHardError(Slice slice, IFormattedMessage error)
 		{
 			if (!isInPanicMode)
 			{
