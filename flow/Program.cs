@@ -24,7 +24,7 @@
 			for (var i = 0; i < errors.count; i++)
 			{
 				var error = errors.buffer[i];
-				System.Console.WriteLine("{0} {1}", error.type, error.context);
+				System.Console.WriteLine(error.message.Message());
 			}
 		}
 	}

@@ -7,8 +7,6 @@ namespace Flow
 		public readonly CompilerIO io = new CompilerIO();
 		public Buffer<Source> compiledSources = new Buffer<Source>(1);
 
-		private int indentation;
-
 		public Buffer<CompileError> CompileSource(Source source)
 		{
 			compiledSources.count = 0;
@@ -24,7 +22,6 @@ namespace Flow
 			compiledSources.PushBack(source);
 
 			//var finishedModuleImports = false;
-			indentation = 0;
 			io.parser.Next();
 
 			io.EndSource();

@@ -1,29 +1,21 @@
 namespace Flow
 {
-	public enum CompileErrorType
+	public interface ICompileErrorMessage
 	{
-		InvalidToken,
-		ExpectedNodeName,
-		ExpectedNewLine,
-	}
-
-	public interface ICompileErrorContext
-	{
+		string Message();
 	}
 
 	public readonly struct CompileError
 	{
 		public readonly int sourceIndex;
 		public readonly Slice slice;
-		public readonly CompileErrorType type;
-		public readonly ICompileErrorContext context;
+		public readonly ICompileErrorMessage message;
 
-		public CompileError(int sourceIndex, Slice slice, CompileErrorType type, ICompileErrorContext context)
+		public CompileError(int sourceIndex, Slice slice, ICompileErrorMessage message)
 		{
 			this.sourceIndex = sourceIndex;
 			this.slice = slice;
-			this.type = type;
-			this.context = context;
+			this.message = message;
 		}
 	}
 }

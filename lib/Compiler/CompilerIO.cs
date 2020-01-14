@@ -31,9 +31,9 @@ namespace Flow
 
 		public CompilerIO()
 		{
-			void AddTokenizerError(Slice slice, CompileErrorType errorType, ICompileErrorContext context)
+			void AddTokenizerError(Slice slice, ICompileErrorMessage error)
 			{
-				AddHardError(slice, errorType, context);
+				AddHardError(slice, error);
 			}
 
 			parser = new Parser(AddTokenizerError);
@@ -78,16 +78,19 @@ namespace Flow
 			RestoreState(stateFrameStack.PopLast());
 		}
 
-		public void AddSoftError(Slice slice, CompileErrorType errorType, ICompileErrorContext context)
+		public void AddSoftError(Slice slice, ICompileErrorMessage error)
 		{
 			if (!isInPanicMode)
-				errors.PushBack(new CompileError(sourceIndex, slice, errorType, context));
+				errors.PushBack(new CompileError(sourceIndex, slice, error));
 		}
 
-		public void AddHardError(Slice slice, CompileErrorType errorType, ICompileErrorContext context)
+		public void AddHardError(Slice slice, ICompileErrorMessage error)
 		{
 			if (!isInPanicMode)
-				errors.PushBack(new CompileError(sourceIndex, slice, errorType, context));
+			{
+				isInPanicMode = true;
+				errors.PushBack(new CompileError(sourceIndex, slice, error));
+			}
 		}
 	}
 }
