@@ -5,6 +5,12 @@ namespace Flow
 		public static readonly Scanner[] scanners = new Scanner[] {
 			new ExactScanner(";").ForToken(TokenKind.SemiColon),
 			new ExactScanner("|").ForToken(TokenKind.Pipe),
+			new ExactScanner(",").ForToken(TokenKind.Comma),
+
+			new ExactScanner("(").ForToken(TokenKind.OpenParenthesis),
+			new ExactScanner(")").ForToken(TokenKind.CloseParenthesis),
+			new ExactScanner("[").ForToken(TokenKind.OpenSquareBrackets),
+			new ExactScanner("]").ForToken(TokenKind.CloseSquareBrackets),
 
 			new RealNumberScanner().ForToken(TokenKind.FloatLiteral),
 			new IntegerNumberScanner().ForToken(TokenKind.IntLiteral),

@@ -3,7 +3,9 @@ namespace Flow
 	internal enum TokenKind
 	{
 		UNDEFINED,
-		SemiColon, Pipe,
+		SemiColon, Pipe, Comma,
+		OpenParenthesis, CloseParenthesis,
+		OpenSquareBrackets, CloseSquareBrackets,
 
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable,

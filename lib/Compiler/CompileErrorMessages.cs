@@ -20,6 +20,16 @@ namespace Flow
 		public string Format() => "Expected ';' after expression";
 	}
 
+	internal struct ExpectedCloseParenthesisAfterExpression : IFormattedMessage
+	{
+		public string Format() => "Expected ')' after expression";
+	}
+
+	internal struct ExpectedCloseSquareBracketsAfterArrayExpression : IFormattedMessage
+	{
+		public string Format() => "Expected ']' after array expression";
+	}
+
 	internal struct ExpectedCommandNameError : IFormattedMessage
 	{
 		public string Format() => $"Expected command name";

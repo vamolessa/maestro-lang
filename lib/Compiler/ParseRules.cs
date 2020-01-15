@@ -21,7 +21,8 @@ namespace Flow
 			}
 
 			Set(TokenKind.SemiColon, null, null, Precedence.None);
-			// Set(TokenKind.OpenParenthesis, Compiler.Grouping, Compiler.Call, Precedence.Call);
+			Set(TokenKind.OpenParenthesis, Compiler.Grouping, null, Precedence.None);
+			Set(TokenKind.OpenSquareBrackets, Compiler.ArrayExpression, null, Precedence.None);
 			// Set(TokenKind.Minus, Compiler.Unary, Compiler.Binary, Precedence.Term);
 			// Set(TokenKind.Plus, null, Compiler.Binary, Precedence.Term);
 			// Set(TokenKind.Slash, null, Compiler.Binary, Precedence.Factor);

@@ -98,8 +98,30 @@ namespace Flow
 			ParseWithPrecedence(Precedence.Primary);
 		}
 
+		internal static void Grouping(Compiler self)
+		{
+			self.Expression();
+			self.io.parser.Consume(TokenKind.CloseParenthesis, new ExpectedCloseParenthesisAfterExpression());
+		}
+
+		internal static void ArrayExpression(Compiler self)
+		{
+			System.Console.WriteLine("[");
+			while (!self.io.parser.Check(TokenKind.End))
+			{
+				self.Expression();
+				if (!self.io.parser.Match(TokenKind.Comma))
+					break;
+			}
+
+			self.io.parser.Consume(TokenKind.CloseSquareBrackets, new ExpectedCloseSquareBracketsAfterArrayExpression());
+
+			System.Console.WriteLine("]");
+		}
+
 		internal static void Pipe(Compiler self)
 		{
+			System.Console.WriteLine("PIPE TO");
 			self.ParseWithPrecedence(Precedence.Pipe);
 		}
 
@@ -111,8 +133,9 @@ namespace Flow
 			while (
 				!self.io.parser.Check(TokenKind.End) &&
 				!self.io.parser.Check(TokenKind.SemiColon) &&
-				!self.io.parser.Check(TokenKind.Pipe) /*&&
-				!self.io.parser.Check(TokenKind.CloseParenthesis)*/
+				!self.io.parser.Check(TokenKind.Pipe) &&
+				!self.io.parser.Check(TokenKind.CloseParenthesis) &&
+				!self.io.parser.Check(TokenKind.CloseSquareBrackets)
 			)
 			{
 				self.Value();
