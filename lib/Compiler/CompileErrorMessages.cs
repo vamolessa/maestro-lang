@@ -1,29 +1,28 @@
 namespace Flow
 {
+	internal struct NeverError : IFormattedMessage
+	{
+		public string Format() => string.Empty;
+	}
+
 	internal struct InvalidTokenError : IFormattedMessage
 	{
 		public string Format() => "Invalid char";
 	}
 
-	internal struct ExpectedVariableOnAssignment : IFormattedMessage
+	internal struct ExpectedExpression : IFormattedMessage
 	{
-		public string Format() => "Expected variable on assignment";
+		public string Format() => "Expected expression";
 	}
 
-	internal struct ExpectedEqualsOnAssignment : IFormattedMessage
+	internal struct ExpectedSemiColonAfterExpression : IFormattedMessage
 	{
-		public string Format() => "Expected '=' on assignment";
-	}
-
-	internal struct ExpectedSemiColonAtEndOfStatement : IFormattedMessage
-	{
-		public string Format() => "Expected ';' at end of statement";
+		public string Format() => "Expected ';' after expression";
 	}
 
 	internal struct ExpectedCommandNameError : IFormattedMessage
 	{
-		public TokenKind got;
-		public string Format() => $"Expected command name. Got {got}";
+		public string Format() => $"Expected command name";
 	}
 
 	internal struct ExpectedLiteralError : IFormattedMessage

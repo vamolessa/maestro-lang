@@ -1,4 +1,7 @@
 # this is a comment
 #$var = command "string" | another 234 56.01;
-actor "thing"
+actor "thing" | other 54;
+command | $var;
+a_command other_command one_more_command $arg;
+#$var | command;
 # last line comment

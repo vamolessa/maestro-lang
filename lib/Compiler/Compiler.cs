@@ -7,6 +7,8 @@ namespace Flow
 		public readonly CompilerIO io = new CompilerIO();
 		public Buffer<Source> compiledSources = new Buffer<Source>(1);
 
+		private readonly ParseRules parseRules = new ParseRules();
+
 		public Buffer<CompileError> CompileSource(Source source)
 		{
 			compiledSources.count = 0;
@@ -29,47 +31,106 @@ namespace Flow
 			io.EndSource();
 		}
 
-		private void Statement()
+		private void Syncronize()
 		{
-			if (io.parser.Check(TokenKind.Variable))
-				AssignmentStatement();
-			else if (io.parser.Check(TokenKind.Identifier))
-				ExpressionStatement();
+			if (!io.isInPanicMode)
+				return;
+
+			while (io.parser.currentToken.kind != TokenKind.End)
+			{
+				if (io.parser.currentToken.kind != TokenKind.SemiColon)
+					io.parser.Next();
+
+				io.isInPanicMode = false;
+				break;
+			}
 		}
 
-		private void AssignmentStatement()
+		private void ParseWithPrecedence(Precedence precedence)
 		{
-			io.parser.Consume(TokenKind.Variable, new ExpectedVariableOnAssignment());
-			var variableSlice = io.parser.previousToken.slice;
-			io.parser.Consume(TokenKind.Equals, new ExpectedEqualsOnAssignment());
+			var parser = io.parser;
+			parser.Next();
+			var slice = parser.previousToken.slice;
+			if (parser.previousToken.kind == TokenKind.End)
+				return;
+
+			var prefixRule = parseRules.GetPrefixRule(parser.previousToken.kind);
+			if (prefixRule == null)
+			{
+				io.AddHardError(parser.previousToken.slice, new ExpectedExpression());
+				return;
+			}
+			prefixRule(this);
+
+			while (
+				parser.currentToken.kind != TokenKind.End &&
+				precedence <= parseRules.GetPrecedence(parser.currentToken.kind)
+			)
+			{
+				parser.Next();
+				var infixRule = parseRules.GetInfixRule(parser.previousToken.kind);
+				infixRule(this);
+				slice = Slice.FromTo(slice, parser.previousToken.slice);
+			}
+
+			slice = Slice.FromTo(slice, parser.previousToken.slice);
+		}
+
+		private void Statement()
+		{
+			System.Console.WriteLine("BEGIN STATEMENT");
+			ExpressionStatement();
 		}
 
 		private void ExpressionStatement()
 		{
 			Expression();
-			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAtEndOfStatement());
+			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterExpression());
 		}
 
 		private void Expression()
 		{
-			Command();
-		}
-
-		private void Command()
-		{
-			io.parser.Consume(TokenKind.Identifier, new ExpectedCommandNameError());
+			ParseWithPrecedence(Precedence.Pipe);
 		}
 
 		private void Value()
 		{
-			Literal();
+			ParseWithPrecedence(Precedence.Primary);
 		}
 
-		private void Literal()
+		internal static void Pipe(Compiler self)
 		{
-			io.parser.Next();
+			self.ParseWithPrecedence(Precedence.Pipe);
+		}
 
-			switch (io.parser.previousToken.kind)
+		internal static void Command(Compiler self)
+		{
+			var slice = self.io.parser.previousToken.slice;
+
+			var argCount = 0;
+			while (
+				!self.io.parser.Check(TokenKind.End) &&
+				!self.io.parser.Check(TokenKind.SemiColon) &&
+				!self.io.parser.Check(TokenKind.Pipe) /*&&
+				!self.io.parser.Check(TokenKind.CloseParenthesis)*/
+			)
+			{
+				self.Value();
+				argCount += 1;
+			}
+
+			System.Console.WriteLine("COMMAND {0} WITH {1} ARGS", self.io.parser.tokenizer.source.Substring(slice.index, slice.length), argCount);
+		}
+
+		internal static void Variable(Compiler self)
+		{
+			var slice = self.io.parser.previousToken.slice;
+			System.Console.WriteLine("VARIABLE {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
+		}
+
+		internal static void Literal(Compiler self)
+		{
+			switch (self.io.parser.previousToken.kind)
 			{
 			case TokenKind.False:
 				System.Console.WriteLine("FALSE");
@@ -78,16 +139,16 @@ namespace Flow
 				System.Console.WriteLine("TRUE");
 				break;
 			case TokenKind.IntLiteral:
-				System.Console.WriteLine("INT {0}", io.parser.tokenizer.source.Substring(io.parser.previousToken.slice.index, io.parser.previousToken.slice.length));
+				System.Console.WriteLine("INT {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
 				break;
 			case TokenKind.FloatLiteral:
-				System.Console.WriteLine("FLOAT {0}", io.parser.tokenizer.source.Substring(io.parser.previousToken.slice.index, io.parser.previousToken.slice.length));
+				System.Console.WriteLine("FLOAT {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
 				break;
 			case TokenKind.StringLiteral:
-				System.Console.WriteLine("STRING {0}", io.parser.tokenizer.source.Substring(io.parser.previousToken.slice.index, io.parser.previousToken.slice.length));
+				System.Console.WriteLine("STRING {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
 				break;
 			default:
-				io.AddHardError(io.parser.previousToken.slice, new ExpectedLiteralError { got = io.parser.previousToken.kind });
+				self.io.AddHardError(self.io.parser.previousToken.slice, new ExpectedLiteralError { got = self.io.parser.previousToken.kind });
 				break;
 			}
 		}

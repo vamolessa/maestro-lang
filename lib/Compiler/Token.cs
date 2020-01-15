@@ -2,7 +2,8 @@ namespace Flow
 {
 	internal enum TokenKind
 	{
-		SemiColon, Pipe, Equals,
+		UNDEFINED,
+		SemiColon, Pipe,
 
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable,
@@ -27,5 +28,17 @@ namespace Flow
 		{
 			return kind >= 0;
 		}
+	}
+
+	internal enum Precedence
+	{
+		None,
+		// Equality, // == !=
+		// Comparison, // < > <= >=
+		Pipe, // |
+		Term,// + -
+		Factor, // * /
+		Unary, // ! -
+		Primary,
 	}
 }
