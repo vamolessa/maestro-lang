@@ -3,6 +3,7 @@
 #actor "thing" | other 54;
 #command | $var;
 #a_command other_command one_more_command $arg;
-45 | [true, "a string", some_internal_command "with arg"] | command_after;
-#$var | command;
-# last line comment
+
+45 | [true, "a string", command "with arg"] | print;
+
+$var | command 32;

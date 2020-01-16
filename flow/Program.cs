@@ -1,4 +1,6 @@
-﻿namespace Flow
+﻿using System.Text;
+
+namespace Flow
 {
 	public static class Program
 	{
@@ -6,14 +8,26 @@
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.flow");
 
-			var compiler = new Compiler();
-			var errors = compiler.CompileSource(new Source(new Uri("script.flow"), content));
+			var chunk = new ByteCodeChunk();
+			chunk.RegisterCommand(new Command("command", null));
+			chunk.RegisterCommand(new Command("print", null));
 
-			System.Console.WriteLine("ERRROR COUNT: {0}", errors.count);
-			for (var i = 0; i < errors.count; i++)
+			var compiler = new Compiler();
+			var errors = compiler.CompileSource(chunk, new Source(new Uri("script.flow"), content));
+
+			if (errors.count > 0)
 			{
-				var error = errors.buffer[i];
-				System.Console.WriteLine(error.message.Format());
+				for (var i = 0; i < errors.count; i++)
+				{
+					var error = errors.buffer[i];
+					System.Console.WriteLine(error.message.Format());
+				}
+			}
+			else
+			{
+				var sb = new StringBuilder();
+				chunk.Disassemble(sb);
+				System.Console.WriteLine(sb);
 			}
 		}
 	}

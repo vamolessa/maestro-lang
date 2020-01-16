@@ -9,11 +9,11 @@ namespace Flow
 
 		private readonly ParseRules parseRules = new ParseRules();
 
-		public Buffer<CompileError> CompileSource(Source source)
+		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Source source)
 		{
 			compiledSources.count = 0;
 
-			io.Reset();
+			io.Reset(chunk);
 			Compile(source);
 			return io.errors;
 		}
@@ -22,6 +22,8 @@ namespace Flow
 		{
 			io.BeginSource(source.content, compiledSources.count);
 			compiledSources.PushBack(source);
+
+			io.EmitInstruction(Instruction.ClearVariables);
 
 			//var finishedModuleImports = false;
 			io.parser.Next();
@@ -46,19 +48,19 @@ namespace Flow
 			}
 		}
 
-		private void ParseWithPrecedence(Precedence precedence)
+		private Slice ParseWithPrecedence(Precedence precedence)
 		{
 			var parser = io.parser;
 			parser.Next();
 			var slice = parser.previousToken.slice;
 			if (parser.previousToken.kind == TokenKind.End)
-				return;
+				return slice;
 
 			var prefixRule = parseRules.GetPrefixRule(parser.previousToken.kind);
 			if (prefixRule == null)
 			{
 				io.AddHardError(parser.previousToken.slice, new ExpectedExpression());
-				return;
+				return slice;
 			}
 			prefixRule(this);
 
@@ -74,11 +76,11 @@ namespace Flow
 			}
 
 			slice = Slice.FromTo(slice, parser.previousToken.slice);
+			return slice;
 		}
 
 		private void Statement()
 		{
-			System.Console.WriteLine("BEGIN STATEMENT");
 			ExpressionStatement();
 		}
 
@@ -86,16 +88,17 @@ namespace Flow
 		{
 			Expression();
 			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterExpression());
+			io.EmitInstruction(Instruction.ClearStack);
 		}
 
-		private void Expression()
+		private Slice Expression()
 		{
-			ParseWithPrecedence(Precedence.Pipe);
+			return ParseWithPrecedence(Precedence.Pipe);
 		}
 
-		private void Value()
+		private Slice Value()
 		{
-			ParseWithPrecedence(Precedence.Primary);
+			return ParseWithPrecedence(Precedence.Primary);
 		}
 
 		internal static void Grouping(Compiler self)
@@ -106,7 +109,6 @@ namespace Flow
 
 		internal static void ArrayExpression(Compiler self)
 		{
-			System.Console.WriteLine("[");
 			while (!self.io.parser.Check(TokenKind.End))
 			{
 				self.Expression();
@@ -115,40 +117,65 @@ namespace Flow
 			}
 
 			self.io.parser.Consume(TokenKind.CloseSquareBrackets, new ExpectedCloseSquareBracketsAfterArrayExpression());
-
-			System.Console.WriteLine("]");
 		}
 
 		internal static void Pipe(Compiler self)
 		{
-			System.Console.WriteLine("PIPE TO");
 			self.ParseWithPrecedence(Precedence.Pipe);
+		}
+
+		private bool IsLastPipeExpression()
+		{
+			return
+				io.parser.Check(TokenKind.End) ||
+				io.parser.Check(TokenKind.SemiColon) ||
+				io.parser.Check(TokenKind.Pipe) ||
+				io.parser.Check(TokenKind.CloseParenthesis) ||
+				io.parser.Check(TokenKind.CloseSquareBrackets) ||
+				io.parser.Check(TokenKind.Comma);
 		}
 
 		internal static void Command(Compiler self)
 		{
-			var slice = self.io.parser.previousToken.slice;
+			var commandSlice = self.io.parser.previousToken.slice;
+			var slice = commandSlice;
 
 			var argCount = 0;
-			while (
-				!self.io.parser.Check(TokenKind.End) &&
-				!self.io.parser.Check(TokenKind.SemiColon) &&
-				!self.io.parser.Check(TokenKind.Pipe) &&
-				!self.io.parser.Check(TokenKind.CloseParenthesis) &&
-				!self.io.parser.Check(TokenKind.CloseSquareBrackets)
-			)
+			while (!self.IsLastPipeExpression())
 			{
-				self.Value();
+				var valueSlice = self.Value();
+				slice = Slice.FromTo(slice, valueSlice);
 				argCount += 1;
 			}
 
-			System.Console.WriteLine("COMMAND {0} WITH {1} ARGS", self.io.parser.tokenizer.source.Substring(slice.index, slice.length), argCount);
+			var commandIndex = -1;
+			for (var i = 0; i < self.io.chunk.commands.count; i++)
+			{
+				var command = self.io.chunk.commands.buffer[i];
+				if (CompilerHelper.AreEqual(
+					self.io.parser.tokenizer.source,
+					commandSlice,
+					command.name
+				))
+				{
+					commandIndex = i;
+					break;
+				}
+			}
+
+			if (argCount > byte.MaxValue)
+				self.io.AddSoftError(slice, new TooManyCommandArguments());
+			else if (commandIndex < 0)
+				self.io.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(self.io, commandSlice) });
+			else
+				self.io.EmitRunCommandInstance(commandIndex, (byte)argCount);
 		}
 
 		internal static void Variable(Compiler self)
 		{
 			var slice = self.io.parser.previousToken.slice;
-			System.Console.WriteLine("VARIABLE {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
+			var name = CompilerHelper.GetSlice(self.io, slice);
+			self.io.EmitVariableInstruction(Instruction.LoadVariable, name);
 		}
 
 		internal static void Literal(Compiler self)
@@ -156,19 +183,19 @@ namespace Flow
 			switch (self.io.parser.previousToken.kind)
 			{
 			case TokenKind.False:
-				System.Console.WriteLine("FALSE");
+				self.io.EmitInstruction(Instruction.LoadFalse);
 				break;
 			case TokenKind.True:
-				System.Console.WriteLine("TRUE");
+				self.io.EmitInstruction(Instruction.LoadTrue);
 				break;
 			case TokenKind.IntLiteral:
-				System.Console.WriteLine("INT {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
+				self.io.EmitLoadLiteral(CompilerHelper.GetParsedInt(self.io));
 				break;
 			case TokenKind.FloatLiteral:
-				System.Console.WriteLine("FLOAT {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
+				self.io.EmitLoadLiteral(CompilerHelper.GetParsedFloat(self.io));
 				break;
 			case TokenKind.StringLiteral:
-				System.Console.WriteLine("STRING {0}", self.io.parser.tokenizer.source.Substring(self.io.parser.previousToken.slice.index, self.io.parser.previousToken.slice.length));
+				self.io.EmitLoadLiteral(CompilerHelper.GetParsedString(self.io));
 				break;
 			default:
 				self.io.AddHardError(self.io.parser.previousToken.slice, new ExpectedLiteralError { got = self.io.parser.previousToken.kind });

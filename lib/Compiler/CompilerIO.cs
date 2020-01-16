@@ -23,6 +23,8 @@ namespace Flow
 		}
 
 		public readonly Parser parser;
+		public ByteCodeChunk chunk;
+
 		public int sourceIndex;
 		public bool isInPanicMode;
 
@@ -39,9 +41,11 @@ namespace Flow
 			parser = new Parser(AddTokenizerError);
 		}
 
-		public void Reset()
+		public void Reset(ByteCodeChunk chunk)
 		{
+			this.chunk = chunk;
 			errors.count = 0;
+			stateFrameStack.count = 0;
 		}
 
 		private void RestoreState(StateFrame state)

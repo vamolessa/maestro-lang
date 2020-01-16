@@ -17,8 +17,8 @@ namespace Flow
 			new StringScanner('"').ForToken(TokenKind.StringLiteral),
 			new ExactScanner("true").ForToken(TokenKind.True),
 			new ExactScanner("false").ForToken(TokenKind.False),
-			new IdentifierScanner("", "_").ForToken(TokenKind.Identifier),
-			new IdentifierScanner("$", "_").ForToken(TokenKind.Variable),
+			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
+			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
 
 			new WhiteSpaceScanner().Ignore(),
 			new LineCommentScanner("#").Ignore(),

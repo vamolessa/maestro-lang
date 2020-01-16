@@ -30,9 +30,15 @@ namespace Flow
 		public string Format() => "Expected ']' after array expression";
 	}
 
-	internal struct ExpectedCommandNameError : IFormattedMessage
+	internal struct TooManyCommandArguments : IFormattedMessage
 	{
-		public string Format() => $"Expected command name";
+		public string Format() => $"Too many command arguments. Max is {byte.MaxValue}";
+	}
+
+	internal struct CommandNotRegisteredError : IFormattedMessage
+	{
+		public string name;
+		public string Format() => $"Command '{name}' not registered";
 	}
 
 	internal struct ExpectedLiteralError : IFormattedMessage
