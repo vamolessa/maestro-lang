@@ -4,6 +4,4 @@
 #command | $var;
 #a_command other_command one_more_command $arg;
 
-45 | [true, "a string", command "with arg"] | print;
-
-$var | command 32;
+[true, "a string", command "with arg"] | $my_var | print;

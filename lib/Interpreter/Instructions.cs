@@ -3,12 +3,14 @@ namespace Flow
 	internal enum Instruction
 	{
 		Halt,
-		ClearStack,
+		ClearVariables,
+		Pop,
+		LoadNull,
 		LoadFalse,
 		LoadTrue,
 		LoadLiteral,
-		ClearVariables,
-		SetVariable,
+		CreateArray,
+		PipeVariable,
 		LoadVariable,
 		RunCommandInstance,
 	}

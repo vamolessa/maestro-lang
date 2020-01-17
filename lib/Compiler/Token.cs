@@ -7,7 +7,7 @@ namespace Flow
 		OpenParenthesis, CloseParenthesis,
 		OpenSquareBrackets, CloseSquareBrackets,
 
-		IntLiteral, FloatLiteral, StringLiteral, True, False,
+		IntLiteral, FloatLiteral, StringLiteral, Null, True, False,
 		Identifier, Variable,
 
 		COUNT,
@@ -35,9 +35,9 @@ namespace Flow
 	internal enum Precedence
 	{
 		None,
+		Pipe,
 		// Equality, // == !=
 		// Comparison, // < > <= >=
-		Pipe, // |
 		Term,// + -
 		Factor, // * /
 		Unary, // ! -

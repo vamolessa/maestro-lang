@@ -87,8 +87,8 @@ namespace Flow
 		private void ExpressionStatement()
 		{
 			Expression();
-			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterExpression());
-			io.EmitInstruction(Instruction.ClearStack);
+			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterStatement());
+			io.EmitInstruction(Instruction.Pop);
 		}
 
 		private Slice Expression()
@@ -109,19 +109,53 @@ namespace Flow
 
 		internal static void ArrayExpression(Compiler self)
 		{
+			var slice = self.io.parser.previousToken.slice;
+
+			var elementCount = 0;
 			while (!self.io.parser.Check(TokenKind.End))
 			{
 				self.Expression();
+				elementCount += 1;
+
 				if (!self.io.parser.Match(TokenKind.Comma))
 					break;
 			}
 
 			self.io.parser.Consume(TokenKind.CloseSquareBrackets, new ExpectedCloseSquareBracketsAfterArrayExpression());
+			slice = Slice.FromTo(slice, self.io.parser.previousToken.slice);
+
+			if (elementCount > byte.MaxValue)
+			{
+				self.io.AddSoftError(slice, new TooManyArrayElementsError());
+			}
+			else
+			{
+				self.io.EmitInstruction(Instruction.CreateArray);
+				self.io.EmitByte((byte)elementCount);
+			}
 		}
 
 		internal static void Pipe(Compiler self)
 		{
-			self.ParseWithPrecedence(Precedence.Pipe);
+			while (!self.io.parser.Check(TokenKind.End))
+			{
+				self.io.parser.Next();
+				switch (self.io.parser.previousToken.kind)
+				{
+				case TokenKind.Variable:
+					self.PipeVariable();
+					break;
+				case TokenKind.Identifier:
+					self.PipeCommand();
+					break;
+				default:
+					self.io.AddHardError(self.io.parser.previousToken.slice, new InvalidTokenAfterPipe());
+					return;
+				}
+
+				if (!self.io.parser.Match(TokenKind.Pipe))
+					break;
+			}
 		}
 
 		private bool IsLastPipeExpression()
@@ -137,23 +171,29 @@ namespace Flow
 
 		internal static void Command(Compiler self)
 		{
-			var commandSlice = self.io.parser.previousToken.slice;
+			self.io.EmitInstruction(Instruction.LoadNull);
+			self.PipeCommand();
+		}
+
+		private void PipeCommand()
+		{
+			var commandSlice = io.parser.previousToken.slice;
 			var slice = commandSlice;
 
 			var argCount = 0;
-			while (!self.IsLastPipeExpression())
+			while (!IsLastPipeExpression())
 			{
-				var valueSlice = self.Value();
+				var valueSlice = Value();
 				slice = Slice.FromTo(slice, valueSlice);
 				argCount += 1;
 			}
 
 			var commandIndex = -1;
-			for (var i = 0; i < self.io.chunk.commands.count; i++)
+			for (var i = 0; i < io.chunk.commands.count; i++)
 			{
-				var command = self.io.chunk.commands.buffer[i];
+				var command = io.chunk.commands.buffer[i];
 				if (CompilerHelper.AreEqual(
-					self.io.parser.tokenizer.source,
+					io.parser.tokenizer.source,
 					commandSlice,
 					command.name
 				))
@@ -164,11 +204,18 @@ namespace Flow
 			}
 
 			if (argCount > byte.MaxValue)
-				self.io.AddSoftError(slice, new TooManyCommandArguments());
-			else if (commandIndex < 0)
-				self.io.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(self.io, commandSlice) });
+				io.AddSoftError(slice, new TooManyCommandArgumentsError());
+			if (commandIndex < 0)
+				io.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(io, commandSlice) });
 			else
-				self.io.EmitRunCommandInstance(commandIndex, (byte)argCount);
+				io.EmitRunCommandInstance(commandIndex, (byte)argCount);
+		}
+
+		private void PipeVariable()
+		{
+			var slice = io.parser.previousToken.slice;
+			var name = CompilerHelper.GetSlice(io, slice);
+			io.EmitVariableInstruction(Instruction.PipeVariable, name);
 		}
 
 		internal static void Variable(Compiler self)
@@ -182,6 +229,9 @@ namespace Flow
 		{
 			switch (self.io.parser.previousToken.kind)
 			{
+			case TokenKind.Null:
+				self.io.EmitInstruction(Instruction.LoadNull);
+				break;
 			case TokenKind.False:
 				self.io.EmitInstruction(Instruction.LoadFalse);
 				break;

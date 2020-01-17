@@ -39,8 +39,9 @@ namespace Flow
 			Set(TokenKind.Variable, Compiler.Variable, null, Precedence.None);
 			Set(TokenKind.StringLiteral, Compiler.Literal, null, Precedence.None);
 			Set(TokenKind.IntLiteral, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.False, Compiler.Literal, null, Precedence.None);
 			Set(TokenKind.FloatLiteral, Compiler.Literal, null, Precedence.None);
+			Set(TokenKind.Null, Compiler.Literal, null, Precedence.None);
+			Set(TokenKind.False, Compiler.Literal, null, Precedence.None);
 			Set(TokenKind.True, Compiler.Literal, null, Precedence.None);
 		}
 

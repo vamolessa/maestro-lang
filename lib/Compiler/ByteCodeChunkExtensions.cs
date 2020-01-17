@@ -98,14 +98,17 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
-			case Instruction.ClearStack:
+			case Instruction.ClearVariables:
+			case Instruction.Pop:
+			case Instruction.LoadNull:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
-			case Instruction.ClearVariables:
 				return OneByteInstruction(instruction, index, sb);
+			case Instruction.CreateArray:
+				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.SetVariable:
+			case Instruction.PipeVariable:
 			case Instruction.LoadVariable:
 				return VariableInstruction(self, instruction, index, sb);
 			case Instruction.RunCommandInstance:
@@ -129,28 +132,6 @@ namespace Flow
 			sb.Append(' ');
 			sb.Append(chunk.bytes.buffer[index + 1]);
 			return index + 2;
-		}
-
-		private static int ThreeByteInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
-		{
-			sb.Append(instruction.ToString());
-			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[index + 1]);
-			sb.Append(", ");
-			sb.Append(chunk.bytes.buffer[index + 2]);
-			return index + 3;
-		}
-
-		private static int FourByteInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
-		{
-			sb.Append(instruction.ToString());
-			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[index + 1]);
-			sb.Append(", ");
-			sb.Append(chunk.bytes.buffer[index + 2]);
-			sb.Append(", ");
-			sb.Append(chunk.bytes.buffer[index + 3]);
-			return index + 4;
 		}
 
 		private static int LoadLiteralInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)

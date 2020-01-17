@@ -15,8 +15,10 @@ namespace Flow
 			new RealNumberScanner().ForToken(TokenKind.FloatLiteral),
 			new IntegerNumberScanner().ForToken(TokenKind.IntLiteral),
 			new StringScanner('"').ForToken(TokenKind.StringLiteral),
-			new ExactScanner("true").ForToken(TokenKind.True),
+			new ExactScanner("null").ForToken(TokenKind.Null),
 			new ExactScanner("false").ForToken(TokenKind.False),
+			new ExactScanner("true").ForToken(TokenKind.True),
+
 			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
 
