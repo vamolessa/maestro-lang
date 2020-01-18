@@ -11,7 +11,7 @@ namespace Flow
 			for (var i = 0; i < errors.count; i++)
 			{
 				var e = errors.buffer[i];
-				sb.Append(e.message);
+				sb.Append(e.message.Format());
 
 				if (e.slice.index > 0 || e.slice.length > 0)
 				{

@@ -2,6 +2,7 @@
 #$var = command "string" | another 234 56.01;
 #actor "thing" | other 54;
 #command | $var;
-#a_command other_command one_more_command $arg;
+
+print command command $arg;
 
 [true, "a string", command "with arg"] | $my_var | print;
