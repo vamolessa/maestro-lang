@@ -110,9 +110,9 @@ namespace Flow
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.NameLocal:
-				return NameLocalInstruction(self, instruction, index, sb);
-			case Instruction.CallCommand:
+			case Instruction.AddLocalName:
+				return AddLocalNameInstruction(self, instruction, index, sb);
+			case Instruction.CallNativeCommand:
 				return CallCommandInstruction(self, instruction, index, sb);
 			default:
 				sb.Append("Unknown instruction ");
@@ -144,15 +144,14 @@ namespace Flow
 			var value = chunk.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
-			sb.Append(" [");
-			sb.Append(value.GetType().Name);
-			sb.Append("] ");
 			sb.Append(value);
+			sb.Append(" #");
+			sb.Append(value.GetType().Name);
 
 			return index + 3;
 		}
 
-		private static int NameLocalInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int AddLocalNameInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[index + 1],

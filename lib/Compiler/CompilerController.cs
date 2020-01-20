@@ -228,7 +228,7 @@ namespace Flow
 				if (argCount != command.parameterCount)
 					compiler.AddSoftError(slice, new WrongNumberOfCommandArgumentsError { commandName = command.name, expected = command.parameterCount, got = argCount });
 				else
-					compiler.EmitRunCommandInstance(commandIndex);
+					compiler.EmitCallNativeCommand(commandIndex);
 			}
 		}
 

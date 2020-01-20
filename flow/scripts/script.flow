@@ -1,10 +1,5 @@
-# this is a comment
-#$var = command "string" | another 234 56.01;
-#actor "thing" | other 54;
-#command | $var;
-
-#34 | $arg;
-#print command command $arg;
-
-[true, "a string", command "with arg"] | $var;
+34 | $var;
 $var | print;
+
+
+#[true, "a string", command "with arg"] | $var;

@@ -6,7 +6,7 @@ namespace Flow
 		{
 			var name = CompilerHelper.GetSlice(self, slice);
 			var nameLiteralIndex = self.chunk.AddLiteral(name);
-			self.EmitInstruction(Instruction.NameLocal);
+			self.EmitInstruction(Instruction.AddLocalName);
 			self.EmitUShort((ushort)nameLiteralIndex);
 
 			used = used || self.parser.tokenizer.source[slice.index + 1] == '_';

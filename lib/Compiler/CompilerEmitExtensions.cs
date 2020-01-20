@@ -26,11 +26,11 @@ namespace Flow
 			self.EmitUShort((ushort)index);
 		}
 
-		public static void EmitRunCommandInstance(this Compiler self, int commandIndex)
+		public static void EmitCallNativeCommand(this Compiler self, int commandIndex)
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
 			self.chunk.commandInstances.PushBack(commandIndex);
-			self.EmitInstruction(Instruction.CallCommand);
+			self.EmitInstruction(Instruction.CallNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
 

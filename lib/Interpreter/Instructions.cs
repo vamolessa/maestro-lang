@@ -3,6 +3,7 @@ namespace Flow
 	internal enum Instruction
 	{
 		Halt,
+		CallNativeCommand,
 		ClearStack,
 		Pop,
 		LoadNull,
@@ -10,9 +11,8 @@ namespace Flow
 		LoadTrue,
 		LoadLiteral,
 		CreateArray,
-		NameLocal,
+		AddLocalName,
 		AssignLocal,
 		LoadLocal,
-		CallCommand,
 	}
 }
