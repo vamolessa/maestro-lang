@@ -98,19 +98,22 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
+			case Instruction.ClearStack:
+			case Instruction.Pop:
 			case Instruction.LoadNull:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 				return OneByteInstruction(instruction, index, sb);
-			case Instruction.Pop:
 			case Instruction.CreateArray:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.RunCommandInstance:
-				return RunCommandInstanceInstruction(self, instruction, index, sb);
+			case Instruction.NameLocal:
+				return NameLocalInstruction(self, instruction, index, sb);
+			case Instruction.CallCommand:
+				return CallCommandInstruction(self, instruction, index, sb);
 			default:
 				sb.Append("Unknown instruction ");
 				sb.Append(instruction.ToString());
@@ -149,7 +152,22 @@ namespace Flow
 			return index + 3;
 		}
 
-		private static int RunCommandInstanceInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int NameLocalInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		{
+			var literalIndex = BytesHelper.BytesToUShort(
+				chunk.bytes.buffer[index + 1],
+				chunk.bytes.buffer[index + 2]
+			);
+			var name = chunk.literals.buffer[literalIndex];
+
+			sb.Append(instruction.ToString());
+			sb.Append(' ');
+			sb.Append(name);
+
+			return index + 3;
+		}
+
+		private static int CallCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var instanceIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[index + 1],

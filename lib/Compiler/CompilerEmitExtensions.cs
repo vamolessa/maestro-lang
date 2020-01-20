@@ -30,7 +30,7 @@ namespace Flow
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
 			self.chunk.commandInstances.PushBack(commandIndex);
-			self.EmitInstruction(Instruction.RunCommandInstance);
+			self.EmitInstruction(Instruction.CallCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
 

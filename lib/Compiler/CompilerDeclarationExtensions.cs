@@ -4,6 +4,11 @@ namespace Flow
 	{
 		public static int AddLocalVariable(this Compiler self, Slice slice, bool used)
 		{
+			var name = CompilerHelper.GetSlice(self, slice);
+			var nameLiteralIndex = self.chunk.AddLiteral(name);
+			self.EmitInstruction(Instruction.NameLocal);
+			self.EmitUShort((ushort)nameLiteralIndex);
+
 			used = used || self.parser.tokenizer.source[slice.index + 1] == '_';
 			self.localVariables.PushBack(new LocalVariable(slice, used));
 			return self.localVariables.count - 1;

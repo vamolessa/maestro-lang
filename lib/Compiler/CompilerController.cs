@@ -32,11 +32,12 @@ namespace Flow
 			{
 				var local = compiler.localVariables.buffer[i];
 				if (!local.used)
+				{
 					compiler.AddSoftError(local.slice, new LocalVariableNotUsed { name = CompilerHelper.GetSlice(compiler, local.slice) });
+				}
 			}
 
-			compiler.EmitInstruction(Instruction.Pop);
-			compiler.EmitByte((byte)compiler.localVariables.count);
+			compiler.EmitInstruction(Instruction.ClearStack);
 			compiler.localVariables.count = 0;
 
 			compiler.EndSource();
@@ -99,7 +100,6 @@ namespace Flow
 
 			compiler.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterStatement());
 			compiler.EmitInstruction(Instruction.Pop);
-			compiler.EmitByte(1);
 		}
 
 		private Slice Expression(bool canAssignToVariable)
