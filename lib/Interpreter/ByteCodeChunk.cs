@@ -12,7 +12,6 @@ namespace Flow
 		public Buffer<Command> commands = new Buffer<Command>(16);
 		public Buffer<object> literals = new Buffer<object>(32);
 		public Buffer<int> commandInstances = new Buffer<int>(32);
-		public Buffer<string> variableNames = new Buffer<string>(8);
 
 		public bool RegisterCommand(Command command)
 		{
@@ -42,18 +41,6 @@ namespace Flow
 
 			literals.PushBack(value);
 			return literals.count - 1;
-		}
-
-		public int AddVariableName(string name)
-		{
-			for (var i = 0; i < variableNames.count; i++)
-			{
-				if (name == variableNames.buffer[i])
-					return i;
-			}
-
-			variableNames.PushBack(name);
-			return variableNames.count - 1;
 		}
 	}
 }

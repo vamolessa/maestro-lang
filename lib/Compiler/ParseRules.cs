@@ -2,8 +2,8 @@ namespace Flow
 {
 	internal sealed class ParseRules
 	{
-		public delegate void PrefixFunction(Compiler compiler);
-		public delegate void InfixFunction(Compiler compiler);
+		public delegate void PrefixFunction(CompilerController controller);
+		public delegate void InfixFunction(CompilerController controller, Slice slice);
 
 		private const int RuleCount = (int)TokenKind.COUNT;
 		private readonly Precedence[] precedences = new Precedence[RuleCount];
@@ -21,8 +21,8 @@ namespace Flow
 			}
 
 			Set(TokenKind.SemiColon, null, null, Precedence.None);
-			Set(TokenKind.OpenParenthesis, Compiler.Grouping, null, Precedence.None);
-			Set(TokenKind.OpenSquareBrackets, Compiler.ArrayExpression, null, Precedence.None);
+			Set(TokenKind.OpenParenthesis, CompilerController.Grouping, null, Precedence.None);
+			Set(TokenKind.OpenSquareBrackets, CompilerController.ArrayExpression, null, Precedence.None);
 			// Set(TokenKind.Minus, Compiler.Unary, Compiler.Binary, Precedence.Term);
 			// Set(TokenKind.Plus, null, Compiler.Binary, Precedence.Term);
 			// Set(TokenKind.Slash, null, Compiler.Binary, Precedence.Factor);
@@ -34,15 +34,15 @@ namespace Flow
 			// Set(TokenKind.GreaterEqual, null, Compiler.Binary, Precedence.Comparison);
 			// Set(TokenKind.Less, null, Compiler.Binary, Precedence.Comparison);
 			// Set(TokenKind.LessEqual, null, Compiler.Binary, Precedence.Comparison);
-			Set(TokenKind.Pipe, null, Compiler.Pipe, Precedence.Pipe);
-			Set(TokenKind.Identifier, Compiler.Command, null, Precedence.None);
-			Set(TokenKind.Variable, Compiler.Variable, null, Precedence.None);
-			Set(TokenKind.StringLiteral, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.IntLiteral, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.FloatLiteral, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.Null, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.False, Compiler.Literal, null, Precedence.None);
-			Set(TokenKind.True, Compiler.Literal, null, Precedence.None);
+			Set(TokenKind.Pipe, null, CompilerController.Pipe, Precedence.Pipe);
+			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
+			Set(TokenKind.Variable, CompilerController.LoadLocal, null, Precedence.None);
+			Set(TokenKind.StringLiteral, CompilerController.Literal, null, Precedence.None);
+			Set(TokenKind.IntLiteral, CompilerController.Literal, null, Precedence.None);
+			Set(TokenKind.FloatLiteral, CompilerController.Literal, null, Precedence.None);
+			Set(TokenKind.Null, CompilerController.Literal, null, Precedence.None);
+			Set(TokenKind.False, CompilerController.Literal, null, Precedence.None);
+			Set(TokenKind.True, CompilerController.Literal, null, Precedence.None);
 		}
 
 		public Precedence GetPrecedence(TokenKind kind)

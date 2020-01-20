@@ -2,6 +2,18 @@ using System.Globalization;
 
 namespace Flow
 {
+	internal struct LocalVariable
+	{
+		public Slice slice;
+		public bool used;
+
+		public LocalVariable(Slice slice, bool used)
+		{
+			this.slice = slice;
+			this.used = used;
+		}
+	}
+
 	internal static class CompilerHelper
 	{
 		public static bool AreEqual(string source, Slice a, Slice b)
@@ -32,21 +44,21 @@ namespace Flow
 			return true;
 		}
 
-		public static string GetSlice(CompilerIO io, Slice slice)
+		public static string GetSlice(Compiler compiler, Slice slice)
 		{
-			return io.parser.tokenizer.source.Substring(slice.index, slice.length);
+			return compiler.parser.tokenizer.source.Substring(slice.index, slice.length);
 		}
 
-		public static int GetParsedInt(CompilerIO io)
+		public static int GetParsedInt(Compiler compiler)
 		{
-			var sub = GetSlice(io, io.parser.previousToken.slice);
+			var sub = GetSlice(compiler, compiler.parser.previousToken.slice);
 			int.TryParse(sub, out var value);
 			return value;
 		}
 
-		public static float GetParsedFloat(CompilerIO io)
+		public static float GetParsedFloat(Compiler compiler)
 		{
-			var sub = GetSlice(io, io.parser.previousToken.slice);
+			var sub = GetSlice(compiler, compiler.parser.previousToken.slice);
 			float.TryParse(
 				sub,
 				NumberStyles.Float,
@@ -55,13 +67,13 @@ namespace Flow
 			return value;
 		}
 
-		public static string GetParsedString(CompilerIO io)
+		public static string GetParsedString(Compiler compiler)
 		{
 			var slice = new Slice(
-				io.parser.previousToken.slice.index + 1,
-				io.parser.previousToken.slice.length - 2
+				compiler.parser.previousToken.slice.index + 1,
+				compiler.parser.previousToken.slice.length - 2
 			);
-			return GetSlice(io, slice);
+			return GetSlice(compiler, slice);
 		}
 	}
 }

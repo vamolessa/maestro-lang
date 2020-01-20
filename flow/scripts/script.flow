@@ -3,6 +3,7 @@
 #actor "thing" | other 54;
 #command | $var;
 
+34 | $arg;
 print command command $arg;
 
-[true, "a string", command "with arg"] | $my_var | print;
+[true, "a string", command "with arg"] | $arg | print;

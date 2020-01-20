@@ -1,255 +1,104 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("flow")]
-
 namespace Flow
 {
 	internal sealed class Compiler
 	{
-		public readonly CompilerIO io = new CompilerIO();
-		public Buffer<Source> compiledSources = new Buffer<Source>(1);
-
-		private readonly ParseRules parseRules = new ParseRules();
-
-		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Source source)
+		private readonly struct StateFrame
 		{
-			compiledSources.count = 0;
+			public readonly string sourceContent;
+			public readonly int sourceIndex;
 
-			io.Reset(chunk);
-			Compile(source);
-			return io.errors;
-		}
+			public readonly int tokenizerIndex;
+			public readonly Token previousToken;
+			public readonly Token currentToken;
 
-		private void Compile(Source source)
-		{
-			io.BeginSource(source.content, compiledSources.count);
-			compiledSources.PushBack(source);
-
-			io.EmitInstruction(Instruction.ClearVariables);
-
-			//var finishedModuleImports = false;
-			io.parser.Next();
-			while (!io.parser.Match(TokenKind.End))
-				Statement();
-
-			io.EndSource();
-		}
-
-		private void Syncronize()
-		{
-			if (!io.isInPanicMode)
-				return;
-
-			while (io.parser.currentToken.kind != TokenKind.End)
+			public StateFrame(string sourceContent, int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
 			{
-				if (io.parser.currentToken.kind != TokenKind.SemiColon)
-					io.parser.Next();
+				this.sourceContent = sourceContent;
+				this.sourceIndex = sourceIndex;
 
-				io.isInPanicMode = false;
-				break;
+				this.tokenizerIndex = tokenizerIndex;
+				this.previousToken = previousToken;
+				this.currentToken = currentToken;
 			}
 		}
 
-		private Slice ParseWithPrecedence(Precedence precedence)
+		public readonly Parser parser;
+		public ByteCodeChunk chunk;
+
+		public int sourceIndex;
+		public bool isInPanicMode;
+		public int expressionDepth;
+
+		public Buffer<CompileError> errors = new Buffer<CompileError>();
+
+		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
+
+		private Buffer<StateFrame> stateFrameStack = new Buffer<StateFrame>();
+
+		public Compiler()
 		{
-			var parser = io.parser;
-			parser.Next();
-			var slice = parser.previousToken.slice;
-			if (parser.previousToken.kind == TokenKind.End)
-				return slice;
-
-			var prefixRule = parseRules.GetPrefixRule(parser.previousToken.kind);
-			if (prefixRule == null)
+			void AddTokenizerError(Slice slice, IFormattedMessage error)
 			{
-				io.AddHardError(parser.previousToken.slice, new ExpectedExpression());
-				return slice;
-			}
-			prefixRule(this);
-
-			while (
-				parser.currentToken.kind != TokenKind.End &&
-				precedence <= parseRules.GetPrecedence(parser.currentToken.kind)
-			)
-			{
-				parser.Next();
-				var infixRule = parseRules.GetInfixRule(parser.previousToken.kind);
-				infixRule(this);
-				slice = Slice.FromTo(slice, parser.previousToken.slice);
+				AddHardError(slice, error);
 			}
 
-			slice = Slice.FromTo(slice, parser.previousToken.slice);
-			return slice;
+			parser = new Parser(AddTokenizerError);
 		}
 
-		private void Statement()
+		public void Reset(ByteCodeChunk chunk)
 		{
-			ExpressionStatement();
+			this.chunk = chunk;
+			errors.count = 0;
+			stateFrameStack.count = 0;
 		}
 
-		private void ExpressionStatement()
+		private void RestoreState(StateFrame state)
 		{
-			Expression();
-			io.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterStatement());
-			io.EmitInstruction(Instruction.Pop);
+			parser.tokenizer.Reset(state.sourceContent, state.tokenizerIndex);
+			parser.Reset(state.previousToken, state.currentToken);
+			sourceIndex = state.sourceIndex;
+
+			isInPanicMode = false;
+			expressionDepth = 0;
 		}
 
-		private Slice Expression()
+		public void BeginSource(string source, int sourceIndex)
 		{
-			return ParseWithPrecedence(Precedence.Pipe);
+			stateFrameStack.PushBack(new StateFrame(
+				parser.tokenizer.source,
+				this.sourceIndex,
+
+				parser.tokenizer.nextIndex,
+				parser.previousToken,
+				parser.currentToken
+			));
+
+			RestoreState(new StateFrame(
+				source,
+				sourceIndex,
+				0,
+				new Token(TokenKind.End, new Slice()),
+				new Token(TokenKind.End, new Slice())
+			));
 		}
 
-		private Slice Value()
+		public void EndSource()
 		{
-			return ParseWithPrecedence(Precedence.Primary);
+			RestoreState(stateFrameStack.PopLast());
 		}
 
-		internal static void Grouping(Compiler self)
+		public void AddSoftError(Slice slice, IFormattedMessage error)
 		{
-			self.Expression();
-			self.io.parser.Consume(TokenKind.CloseParenthesis, new ExpectedCloseParenthesisAfterExpression());
+			if (!isInPanicMode)
+				errors.PushBack(new CompileError(sourceIndex, slice, error));
 		}
 
-		internal static void ArrayExpression(Compiler self)
+		public void AddHardError(Slice slice, IFormattedMessage error)
 		{
-			var slice = self.io.parser.previousToken.slice;
-
-			var elementCount = 0;
-			while (!self.io.parser.Check(TokenKind.End))
+			if (!isInPanicMode)
 			{
-				self.Expression();
-				elementCount += 1;
-
-				if (!self.io.parser.Match(TokenKind.Comma))
-					break;
-			}
-
-			self.io.parser.Consume(TokenKind.CloseSquareBrackets, new ExpectedCloseSquareBracketsAfterArrayExpression());
-			slice = Slice.FromTo(slice, self.io.parser.previousToken.slice);
-
-			if (elementCount > byte.MaxValue)
-			{
-				self.io.AddSoftError(slice, new TooManyArrayElementsError());
-			}
-			else
-			{
-				self.io.EmitInstruction(Instruction.CreateArray);
-				self.io.EmitByte((byte)elementCount);
-			}
-		}
-
-		internal static void Pipe(Compiler self)
-		{
-			while (!self.io.parser.Check(TokenKind.End))
-			{
-				self.io.parser.Next();
-				switch (self.io.parser.previousToken.kind)
-				{
-				case TokenKind.Variable:
-					self.PipeVariable();
-					break;
-				case TokenKind.Identifier:
-					self.PipeCommand();
-					break;
-				default:
-					self.io.AddHardError(self.io.parser.previousToken.slice, new InvalidTokenAfterPipe());
-					return;
-				}
-
-				if (!self.io.parser.Match(TokenKind.Pipe))
-					break;
-			}
-		}
-
-		private bool IsLastPipeExpression()
-		{
-			return
-				io.parser.Check(TokenKind.End) ||
-				io.parser.Check(TokenKind.SemiColon) ||
-				io.parser.Check(TokenKind.Pipe) ||
-				io.parser.Check(TokenKind.CloseParenthesis) ||
-				io.parser.Check(TokenKind.CloseSquareBrackets) ||
-				io.parser.Check(TokenKind.Comma);
-		}
-
-		internal static void Command(Compiler self)
-		{
-			self.io.EmitInstruction(Instruction.LoadNull);
-			self.PipeCommand();
-		}
-
-		private void PipeCommand()
-		{
-			var commandSlice = io.parser.previousToken.slice;
-			var slice = commandSlice;
-
-			var argCount = 0;
-			while (!IsLastPipeExpression())
-			{
-				var valueSlice = Value();
-				slice = Slice.FromTo(slice, valueSlice);
-				argCount += 1;
-			}
-
-			var commandIndex = -1;
-			for (var i = 0; i < io.chunk.commands.count; i++)
-			{
-				var command = io.chunk.commands.buffer[i];
-				if (CompilerHelper.AreEqual(
-					io.parser.tokenizer.source,
-					commandSlice,
-					command.name
-				))
-				{
-					commandIndex = i;
-					break;
-				}
-			}
-
-			if (argCount > byte.MaxValue)
-				io.AddSoftError(slice, new TooManyCommandArgumentsError());
-			if (commandIndex < 0)
-				io.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(io, commandSlice) });
-			else
-				io.EmitRunCommandInstance(commandIndex, (byte)argCount);
-		}
-
-		private void PipeVariable()
-		{
-			var slice = io.parser.previousToken.slice;
-			var name = CompilerHelper.GetSlice(io, slice);
-			io.EmitVariableInstruction(Instruction.PipeVariable, name);
-		}
-
-		internal static void Variable(Compiler self)
-		{
-			var slice = self.io.parser.previousToken.slice;
-			var name = CompilerHelper.GetSlice(self.io, slice);
-			self.io.EmitVariableInstruction(Instruction.LoadVariable, name);
-		}
-
-		internal static void Literal(Compiler self)
-		{
-			switch (self.io.parser.previousToken.kind)
-			{
-			case TokenKind.Null:
-				self.io.EmitInstruction(Instruction.LoadNull);
-				break;
-			case TokenKind.False:
-				self.io.EmitInstruction(Instruction.LoadFalse);
-				break;
-			case TokenKind.True:
-				self.io.EmitInstruction(Instruction.LoadTrue);
-				break;
-			case TokenKind.IntLiteral:
-				self.io.EmitLoadLiteral(CompilerHelper.GetParsedInt(self.io));
-				break;
-			case TokenKind.FloatLiteral:
-				self.io.EmitLoadLiteral(CompilerHelper.GetParsedFloat(self.io));
-				break;
-			case TokenKind.StringLiteral:
-				self.io.EmitLoadLiteral(CompilerHelper.GetParsedString(self.io));
-				break;
-			default:
-				self.io.AddHardError(self.io.parser.previousToken.slice, new ExpectedLiteralError { got = self.io.parser.previousToken.kind });
-				break;
+				isInPanicMode = true;
+				errors.PushBack(new CompileError(sourceIndex, slice, error));
 			}
 		}
 	}

@@ -98,19 +98,17 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
-			case Instruction.ClearVariables:
-			case Instruction.Pop:
 			case Instruction.LoadNull:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 				return OneByteInstruction(instruction, index, sb);
+			case Instruction.Pop:
 			case Instruction.CreateArray:
+			case Instruction.AssignLocal:
+			case Instruction.LoadLocal:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.PipeVariable:
-			case Instruction.LoadVariable:
-				return VariableInstruction(self, instruction, index, sb);
 			case Instruction.RunCommandInstance:
 				return RunCommandInstanceInstruction(self, instruction, index, sb);
 			default:
@@ -147,21 +145,6 @@ namespace Flow
 			sb.Append(value.GetType().Name);
 			sb.Append("] ");
 			sb.Append(value);
-
-			return index + 3;
-		}
-
-		private static int VariableInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
-		{
-			var variableNameIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[index + 1],
-				chunk.bytes.buffer[index + 2]
-			);
-			var name = chunk.variableNames.buffer[variableNameIndex];
-
-			sb.Append(instruction.ToString());
-			sb.Append(' ');
-			sb.Append(name);
 
 			return index + 3;
 		}

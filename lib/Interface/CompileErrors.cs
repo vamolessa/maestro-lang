@@ -51,9 +51,31 @@ namespace Flow
 		public string Format() => $"Command '{name}' not registered";
 	}
 
+	internal struct CanOnlyAssignVariablesAtTopLevelExpressions : IFormattedMessage
+	{
+		public string Format() => "Can only assign variables at top level expressions";
+	}
+
+	internal struct TooManyLocalVariables : IFormattedMessage
+	{
+		public string Format() => $"Too many variables. Max is {byte.MaxValue}";
+	}
+
+	internal struct LocalVariableUnassigned : IFormattedMessage
+	{
+		public string name;
+		public string Format() => $"Use of unassigned '{name}' variable";
+	}
+
 	internal struct ExpectedLiteralError : IFormattedMessage
 	{
 		public TokenKind got;
 		public string Format() => $"Expected literal. Got {got}";
+	}
+
+	internal struct LocalVariableNotUsed : IFormattedMessage
+	{
+		public string name;
+		public string Format() => $"Variable '{name}' is never used";
 	}
 }

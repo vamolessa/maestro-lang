@@ -31,8 +31,8 @@ namespace Flow
 			chunk.RegisterCommand(new Command("command", null));
 			chunk.RegisterCommand(new Command("print", null));
 
-			var compiler = new Compiler();
-			var errors = compiler.CompileSource(chunk, source);
+			var controller = new CompilerController();
+			var errors = controller.CompileSource(chunk, source);
 
 			if (errors.count > 0)
 			{
