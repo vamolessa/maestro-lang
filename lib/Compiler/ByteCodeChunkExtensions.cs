@@ -144,9 +144,8 @@ namespace Flow
 			var value = chunk.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
-			sb.Append(value);
-			sb.Append(" #");
-			sb.Append(value.GetType().Name);
+			sb.Append(' ');
+			ValueHelper.ValueToString(value, sb);
 
 			return index + 3;
 		}

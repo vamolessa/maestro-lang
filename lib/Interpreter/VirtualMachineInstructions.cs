@@ -36,15 +36,12 @@ namespace Flow
 				case Instruction.CallNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var command = vm.chunk.commands.buffer[index];
+						var commandIndex = vm.chunk.commandInstances.buffer[index];
+						var command = vm.chunk.commands.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
 						stack.count -= command.parameterCount;
-						vm.stack = stack;
-
 						var result = instance.Invoke(stack.buffer[stack.count - 1]);
-
-						stack = vm.stack;
 						stack.buffer[stack.count - 1] = result;
 						break;
 					}
@@ -73,8 +70,9 @@ namespace Flow
 				case Instruction.CreateArray:
 					{
 						var array = new object[bytes[codeIndex++]];
+						stack.count -= array.Length;
 						for (var i = 0; i < array.Length; i++)
-							array[i] = stack.buffer[--stack.count];
+							array[i] = stack.buffer[stack.count + i];
 						stack.PushBackUnchecked(array);
 						break;
 					}

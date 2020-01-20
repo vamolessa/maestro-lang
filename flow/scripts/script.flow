@@ -2,4 +2,6 @@
 $var | print;
 
 
-#[true, "a string", command "with arg"] | $var;
+[true, "a string", command "with arg"] | $var;
+
+$var | command 2 | print;
