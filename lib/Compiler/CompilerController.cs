@@ -95,17 +95,19 @@ namespace Flow
 
 		private void ExpressionStatement()
 		{
-			Expression();
+			Expression(true);
+
 			compiler.parser.Consume(TokenKind.SemiColon, new ExpectedSemiColonAfterStatement());
 			compiler.EmitInstruction(Instruction.Pop);
 			compiler.EmitByte(1);
 		}
 
-		private Slice Expression()
+		private Slice Expression(bool canAssignToVariable)
 		{
-			compiler.expressionDepth += 1;
 			var slice = ParseWithPrecedence(Precedence.Pipe);
-			compiler.expressionDepth -= 1;
+			if (compiler.parser.Match(TokenKind.Pipe))
+				Pipe(canAssignToVariable);
+
 			return slice;
 		}
 
@@ -116,7 +118,7 @@ namespace Flow
 
 		internal static void Grouping(CompilerController self)
 		{
-			self.Expression();
+			self.Expression(false);
 			self.compiler.parser.Consume(TokenKind.CloseParenthesis, new ExpectedCloseParenthesisAfterExpression());
 		}
 
@@ -127,7 +129,7 @@ namespace Flow
 			var elementCount = 0;
 			while (!self.compiler.parser.Check(TokenKind.End))
 			{
-				self.Expression();
+				self.Expression(false);
 				elementCount += 1;
 
 				if (!self.compiler.parser.Match(TokenKind.Comma))
@@ -148,25 +150,25 @@ namespace Flow
 			}
 		}
 
-		internal static void Pipe(CompilerController self, Slice previousSlice)
+		private void Pipe(bool canAssignToVariable)
 		{
-			while (!self.compiler.parser.Check(TokenKind.End))
+			while (!compiler.parser.Check(TokenKind.End))
 			{
-				self.compiler.parser.Next();
-				switch (self.compiler.parser.previousToken.kind)
+				compiler.parser.Next();
+				switch (compiler.parser.previousToken.kind)
 				{
 				case TokenKind.Variable:
-					self.AssignLocal();
+					AssignLocal(canAssignToVariable);
 					return;
 				case TokenKind.Identifier:
-					self.PipeCommand();
+					PipeCommand();
 					break;
 				default:
-					self.compiler.AddHardError(self.compiler.parser.previousToken.slice, new InvalidTokenAfterPipe());
+					compiler.AddHardError(compiler.parser.previousToken.slice, new InvalidTokenAfterPipe());
 					return;
 				}
 
-				if (!self.compiler.parser.Match(TokenKind.Pipe))
+				if (!compiler.parser.Match(TokenKind.Pipe))
 					break;
 			}
 		}
@@ -216,19 +218,25 @@ namespace Flow
 				}
 			}
 
-			if (argCount > byte.MaxValue)
-				compiler.AddSoftError(slice, new TooManyCommandArgumentsError());
 			if (commandIndex < 0)
+			{
 				compiler.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(compiler, commandSlice) });
+			}
 			else
-				compiler.EmitRunCommandInstance(commandIndex, (byte)argCount);
+			{
+				var command = compiler.chunk.commands.buffer[commandIndex];
+				if (argCount != command.parameterCount)
+					compiler.AddSoftError(slice, new WrongNumberOfCommandArgumentsError { commandName = command.name, expected = command.parameterCount, got = argCount });
+				else
+					compiler.EmitRunCommandInstance(commandIndex);
+			}
 		}
 
-		private void AssignLocal()
+		private void AssignLocal(bool canAssign)
 		{
 			var slice = compiler.parser.previousToken.slice;
 
-			if (compiler.expressionDepth > 1)
+			if (!canAssign)
 			{
 				compiler.AddSoftError(slice, new CanOnlyAssignVariablesAtTopLevelExpressions());
 				return;

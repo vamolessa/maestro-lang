@@ -155,7 +155,6 @@ namespace Flow
 				chunk.bytes.buffer[index + 1],
 				chunk.bytes.buffer[index + 2]
 			);
-			var argCount = chunk.bytes.buffer[index + 3];
 
 			var commandIndex = chunk.commandInstances.buffer[instanceIndex];
 			var command = chunk.commands.buffer[commandIndex];
@@ -163,10 +162,8 @@ namespace Flow
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
 			sb.Append(command.name);
-			sb.Append(' ');
-			sb.Append(argCount);
 
-			return index + 4;
+			return index + 3;
 		}
 	}
 }

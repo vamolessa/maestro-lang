@@ -40,9 +40,12 @@ namespace Flow
 		public string Format() => "Expected variable or command after '|'";
 	}
 
-	internal struct TooManyCommandArgumentsError : IFormattedMessage
+	internal struct WrongNumberOfCommandArgumentsError : IFormattedMessage
 	{
-		public string Format() => $"Too many command arguments. Max is {byte.MaxValue}";
+		public string commandName;
+		public int expected;
+		public int got;
+		public string Format() => $"Wrong number of arguments for command '{commandName}'. Expected {expected}. Got {got}";
 	}
 
 	internal struct CommandNotRegisteredError : IFormattedMessage

@@ -26,13 +26,12 @@ namespace Flow
 			self.EmitUShort((ushort)index);
 		}
 
-		public static void EmitRunCommandInstance(this Compiler self, int commandIndex, byte argCount)
+		public static void EmitRunCommandInstance(this Compiler self, int commandIndex)
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
 			self.chunk.commandInstances.PushBack(commandIndex);
 			self.EmitInstruction(Instruction.RunCommandInstance);
 			self.EmitUShort((ushort)instanceIndex);
-			self.EmitByte(argCount);
 		}
 
 		/*

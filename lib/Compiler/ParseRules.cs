@@ -34,7 +34,7 @@ namespace Flow
 			// Set(TokenKind.GreaterEqual, null, Compiler.Binary, Precedence.Comparison);
 			// Set(TokenKind.Less, null, Compiler.Binary, Precedence.Comparison);
 			// Set(TokenKind.LessEqual, null, Compiler.Binary, Precedence.Comparison);
-			Set(TokenKind.Pipe, null, CompilerController.Pipe, Precedence.Pipe);
+			Set(TokenKind.Pipe, null, null, Precedence.None);
 			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
 			Set(TokenKind.Variable, CompilerController.LoadLocal, null, Precedence.None);
 			Set(TokenKind.StringLiteral, CompilerController.Literal, null, Precedence.None);

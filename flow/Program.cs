@@ -28,8 +28,8 @@ namespace Flow
 			var source = new Source(new Uri("script.flow"), content);
 
 			var chunk = new ByteCodeChunk();
-			chunk.RegisterCommand(new Command("command", null));
-			chunk.RegisterCommand(new Command("print", null));
+			chunk.RegisterCommand(new Command("command", 1, null));
+			chunk.RegisterCommand(new Command("print", 0, null));
 
 			var controller = new CompilerController();
 			var errors = controller.CompileSource(chunk, source);

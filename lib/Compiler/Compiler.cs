@@ -27,7 +27,6 @@ namespace Flow
 
 		public int sourceIndex;
 		public bool isInPanicMode;
-		public int expressionDepth;
 
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
@@ -59,7 +58,6 @@ namespace Flow
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
-			expressionDepth = 0;
 		}
 
 		public void BeginSource(string source, int sourceIndex)

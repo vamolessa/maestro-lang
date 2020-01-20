@@ -3,7 +3,8 @@
 #actor "thing" | other 54;
 #command | $var;
 
-34 | $arg;
-print command command $arg;
+#34 | $arg;
+#print command command $arg;
 
-[true, "a string", command "with arg"] | $arg | print;
+[true, "a string", command "with arg"] | $var;
+$var | print;
