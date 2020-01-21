@@ -26,7 +26,7 @@ namespace Flow
 	{
 		public ByteCodeChunk chunk;
 		public Buffer<CallFrame> callFrameStack = new Buffer<CallFrame>(4);
-		public Buffer<object> stack = new Buffer<object>(32);
+		public Buffer<Value> stack = new Buffer<Value>(32);
 		public Buffer<ICommand> commands = new Buffer<ICommand>(8);
 		public Buffer<string> localVariableNames = new Buffer<string>(8);
 
@@ -41,7 +41,7 @@ namespace Flow
 			for (var i = 0; i < chunk.commandInstances.count; i++)
 			{
 				var index = chunk.commandInstances.buffer[i];
-				var command = chunk.commands.buffer[index];
+				var command = chunk.commandDefinitions.buffer[index];
 				commands.PushBackUnchecked(command.factory());
 			}
 		}

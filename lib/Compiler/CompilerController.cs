@@ -37,9 +37,6 @@ namespace Flow
 				}
 			}
 
-			compiler.EmitInstruction(Instruction.ClearStack);
-			compiler.localVariables.count = 0;
-
 			compiler.EndSource();
 		}
 
@@ -204,9 +201,9 @@ namespace Flow
 			}
 
 			var commandIndex = -1;
-			for (var i = 0; i < compiler.chunk.commands.count; i++)
+			for (var i = 0; i < compiler.chunk.commandDefinitions.count; i++)
 			{
-				var command = compiler.chunk.commands.buffer[i];
+				var command = compiler.chunk.commandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(
 					compiler.parser.tokenizer.source,
 					commandSlice,
@@ -224,7 +221,7 @@ namespace Flow
 			}
 			else
 			{
-				var command = compiler.chunk.commands.buffer[commandIndex];
+				var command = compiler.chunk.commandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)
 					compiler.AddSoftError(slice, new WrongNumberOfCommandArgumentsError { commandName = command.name, expected = command.parameterCount, got = argCount });
 				else
@@ -291,13 +288,13 @@ namespace Flow
 				self.compiler.EmitInstruction(Instruction.LoadTrue);
 				break;
 			case TokenKind.IntLiteral:
-				self.compiler.EmitLoadLiteral(CompilerHelper.GetParsedInt(self.compiler));
+				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedInt(self.compiler)));
 				break;
 			case TokenKind.FloatLiteral:
-				self.compiler.EmitLoadLiteral(CompilerHelper.GetParsedFloat(self.compiler));
+				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedFloat(self.compiler)));
 				break;
 			case TokenKind.StringLiteral:
-				self.compiler.EmitLoadLiteral(CompilerHelper.GetParsedString(self.compiler));
+				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedString(self.compiler)));
 				break;
 			default:
 				self.compiler.AddHardError(self.compiler.parser.previousToken.slice, new ExpectedLiteralError { got = self.compiler.parser.previousToken.kind });

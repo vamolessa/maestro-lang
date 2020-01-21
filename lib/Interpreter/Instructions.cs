@@ -4,7 +4,6 @@ namespace Flow
 	{
 		Halt,
 		CallNativeCommand,
-		ClearStack,
 		Pop,
 		LoadNull,
 		LoadFalse,

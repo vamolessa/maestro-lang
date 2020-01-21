@@ -9,19 +9,19 @@ namespace Flow
 		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
 		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
-		public Buffer<Command> commands = new Buffer<Command>(16);
-		public Buffer<object> literals = new Buffer<object>(32);
+		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(16);
+		public Buffer<Value> literals = new Buffer<Value>(32);
 		public Buffer<int> commandInstances = new Buffer<int>(32);
 
-		public bool RegisterCommand(Command command)
+		public bool RegisterCommand(CommandDefinition command)
 		{
-			for (var i = 0; i < commands.count; i++)
+			for (var i = 0; i < commandDefinitions.count; i++)
 			{
-				if (command.name == commands.buffer[i].name)
+				if (command.name == commandDefinitions.buffer[i].name)
 					return false;
 			}
 
-			commands.PushBack(command);
+			commandDefinitions.PushBack(command);
 			return true;
 		}
 
@@ -31,11 +31,11 @@ namespace Flow
 			sourceSlices.PushBack(slice);
 		}
 
-		public int AddLiteral(object value)
+		public int AddLiteral(Value value)
 		{
 			for (var i = 0; i < literals.count; i++)
 			{
-				if (value.Equals(literals.buffer[i]))
+				if (value.IsEqualTo(literals.buffer[i]))
 					return i;
 			}
 

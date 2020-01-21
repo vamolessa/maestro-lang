@@ -10,7 +10,7 @@ namespace Flow
 			for (var i = 0; i < vm.stack.count; i++)
 			{
 				sb.Append('(');
-				ValueHelper.ValueToString(vm.stack.buffer[i], sb);
+				vm.stack.buffer[i].AppendTo(sb);
 				sb.Append(") ");
 			}
 

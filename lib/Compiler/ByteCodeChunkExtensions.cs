@@ -98,7 +98,6 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
-			case Instruction.ClearStack:
 			case Instruction.Pop:
 			case Instruction.LoadNull:
 			case Instruction.LoadFalse:
@@ -145,7 +144,7 @@ namespace Flow
 
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
-			ValueHelper.ValueToString(value, sb);
+			value.AppendTo(sb);
 
 			return index + 3;
 		}
@@ -160,7 +159,7 @@ namespace Flow
 
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
-			sb.Append(name);
+			name.AppendTo(sb);
 
 			return index + 3;
 		}
@@ -173,7 +172,7 @@ namespace Flow
 			);
 
 			var commandIndex = chunk.commandInstances.buffer[instanceIndex];
-			var command = chunk.commands.buffer[commandIndex];
+			var command = chunk.commandDefinitions.buffer[commandIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(' ');

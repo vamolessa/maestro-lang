@@ -31,16 +31,28 @@ namespace Flow
 				this.name = name;
 			}
 
-			public object Invoke(object input, object[] args)
+			public Value Invoke(Value input, Value[] args)
 			{
-				var inputText = input != null ? input.ToString() : "null";
-				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {inputText}");
-				return name;
+				var sb = new StringBuilder();
+				input.AppendTo(sb);
+				var inputText = sb.ToString();
+
+				sb.Clear();
+				foreach (var a in args)
+				{
+					a.AppendTo(sb);
+					sb.Append(", ");
+				}
+				var argsText = sb.ToString();
+
+				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {inputText} AND ARGS {argsText}");
+
+				return new Value(name);
 			}
 
-			public static Command New(string name, byte paramCount)
+			public static CommandDefinition New(string name, byte paramCount)
 			{
-				return new Command(name, paramCount, () => new MyCommand(name));
+				return new CommandDefinition(name, paramCount, () => new MyCommand(name));
 			}
 		}
 

@@ -5,7 +5,7 @@ namespace Flow
 		public static int AddLocalVariable(this Compiler self, Slice slice, bool used)
 		{
 			var name = CompilerHelper.GetSlice(self, slice);
-			var nameLiteralIndex = self.chunk.AddLiteral(name);
+			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
 			self.EmitInstruction(Instruction.AddLocalName);
 			self.EmitUShort((ushort)nameLiteralIndex);
 

@@ -19,7 +19,7 @@ namespace Flow
 			self.EmitByte((byte)instruction);
 		}
 
-		public static void EmitLoadLiteral(this Compiler self, object value)
+		public static void EmitLoadLiteral(this Compiler self, Value value)
 		{
 			var index = self.chunk.AddLiteral(value);
 			self.EmitInstruction(Instruction.LoadLiteral);

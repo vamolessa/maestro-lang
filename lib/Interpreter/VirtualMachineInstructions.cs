@@ -37,10 +37,10 @@ namespace Flow
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						var commandIndex = vm.chunk.commandInstances.buffer[index];
-						var command = vm.chunk.commands.buffer[commandIndex];
+						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
-						var args = new object[command.parameterCount];
+						var args = new Value[command.parameterCount];
 						stack.count -= args.Length;
 						for (var i = 0; i < args.Length; i++)
 							args[i] = stack.buffer[stack.count + i];
@@ -49,21 +49,17 @@ namespace Flow
 						stack.buffer[stack.count - 1] = result;
 						break;
 					}
-				case Instruction.ClearStack:
-					stack.count = 0;
-					vm.localVariableNames.count = 0;
-					break;
 				case Instruction.Pop:
 					--stack.count;
 					break;
 				case Instruction.LoadNull:
-					stack.PushBackUnchecked(null);
+					stack.PushBackUnchecked(new Value(null));
 					break;
 				case Instruction.LoadFalse:
-					stack.PushBackUnchecked(false);
+					stack.PushBackUnchecked(new Value(ValueKind.False));
 					break;
 				case Instruction.LoadTrue:
-					stack.PushBackUnchecked(true);
+					stack.PushBackUnchecked(new Value(ValueKind.True));
 					break;
 				case Instruction.LoadLiteral:
 					{
@@ -73,17 +69,17 @@ namespace Flow
 					}
 				case Instruction.CreateArray:
 					{
-						var array = new object[bytes[codeIndex++]];
+						var array = new Value[bytes[codeIndex++]];
 						stack.count -= array.Length;
 						for (var i = 0; i < array.Length; i++)
 							array[i] = stack.buffer[stack.count + i];
-						stack.PushBackUnchecked(array);
+						stack.PushBackUnchecked(new Value(array));
 						break;
 					}
 				case Instruction.AddLocalName:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						vm.localVariableNames.PushBackUnchecked(vm.chunk.literals.buffer[index] as string);
+						vm.localVariableNames.PushBackUnchecked(vm.chunk.literals.buffer[index].asObject as string);
 						break;
 					}
 				case Instruction.AssignLocal:
