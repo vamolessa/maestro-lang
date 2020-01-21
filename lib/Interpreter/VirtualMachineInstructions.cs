@@ -53,7 +53,7 @@ namespace Flow
 					--stack.count;
 					break;
 				case Instruction.LoadNull:
-					stack.PushBackUnchecked(new Value(null));
+					stack.PushBackUnchecked(new Value(ValueKind.Null));
 					break;
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.False));

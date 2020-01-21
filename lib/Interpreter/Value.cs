@@ -6,11 +6,12 @@ namespace Flow
 {
 	public enum ValueKind
 	{
-		Object,
+		Null,
 		False,
 		True,
 		Int,
 		Float,
+		Object,
 		Array,
 	}
 
@@ -64,14 +65,14 @@ namespace Flow
 
 		public Value(object value)
 		{
-			this.kind = ValueKind.Object;
+			this.kind = value != null ? ValueKind.Object : ValueKind.Null;
 			this.asNumber = default;
 			this.asObject = value;
 		}
 
 		public Value(Value[] value)
 		{
-			this.kind = value != null ? ValueKind.Array : ValueKind.Object;
+			this.kind = value != null ? ValueKind.Array : ValueKind.Null;
 			this.asNumber = default;
 			this.asObject = value;
 		}
@@ -83,12 +84,10 @@ namespace Flow
 		{
 			return self.kind switch
 			{
-				ValueKind.False => false,
-				ValueKind.True => true,
+				ValueKind.Null | ValueKind.False => false,
+				ValueKind.True | ValueKind.Object | ValueKind.Array => true,
 				ValueKind.Int => self.asNumber.asInt != 0,
 				ValueKind.Float => self.asNumber.asFloat != 0.0f,
-				ValueKind.Object => self.asObject != null,
-				ValueKind.Array => true,
 				_ => false,
 			};
 		}
@@ -100,6 +99,7 @@ namespace Flow
 
 			switch (self.kind)
 			{
+			case ValueKind.Null:
 			case ValueKind.False:
 			case ValueKind.True:
 				return true;
@@ -108,8 +108,6 @@ namespace Flow
 			case ValueKind.Float:
 				return self.asNumber.asFloat == other.asNumber.asFloat;
 			case ValueKind.Object:
-				if (self.asObject == null)
-					return other.asObject == null;
 				return self.asObject.Equals(other.asObject);
 			case ValueKind.Array:
 				{
@@ -135,6 +133,9 @@ namespace Flow
 		{
 			switch (self.kind)
 			{
+			case ValueKind.Null:
+				sb.Append("null");
+				break;
 			case ValueKind.False:
 				sb.Append("false");
 				break;
@@ -148,9 +149,7 @@ namespace Flow
 				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", self.asNumber.asFloat);
 				break;
 			case ValueKind.Object:
-				if (self.asObject is null)
-					sb.Append("null");
-				else if (self.asObject is string s)
+				if (self.asObject is string s)
 					sb.Append('"').Append(s).Append('"');
 				else
 					sb.Append(self.asObject);
