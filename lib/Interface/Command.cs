@@ -2,7 +2,7 @@ namespace Flow
 {
 	public interface ICommand
 	{
-		object Invoke(object input);
+		object Invoke(object input, object[] args);
 	}
 
 	public readonly struct Command

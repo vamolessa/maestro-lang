@@ -31,7 +31,7 @@ namespace Flow
 				this.name = name;
 			}
 
-			public object Invoke(object input)
+			public object Invoke(object input, object[] args)
 			{
 				var inputText = input != null ? input.ToString() : "null";
 				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {inputText}");

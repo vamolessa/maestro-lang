@@ -40,8 +40,12 @@ namespace Flow
 						var command = vm.chunk.commands.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
-						stack.count -= command.parameterCount;
-						var result = instance.Invoke(stack.buffer[stack.count - 1]);
+						var args = new object[command.parameterCount];
+						stack.count -= args.Length;
+						for (var i = 0; i < args.Length; i++)
+							args[i] = stack.buffer[stack.count + i];
+
+						var result = instance.Invoke(stack.buffer[stack.count - 1], args);
 						stack.buffer[stack.count - 1] = result;
 						break;
 					}
