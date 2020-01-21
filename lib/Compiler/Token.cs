@@ -6,9 +6,12 @@ namespace Flow
 		SemiColon, Pipe, Comma,
 		OpenParenthesis, CloseParenthesis,
 		OpenSquareBrackets, CloseSquareBrackets,
+		OpenCurlyBrackets, CloseCurlyBrackets,
 
 		IntLiteral, FloatLiteral, StringLiteral, Null, True, False,
 		Identifier, Variable,
+
+		If, Else,
 
 		COUNT,
 		End,

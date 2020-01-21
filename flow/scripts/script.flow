@@ -1,7 +1,10 @@
-34 | $var;
-$var | print;
+11 | $var;
 
-
-[true, "a string", command "with arg"] | $var;
-
-$var | command 2 | print;
+if $var {
+	"hello" | print;
+	"new var" | $new-var;
+	$new-var | command 0;
+	"new var 2" | $_new-var-2;
+} else {
+	"world" | command command [false, "asdasd"];
+}

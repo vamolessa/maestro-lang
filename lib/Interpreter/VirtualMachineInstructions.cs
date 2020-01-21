@@ -94,6 +94,26 @@ namespace Flow
 						stack.PushBackUnchecked(stack.buffer[index]);
 						break;
 					}
+				case Instruction.RemoveLocals:
+					{
+						var count = bytes[codeIndex++];
+						vm.localVariableNames.count -= count;
+						stack.count -= count;
+						break;
+					}
+				case Instruction.JumpForward:
+					{
+						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						codeIndex += offset;
+						break;
+					}
+				case Instruction.PopAndJumpForwardIfFalse:
+					{
+						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						if (!stack.buffer[--stack.count].IsTruthy())
+							codeIndex += offset;
+						break;
+					}
 				default:
 					goto case Instruction.Halt;
 				}

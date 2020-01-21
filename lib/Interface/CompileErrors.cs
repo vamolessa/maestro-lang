@@ -10,14 +10,24 @@ namespace Flow
 		public string Format() => "Invalid char";
 	}
 
-	internal struct ExpectedExpression : IFormattedMessage
+	internal struct TooMuchCodeToJumpOverError : IFormattedMessage
+	{
+		public string Format() => "Too much code to jump over";
+	}
+
+	internal struct ExpectedExpressionError : IFormattedMessage
 	{
 		public string Format() => "Expected expression";
 	}
 
-	internal struct ExpectedSemiColonAfterStatement : IFormattedMessage
+	internal struct ExpectedSemiColonAfterStatementError : IFormattedMessage
 	{
-		public string Format() => "Expected ';' after statement";
+		public string Format() => "Expected ';' after statement expression";
+	}
+
+	internal struct ExpectedCloseCurlyBracketsAfterBlockError : IFormattedMessage
+	{
+		public string Format() => "Expected '}' after block";
 	}
 
 	internal struct ExpectedCloseParenthesisAfterExpression : IFormattedMessage
@@ -25,7 +35,7 @@ namespace Flow
 		public string Format() => "Expected ')' after expression";
 	}
 
-	internal struct ExpectedCloseSquareBracketsAfterArrayExpression : IFormattedMessage
+	internal struct ExpectedCloseSquareBracketsAfterArrayExpressionError : IFormattedMessage
 	{
 		public string Format() => "Expected ']' after array expression";
 	}
@@ -35,9 +45,19 @@ namespace Flow
 		public string Format() => $"Too many array elements. Max is {byte.MaxValue}";
 	}
 
-	internal struct InvalidTokenAfterPipe : IFormattedMessage
+	internal struct InvalidTokenAfterPipeError : IFormattedMessage
 	{
 		public string Format() => "Expected variable or command after '|'";
+	}
+
+	internal struct ExpectedOpenCurlyBracesAfterIfConditionError : IFormattedMessage
+	{
+		public string Format() => "Expected '{' after if condition";
+	}
+
+	internal struct ExpectedOpenCurlyBracesAfterElseError : IFormattedMessage
+	{
+		public string Format() => "Expected '{' after else";
 	}
 
 	internal struct WrongNumberOfCommandArgumentsError : IFormattedMessage
@@ -54,17 +74,17 @@ namespace Flow
 		public string Format() => $"Command '{name}' not registered";
 	}
 
-	internal struct CanOnlyAssignVariablesAtTopLevelExpressions : IFormattedMessage
+	internal struct CanOnlyAssignVariablesAtTopLevelExpressionsError : IFormattedMessage
 	{
 		public string Format() => "Can only assign variables at top level expressions";
 	}
 
-	internal struct TooManyLocalVariables : IFormattedMessage
+	internal struct TooManyLocalVariablesError : IFormattedMessage
 	{
 		public string Format() => $"Too many variables. Max is {byte.MaxValue}";
 	}
 
-	internal struct LocalVariableUnassigned : IFormattedMessage
+	internal struct LocalVariableUnassignedError : IFormattedMessage
 	{
 		public string name;
 		public string Format() => $"Use of unassigned '{name}' variable";
@@ -76,7 +96,7 @@ namespace Flow
 		public string Format() => $"Expected literal. Got {got}";
 	}
 
-	internal struct LocalVariableNotUsed : IFormattedMessage
+	internal struct LocalVariableNotUsedError : IFormattedMessage
 	{
 		public string name;
 		public string Format() => $"Variable '{name}' is never used";

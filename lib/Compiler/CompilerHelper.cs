@@ -14,6 +14,16 @@ namespace Flow
 		}
 	}
 
+	internal readonly struct Scope
+	{
+		public readonly int localVariablesStartIndex;
+
+		public Scope(int localVarStartIndex)
+		{
+			this.localVariablesStartIndex = localVarStartIndex;
+		}
+	}
+
 	internal static class CompilerHelper
 	{
 		public static bool AreEqual(string source, Slice a, Slice b)

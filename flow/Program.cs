@@ -38,11 +38,7 @@ namespace Flow
 				var inputText = sb.ToString();
 
 				sb.Clear();
-				foreach (var a in args)
-				{
-					a.AppendTo(sb);
-					sb.Append(", ");
-				}
+				new Value(args).AppendTo(sb);
 				var argsText = sb.ToString();
 
 				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {inputText} AND ARGS {argsText}");

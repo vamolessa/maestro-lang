@@ -31,6 +31,7 @@ namespace Flow
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
 		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
+		public int scopeDepth;
 
 		private Buffer<StateFrame> stateFrameStack = new Buffer<StateFrame>();
 
@@ -58,6 +59,9 @@ namespace Flow
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
+
+			localVariables.count = 0;
+			scopeDepth = 0;
 		}
 
 		public void BeginSource(string source, int sourceIndex)
@@ -82,7 +86,9 @@ namespace Flow
 
 		public void EndSource()
 		{
-			RestoreState(stateFrameStack.PopLast());
+			var current = stateFrameStack.PopLast();
+			this.EndScope(new Scope(0));
+			RestoreState(current);
 		}
 
 		public void AddSoftError(Slice slice, IFormattedMessage error)

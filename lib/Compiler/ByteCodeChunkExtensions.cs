@@ -106,6 +106,7 @@ namespace Flow
 			case Instruction.CreateArray:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
+			case Instruction.RemoveLocals:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
@@ -113,6 +114,9 @@ namespace Flow
 				return AddLocalNameInstruction(self, instruction, index, sb);
 			case Instruction.CallNativeCommand:
 				return CallCommandInstruction(self, instruction, index, sb);
+			case Instruction.JumpForward:
+			case Instruction.PopAndJumpForwardIfFalse:
+				return JumpInstruction(self, instruction, 1, index, sb);
 			default:
 				sb.Append("Unknown instruction ");
 				sb.Append(instruction.ToString());
@@ -178,6 +182,21 @@ namespace Flow
 			sb.Append(' ');
 			sb.Append(command.name);
 
+			return index + 3;
+		}
+
+		private static int JumpInstruction(ByteCodeChunk chunk, Instruction instruction, int direction, int index, StringBuilder sb)
+		{
+			sb.Append(instruction.ToString());
+			sb.Append(' ');
+			var offset = BytesHelper.BytesToUShort(
+				chunk.bytes.buffer[index + 1],
+				chunk.bytes.buffer[index + 2]
+			);
+			sb.Append(offset);
+			sb.Append(" (goto ");
+			sb.Append(index + 3 + offset * direction);
+			sb.Append(")");
 			return index + 3;
 		}
 	}

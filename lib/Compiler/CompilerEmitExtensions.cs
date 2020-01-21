@@ -34,38 +34,25 @@ namespace Flow
 			self.EmitUShort((ushort)instanceIndex);
 		}
 
-		/*
-		public static void EmitSetLocal(this CompilerIO self, int stackIndex, ValueType type)
+		public static int BeginEmitForwardJump(this Compiler self, Instruction instruction)
 		{
-			var typeSize = type.GetSize(self.chunk);
-			if (typeSize > 1)
-			{
-				self.EmitInstruction(Instruction.SetLocalMultiple);
-				self.EmitByte((byte)stackIndex);
-				self.EmitByte(typeSize);
-			}
-			else
-			{
-				self.EmitInstruction(Instruction.SetLocal);
-				self.EmitByte((byte)stackIndex);
-			}
+			self.EmitInstruction(instruction);
+			self.EmitUShort(0);
+
+			return self.chunk.bytes.count - 2;
 		}
 
-		public static void EmitLoadLocal(this CompilerIO self, int stackIndex, ValueType type)
+		public static void EndEmitForwardJump(this Compiler self, int jumpIndex)
 		{
-			var typeSize = type.GetSize(self.chunk);
-			if (typeSize > 1)
-			{
-				self.EmitInstruction(Instruction.LoadLocalMultiple);
-				self.EmitByte((byte)stackIndex);
-				self.EmitByte(typeSize);
-			}
-			else
-			{
-				self.EmitInstruction(Instruction.LoadLocal);
-				self.EmitByte((byte)stackIndex);
-			}
+			var offset = self.chunk.bytes.count - jumpIndex - 2;
+			if (offset > ushort.MaxValue)
+				self.AddSoftError(self.parser.previousToken.slice, new TooMuchCodeToJumpOverError());
+
+			BytesHelper.UShortToBytes(
+				(ushort)offset,
+				out self.chunk.bytes.buffer[jumpIndex],
+				out self.chunk.bytes.buffer[jumpIndex + 1]
+			);
 		}
-		*/
 	}
 }

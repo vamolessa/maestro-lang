@@ -79,6 +79,20 @@ namespace Flow
 
 	internal static class ValueExtensions
 	{
+		public static bool IsTruthy(this Value self)
+		{
+			return self.kind switch
+			{
+				ValueKind.False => false,
+				ValueKind.True => true,
+				ValueKind.Int => self.asNumber.asInt != 0,
+				ValueKind.Float => self.asNumber.asFloat != 0.0f,
+				ValueKind.Object => self.asObject != null,
+				ValueKind.Array => true,
+				_ => false,
+			};
+		}
+
 		public static bool IsEqualTo(this Value self, Value other)
 		{
 			if (self.kind != other.kind)
@@ -129,6 +143,9 @@ namespace Flow
 				break;
 			case ValueKind.Int:
 				sb.Append(self.asNumber.asInt);
+				break;
+			case ValueKind.Float:
+				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", self.asNumber.asFloat);
 				break;
 			case ValueKind.Object:
 				if (self.asObject is null)

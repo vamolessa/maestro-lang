@@ -13,5 +13,8 @@ namespace Flow
 		AddLocalName,
 		AssignLocal,
 		LoadLocal,
+		RemoveLocals,
+		JumpForward,
+		PopAndJumpForwardIfFalse,
 	}
 }

@@ -11,6 +11,8 @@ namespace Flow
 			new ExactScanner(")").ForToken(TokenKind.CloseParenthesis),
 			new ExactScanner("[").ForToken(TokenKind.OpenSquareBrackets),
 			new ExactScanner("]").ForToken(TokenKind.CloseSquareBrackets),
+			new ExactScanner("{").ForToken(TokenKind.OpenCurlyBrackets),
+			new ExactScanner("}").ForToken(TokenKind.CloseCurlyBrackets),
 
 			new RealNumberScanner().ForToken(TokenKind.FloatLiteral),
 			new IntegerNumberScanner().ForToken(TokenKind.IntLiteral),
@@ -18,6 +20,9 @@ namespace Flow
 			new ExactScanner("null").ForToken(TokenKind.Null),
 			new ExactScanner("false").ForToken(TokenKind.False),
 			new ExactScanner("true").ForToken(TokenKind.True),
+
+			new ExactScanner("if").ForToken(TokenKind.If),
+			new ExactScanner("else").ForToken(TokenKind.Else),
 
 			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
