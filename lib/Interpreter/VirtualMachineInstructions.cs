@@ -40,17 +40,22 @@ namespace Flow
 						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
-						var args = new Value[command.parameterCount];
+						var args = vm.CreateArray(command.parameterCount);
 						stack.count -= args.Length;
 						for (var i = 0; i < args.Length; i++)
 							args[i] = stack.buffer[stack.count + i];
 
 						var result = instance.Invoke(stack.buffer[stack.count - 1], args);
+						result = VirtualMachineHelper.DeepCopy(vm, result);
+
+						for (var i = 0; i < args.Length; i++)
+							VirtualMachineHelper.Collect(vm, ref stack.buffer[stack.count + i]);
+
 						stack.buffer[stack.count - 1] = result;
 						break;
 					}
 				case Instruction.Pop:
-					--stack.count;
+					VirtualMachineHelper.Collect(vm, ref stack.buffer[--stack.count]);
 					break;
 				case Instruction.LoadNull:
 					stack.PushBackUnchecked(new Value(ValueKind.Null));
@@ -69,7 +74,7 @@ namespace Flow
 					}
 				case Instruction.CreateArray:
 					{
-						var array = new Value[bytes[codeIndex++]];
+						var array = vm.arrayPool.Request(bytes[codeIndex++]);
 						stack.count -= array.Length;
 						for (var i = 0; i < array.Length; i++)
 							array[i] = stack.buffer[stack.count + i];
@@ -94,11 +99,14 @@ namespace Flow
 						stack.PushBackUnchecked(stack.buffer[index]);
 						break;
 					}
-				case Instruction.RemoveLocals:
+				case Instruction.PopLocals:
 					{
 						var count = bytes[codeIndex++];
 						vm.localVariableNames.count -= count;
 						stack.count -= count;
+
+						for (var i = 0; i < count; i++)
+							VirtualMachineHelper.Collect(vm, ref stack.buffer[stack.count + i]);
 						break;
 					}
 				case Instruction.JumpForward:
@@ -110,8 +118,10 @@ namespace Flow
 				case Instruction.PopAndJumpForwardIfFalse:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						if (!stack.buffer[--stack.count].IsTruthy())
+						ref var value = ref stack.buffer[--stack.count];
+						if (!value.IsTruthy())
 							codeIndex += offset;
+						VirtualMachineHelper.Collect(vm, ref value);
 						break;
 					}
 				default:

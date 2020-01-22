@@ -33,22 +33,22 @@ namespace Flow
 
 			public Value Invoke(Value input, Value[] args)
 			{
-				var sb = new StringBuilder();
-				input.AppendTo(sb);
-				var inputText = sb.ToString();
-
-				sb.Clear();
-				new Value(args).AppendTo(sb);
-				var argsText = sb.ToString();
-
-				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {inputText} AND ARGS {argsText}");
-
+				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {input} AND ARGS {new Value(args)}");
 				return new Value(name);
 			}
 
 			public static CommandDefinition New(string name, byte paramCount)
 			{
 				return new CommandDefinition(name, paramCount, () => new MyCommand(name));
+			}
+		}
+
+		public sealed class BypassCommand : ICommand
+		{
+			public Value Invoke(Value input, Value[] args)
+			{
+				System.Console.WriteLine($"BYPASS {input}");
+				return input;
 			}
 		}
 
@@ -60,6 +60,7 @@ namespace Flow
 			var chunk = new ByteCodeChunk();
 			chunk.RegisterCommand(MyCommand.New("command", 1));
 			chunk.RegisterCommand(MyCommand.New("print", 0));
+			chunk.RegisterCommand(new CommandDefinition("bypass", 0, () => new BypassCommand()));
 
 			var controller = new CompilerController();
 			var errors = controller.CompileSource(chunk, source);

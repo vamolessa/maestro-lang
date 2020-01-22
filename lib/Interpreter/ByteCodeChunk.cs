@@ -10,8 +10,8 @@ namespace Flow
 		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(16);
-		public Buffer<Value> literals = new Buffer<Value>(32);
 		public Buffer<int> commandInstances = new Buffer<int>(32);
+		public Buffer<Value> literals = new Buffer<Value>(32);
 
 		public bool RegisterCommand(CommandDefinition command)
 		{

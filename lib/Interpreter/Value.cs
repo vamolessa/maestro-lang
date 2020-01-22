@@ -76,6 +76,13 @@ namespace Flow
 			this.asNumber = default;
 			this.asObject = value;
 		}
+
+		public override string ToString()
+		{
+			var sb = new StringBuilder();
+			this.AppendTo(sb);
+			return sb.ToString();
+		}
 	}
 
 	internal static class ValueExtensions

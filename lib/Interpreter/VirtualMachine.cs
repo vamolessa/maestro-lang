@@ -24,11 +24,12 @@ namespace Flow
 
 	public sealed class VirtualMachine
 	{
-		public ByteCodeChunk chunk;
-		public Buffer<CallFrame> callFrameStack = new Buffer<CallFrame>(4);
-		public Buffer<Value> stack = new Buffer<Value>(32);
-		public Buffer<ICommand> commands = new Buffer<ICommand>(8);
-		public Buffer<string> localVariableNames = new Buffer<string>(8);
+		internal ByteCodeChunk chunk;
+		internal Buffer<CallFrame> callFrameStack = new Buffer<CallFrame>(4);
+		internal Buffer<Value> stack = new Buffer<Value>(32);
+		internal Buffer<ICommand> commands = new Buffer<ICommand>(8);
+		internal Buffer<string> localVariableNames = new Buffer<string>(8);
+		internal ArrayPool<Value> arrayPool = new ArrayPool<Value>();
 
 		internal Option<RuntimeError> error;
 

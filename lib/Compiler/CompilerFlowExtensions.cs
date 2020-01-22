@@ -25,7 +25,7 @@ namespace Flow
 
 			if (localCount > 0)
 			{
-				self.EmitInstruction(Instruction.RemoveLocals);
+				self.EmitInstruction(Instruction.PopLocals);
 				self.EmitByte((byte)localCount);
 			}
 

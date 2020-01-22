@@ -106,7 +106,7 @@ namespace Flow
 			case Instruction.CreateArray:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
-			case Instruction.RemoveLocals:
+			case Instruction.PopLocals:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
