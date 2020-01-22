@@ -46,20 +46,20 @@ namespace Flow
 			}
 		}
 
-		private Slice ParseWithPrecedence(Precedence precedence)
+		private bool TryParseWithPrecedence(Precedence precedence, out Slice slice)
 		{
 			var parser = compiler.parser;
-			parser.Next();
-			var slice = parser.previousToken.slice;
-			if (parser.previousToken.kind == TokenKind.End)
-				return slice;
-
-			var prefixRule = parseRules.GetPrefixRule(parser.previousToken.kind);
-			if (prefixRule == null)
+			slice = parser.currentToken.slice;
+			if (parser.currentToken.kind == TokenKind.End)
 			{
-				compiler.AddHardError(parser.previousToken.slice, new ExpectedExpressionError());
-				return slice;
+				parser.Next();
+				return true;
 			}
+
+			var prefixRule = parseRules.GetPrefixRule(parser.currentToken.kind);
+			if (prefixRule == null)
+				return false;
+			parser.Next();
 			prefixRule(this);
 
 			while (
@@ -74,7 +74,7 @@ namespace Flow
 			}
 
 			slice = Slice.FromTo(slice, parser.previousToken.slice);
-			return slice;
+			return true;
 		}
 
 		private void Statement()
@@ -97,7 +97,9 @@ namespace Flow
 
 		private Slice Expression(bool canAssignToVariable)
 		{
-			var slice = ParseWithPrecedence(Precedence.Pipe);
+			if (!TryParseWithPrecedence(Precedence.Pipe, out var slice))
+				compiler.AddHardError(compiler.parser.previousToken.slice, new ExpectedExpressionError());
+
 			if (compiler.parser.Match(TokenKind.Pipe))
 			{
 				var pipeSlice = Pipe(canAssignToVariable);
@@ -107,9 +109,9 @@ namespace Flow
 			return slice;
 		}
 
-		private Slice Value()
+		private bool TryValue(out Slice slice)
 		{
-			return ParseWithPrecedence(Precedence.Primary);
+			return TryParseWithPrecedence(Precedence.Primary, out slice);
 		}
 
 		private void IfStatement()
@@ -221,18 +223,6 @@ namespace Flow
 			return slice;
 		}
 
-		private bool IsLastPipeExpression()
-		{
-			return
-				compiler.parser.Check(TokenKind.End) ||
-				compiler.parser.Check(TokenKind.SemiColon) ||
-				compiler.parser.Check(TokenKind.Pipe) ||
-				compiler.parser.Check(TokenKind.CloseParenthesis) ||
-				compiler.parser.Check(TokenKind.CloseSquareBrackets) ||
-				compiler.parser.Check(TokenKind.CloseCurlyBrackets) ||
-				compiler.parser.Check(TokenKind.Comma);
-		}
-
 		internal static void Command(CompilerController self)
 		{
 			self.compiler.EmitInstruction(Instruction.LoadNull);
@@ -245,9 +235,8 @@ namespace Flow
 			var slice = commandSlice;
 
 			var argCount = 0;
-			while (!IsLastPipeExpression())
+			while (TryValue(out var valueSlice))
 			{
-				var valueSlice = Value();
 				slice = Slice.FromTo(slice, valueSlice);
 				argCount += 1;
 			}

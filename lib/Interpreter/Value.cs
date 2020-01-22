@@ -89,14 +89,22 @@ namespace Flow
 	{
 		public static bool IsTruthy(this Value self)
 		{
-			return self.kind switch
+			switch (self.kind)
 			{
-				ValueKind.Null | ValueKind.False => false,
-				ValueKind.True | ValueKind.Object | ValueKind.Array => true,
-				ValueKind.Int => self.asNumber.asInt != 0,
-				ValueKind.Float => self.asNumber.asFloat != 0.0f,
-				_ => false,
-			};
+			case ValueKind.Null:
+			case ValueKind.False:
+				return false;
+			case ValueKind.True:
+			case ValueKind.Object:
+			case ValueKind.Array:
+				return true;
+			case ValueKind.Int:
+				return self.asNumber.asInt != 0;
+			case ValueKind.Float:
+				return self.asNumber.asFloat != 0.0f;
+			default:
+				return false;
+			}
 		}
 
 		public static bool IsEqualTo(this Value self, Value other)
