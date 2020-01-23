@@ -30,24 +30,32 @@ namespace Flow
 		public string Format() => "Expected '}' after block";
 	}
 
-	internal struct ExpectedCloseParenthesisAfterExpression : IFormattedMessage
+	internal struct ExpectedCloseParenthesisAfterExpressionError : IFormattedMessage
 	{
 		public string Format() => "Expected ')' after expression";
 	}
 
-	internal struct ExpectedCloseSquareBracketsAfterArrayExpressionError : IFormattedMessage
+	internal struct TooManyExpressionValuesError : IFormattedMessage
 	{
-		public string Format() => "Expected ']' after array expression";
+		public string Format() => $"Too many expression values. Max is {byte.MaxValue}";
 	}
 
-	internal struct TooManyArrayElementsError : IFormattedMessage
+	internal struct ExpectedOneValueToAssignToVariableError : IFormattedMessage
 	{
-		public string Format() => $"Too many array elements. Max is {byte.MaxValue}";
+		public int got;
+		public string name;
+		public string Format() => $"Expected one value to assign to variable {name}. Got {got}";
 	}
 
 	internal struct InvalidTokenAfterPipeError : IFormattedMessage
 	{
 		public string Format() => "Expected variable or command after '|'";
+	}
+
+	internal struct ExprectedOneValueAsIfConditionError : IFormattedMessage
+	{
+		public int got;
+		public string Format() => $"Expected one value as if condition. Got {got}";
 	}
 
 	internal struct ExpectedOpenCurlyBracesAfterIfConditionError : IFormattedMessage

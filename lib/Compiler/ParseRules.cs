@@ -2,8 +2,8 @@ namespace Flow
 {
 	internal sealed class ParseRules
 	{
-		public delegate void PrefixFunction(CompilerController controller);
-		public delegate void InfixFunction(CompilerController controller, Slice slice);
+		public delegate byte PrefixFunction(CompilerController controller);
+		public delegate byte InfixFunction(CompilerController controller, ExpressionResult result);
 
 		private const int RuleCount = (int)TokenKind.COUNT;
 		private readonly Precedence[] precedences = new Precedence[RuleCount];
@@ -22,7 +22,6 @@ namespace Flow
 
 			Set(TokenKind.SemiColon, null, null, Precedence.None);
 			Set(TokenKind.OpenParenthesis, CompilerController.Grouping, null, Precedence.None);
-			Set(TokenKind.OpenSquareBrackets, CompilerController.ArrayExpression, null, Precedence.None);
 			Set(TokenKind.OpenCurlyBrackets, null, null, Precedence.None);
 			Set(TokenKind.Pipe, null, null, Precedence.None);
 			Set(TokenKind.If, null, null, Precedence.None);
@@ -32,7 +31,6 @@ namespace Flow
 			Set(TokenKind.StringLiteral, CompilerController.Literal, null, Precedence.None);
 			Set(TokenKind.IntLiteral, CompilerController.Literal, null, Precedence.None);
 			Set(TokenKind.FloatLiteral, CompilerController.Literal, null, Precedence.None);
-			Set(TokenKind.Null, CompilerController.Literal, null, Precedence.None);
 			Set(TokenKind.False, CompilerController.Literal, null, Precedence.None);
 			Set(TokenKind.True, CompilerController.Literal, null, Precedence.None);
 		}

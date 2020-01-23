@@ -2,6 +2,18 @@ using System.Globalization;
 
 namespace Flow
 {
+	internal readonly struct ExpressionResult
+	{
+		public readonly Slice slice;
+		public readonly byte valueCount;
+
+		public ExpressionResult(Slice slice, byte count)
+		{
+			this.slice = slice;
+			this.valueCount = count;
+		}
+	}
+
 	internal struct LocalVariable
 	{
 		public Slice slice;

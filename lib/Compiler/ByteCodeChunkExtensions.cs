@@ -103,7 +103,7 @@ namespace Flow
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 				return OneByteInstruction(instruction, index, sb);
-			case Instruction.CreateArray:
+			case Instruction.PopMultiple:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 			case Instruction.PopLocals:
@@ -174,6 +174,7 @@ namespace Flow
 				chunk.bytes.buffer[index + 1],
 				chunk.bytes.buffer[index + 2]
 			);
+			var inputCount = chunk.bytes.buffer[index + 3];
 
 			var commandIndex = chunk.commandInstances.buffer[instanceIndex];
 			var command = chunk.commandDefinitions.buffer[commandIndex];
@@ -181,8 +182,11 @@ namespace Flow
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
 			sb.Append(command.name);
+			sb.Append(" with ");
+			sb.Append(inputCount);
+			sb.Append(" inputs");
 
-			return index + 3;
+			return index + 4;
 		}
 
 		private static int JumpInstruction(ByteCodeChunk chunk, Instruction instruction, int direction, int index, StringBuilder sb)

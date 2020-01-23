@@ -31,24 +31,25 @@ namespace Flow
 				this.name = name;
 			}
 
-			public Value Invoke(Value input, Value[] args)
+			public void Invoke(Stack stack)
 			{
-				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {input} AND ARGS {new Value(args)}");
-				return new Value(name);
+				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {stack.inputCount} AND ARGS {stack.argCount}");
+				stack.PushReturn(new Value(name));
 			}
 
 			public static CommandDefinition New(string name, byte paramCount)
 			{
-				return new CommandDefinition(name, paramCount, () => new MyCommand(name));
+				return new CommandDefinition(name, paramCount, 1, () => new MyCommand(name));
 			}
 		}
 
 		public sealed class BypassCommand : ICommand
 		{
-			public Value Invoke(Value input, Value[] args)
+			public void Invoke(Stack stack)
 			{
+				var input = stack.GetInput(0);
 				System.Console.WriteLine($"BYPASS {input}");
-				return input;
+				stack.PushReturn(input);
 			}
 		}
 
@@ -60,7 +61,7 @@ namespace Flow
 			var chunk = new ByteCodeChunk();
 			chunk.RegisterCommand(MyCommand.New("command", 1));
 			chunk.RegisterCommand(MyCommand.New("print", 0));
-			chunk.RegisterCommand(new CommandDefinition("bypass", 0, () => new BypassCommand()));
+			chunk.RegisterCommand(new CommandDefinition("bypass", 0, 1, () => new BypassCommand()));
 
 			var controller = new CompilerController();
 			var errors = controller.CompileSource(chunk, source);

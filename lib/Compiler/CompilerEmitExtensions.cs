@@ -19,6 +19,28 @@ namespace Flow
 			self.EmitByte((byte)instruction);
 		}
 
+		public static void EmitPop(this Compiler self, int count)
+		{
+			if (count > 1)
+			{
+				self.EmitInstruction(Instruction.PopMultiple);
+
+				if (count > byte.MaxValue)
+				{
+					self.EmitByte(byte.MaxValue);
+					EmitPop(self, count - byte.MaxValue);
+				}
+				else
+				{
+					self.EmitByte((byte)count);
+				}
+			}
+			else if (count > 0)
+			{
+				self.EmitInstruction(Instruction.Pop);
+			}
+		}
+
 		public static void EmitLoadLiteral(this Compiler self, Value value)
 		{
 			var index = self.chunk.AddLiteral(value);
@@ -26,12 +48,13 @@ namespace Flow
 			self.EmitUShort((ushort)index);
 		}
 
-		public static void EmitCallNativeCommand(this Compiler self, int commandIndex)
+		public static void EmitCallNativeCommand(this Compiler self, int commandIndex, byte inputCount)
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
 			self.chunk.commandInstances.PushBack(commandIndex);
 			self.EmitInstruction(Instruction.CallNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
+			self.EmitByte(inputCount);
 		}
 
 		public static int BeginEmitForwardJump(this Compiler self, Instruction instruction)

@@ -36,26 +36,32 @@ namespace Flow
 				case Instruction.CallNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var inputCount = bytes[codeIndex++];
+
 						var commandIndex = vm.chunk.commandInstances.buffer[index];
 						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
-						var args = vm.CreateArray(command.parameterCount);
-						stack.count -= args.Length;
-						for (var i = 0; i < args.Length; i++)
-							args[i] = stack.buffer[stack.count + i];
+						stack.count -= inputCount + command.parameterCount;
+						var savedStackCount = stack.count;
+						vm.stack = stack;
 
-						var result = instance.Invoke(stack.buffer[stack.count - 1], args);
-						result = VirtualMachineHelper.DeepCopy(vm, result);
+						instance.Invoke(new Stack(vm, inputCount, command.parameterCount));
+						stack = vm.stack;
 
-						for (var i = 0; i < args.Length; i++)
-							VirtualMachineHelper.Collect(vm, ref stack.buffer[stack.count + i]);
-
-						stack.buffer[stack.count - 1] = result;
+						var returnCount = stack.count - savedStackCount;
+						if (returnCount != command.returnCount)
+						{
+							System.Console.WriteLine("WRONG NUMBER OF RETURNED VALUES!!! EXPECTED {0}. GOT {1}", command.returnCount, returnCount);
+							return;
+						}
 						break;
 					}
 				case Instruction.Pop:
-					VirtualMachineHelper.Collect(vm, ref stack.buffer[--stack.count]);
+					--stack.count;
+					break;
+				case Instruction.PopMultiple:
+					stack.count -= bytes[codeIndex++];
 					break;
 				case Instruction.LoadNull:
 					stack.PushBackUnchecked(new Value(null));
@@ -72,15 +78,6 @@ namespace Flow
 						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
 						break;
 					}
-				case Instruction.CreateArray:
-					{
-						var array = vm.arrayPool.Request(bytes[codeIndex++]);
-						stack.count -= array.Length;
-						for (var i = 0; i < array.Length; i++)
-							array[i] = stack.buffer[stack.count + i];
-						stack.PushBackUnchecked(new Value(array));
-						break;
-					}
 				case Instruction.AddLocalName:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
@@ -90,7 +87,7 @@ namespace Flow
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						stack.buffer[index] = stack.buffer[stack.count - 1];
+						stack.buffer[index] = stack.buffer[--stack.count];
 						break;
 					}
 				case Instruction.LoadLocal:
@@ -104,9 +101,6 @@ namespace Flow
 						var count = bytes[codeIndex++];
 						vm.localVariableNames.count -= count;
 						stack.count -= count;
-
-						for (var i = 0; i < count; i++)
-							VirtualMachineHelper.Collect(vm, ref stack.buffer[stack.count + i]);
 						break;
 					}
 				case Instruction.JumpForward:
@@ -118,10 +112,8 @@ namespace Flow
 				case Instruction.PopAndJumpForwardIfFalse:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						ref var value = ref stack.buffer[--stack.count];
-						if (!value.IsTruthy())
+						if (!stack.buffer[--stack.count].IsTruthy())
 							codeIndex += offset;
-						VirtualMachineHelper.Collect(vm, ref value);
 						break;
 					}
 				default:

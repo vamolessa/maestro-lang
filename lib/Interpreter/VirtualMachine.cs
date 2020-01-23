@@ -1,5 +1,38 @@
 namespace Flow
 {
+	public readonly struct Stack
+	{
+		public readonly int inputCount;
+		public readonly int argCount;
+		private readonly VirtualMachine vm;
+
+		public Stack(VirtualMachine vm, int inputCount, int argCount)
+		{
+			this.vm = vm;
+			this.inputCount = inputCount;
+			this.argCount = argCount;
+		}
+
+		public Value GetInput(int index)
+		{
+			return index >= 0 && index < inputCount ?
+				vm.stack.buffer[vm.stack.count + index] :
+				new Value(null);
+		}
+
+		public Value GetArg(int index)
+		{
+			return index >= 0 && index < argCount ?
+				vm.stack.buffer[vm.stack.count + inputCount + index] :
+				new Value(null);
+		}
+
+		public void PushReturn(Value value)
+		{
+			vm.stack.PushBackUnchecked(value);
+		}
+	}
+
 	public struct CallFrame
 	{
 		public enum Type : ushort
@@ -29,7 +62,6 @@ namespace Flow
 		internal Buffer<Value> stack = new Buffer<Value>(32);
 		internal Buffer<ICommand> commands = new Buffer<ICommand>(8);
 		internal Buffer<string> localVariableNames = new Buffer<string>(8);
-		internal ArrayPool<Value> arrayPool = new ArrayPool<Value>();
 
 		internal Option<RuntimeError> error;
 

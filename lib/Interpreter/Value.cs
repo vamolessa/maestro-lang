@@ -101,24 +101,6 @@ namespace Flow
 				return other.asObject is ValueKind.Int _ && self.asNumber.asInt == other.asNumber.asInt;
 			case ValueKind.Float _:
 				return other.asObject is ValueKind.Float _ && self.asNumber.asFloat == other.asNumber.asFloat;
-			case Value[] selfArray:
-				if (other.asObject is Value[] otherArray)
-				{
-					if (selfArray.Length != otherArray.Length)
-						return false;
-
-					for (var i = 0; i < selfArray.Length; i++)
-					{
-						if (!selfArray[i].IsEqualTo(otherArray[i]))
-							return false;
-					}
-
-					return true;
-				}
-				else
-				{
-					return false;
-				}
 			default:
 				return self.asObject.Equals(other.asObject);
 			}
@@ -143,19 +125,6 @@ namespace Flow
 			case ValueKind.Float _:
 				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", self.asNumber.asFloat);
 				break;
-			case Value[] array:
-				{
-					sb.Append('[');
-					for (var i = 0; i < array.Length - 1; i++)
-					{
-						array[i].AppendTo(sb);
-						sb.Append(", ");
-					}
-					if (array.Length > 0)
-						array[array.Length - 1].AppendTo(sb);
-					sb.Append(']');
-					break;
-				}
 			case string s:
 				sb.Append('"').Append(s).Append('"');
 				break;

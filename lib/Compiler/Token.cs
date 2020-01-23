@@ -5,10 +5,9 @@ namespace Flow
 		UNDEFINED,
 		SemiColon, Pipe, Comma,
 		OpenParenthesis, CloseParenthesis,
-		OpenSquareBrackets, CloseSquareBrackets,
 		OpenCurlyBrackets, CloseCurlyBrackets,
 
-		IntLiteral, FloatLiteral, StringLiteral, Null, True, False,
+		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable, InputVariable,
 
 		If, Else, Iterate,
