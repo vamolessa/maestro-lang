@@ -11,9 +11,8 @@ namespace Flow
 
 		internal static Value DeepCopy(VirtualMachine vm, Value value)
 		{
-			if (value.kind == ValueKind.Array)
+			if (value.asObject is Value[] array)
 			{
-				var array = value.asObject as Value[];
 				var copy = vm.CreateArray(array.Length);
 				for (var i = 0; i < array.Length; i++)
 					copy[i] = DeepCopy(vm, array[i]);
@@ -28,11 +27,9 @@ namespace Flow
 
 		internal static void Collect(VirtualMachine vm, ref Value value)
 		{
-			if (value.kind == ValueKind.Array)
+			if (value.asObject is Value[] array)
 			{
-				var array = value.asObject as Value[];
 				vm.arrayPool.Return(array);
-
 				for (var i = 0; i < array.Length; i++)
 					Collect(vm, ref array[i]);
 			}

@@ -4,15 +4,17 @@ using System.Text;
 
 namespace Flow
 {
-	public enum ValueKind
+	public static class ValueKind
 	{
-		Null,
-		False,
-		True,
-		Int,
-		Float,
-		Object,
-		Array,
+		public sealed class False { }
+		public sealed class True { }
+		public sealed class Int { }
+		public sealed class Float { }
+
+		public static readonly False FalseKind = new False();
+		public static readonly True TrueKind = new True();
+		public static readonly Int IntKind = new Int();
+		public static readonly Float FloatKind = new Float();
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -38,41 +40,23 @@ namespace Flow
 
 	public readonly struct Value
 	{
-		public readonly ValueKind kind;
 		public readonly Number asNumber;
 		public readonly object asObject;
 
-		public Value(ValueKind kind)
-		{
-			this.kind = kind;
-			this.asNumber = default;
-			this.asObject = default;
-		}
-
 		public Value(int value)
 		{
-			this.kind = ValueKind.Int;
 			this.asNumber = new Number(value);
-			this.asObject = default;
+			this.asObject = ValueKind.IntKind;
 		}
 
 		public Value(float value)
 		{
-			this.kind = ValueKind.Float;
 			this.asNumber = new Number(value);
-			this.asObject = default;
+			this.asObject = ValueKind.FloatKind;
 		}
 
 		public Value(object value)
 		{
-			this.kind = value != null ? ValueKind.Object : ValueKind.Null;
-			this.asNumber = default;
-			this.asObject = value;
-		}
-
-		public Value(Value[] value)
-		{
-			this.kind = value != null ? ValueKind.Array : ValueKind.Null;
 			this.asNumber = default;
 			this.asObject = value;
 		}
@@ -89,45 +73,37 @@ namespace Flow
 	{
 		public static bool IsTruthy(this Value self)
 		{
-			switch (self.kind)
+			switch (self.asObject)
 			{
-			case ValueKind.Null:
-			case ValueKind.False:
+			case null:
+			case ValueKind.False _:
 				return false;
-			case ValueKind.True:
-			case ValueKind.Object:
-			case ValueKind.Array:
-				return true;
-			case ValueKind.Int:
+			case ValueKind.Int _:
 				return self.asNumber.asInt != 0;
-			case ValueKind.Float:
+			case ValueKind.Float _:
 				return self.asNumber.asFloat != 0.0f;
 			default:
-				return false;
+				return true;
 			}
 		}
 
 		public static bool IsEqualTo(this Value self, Value other)
 		{
-			if (self.kind != other.kind)
-				return false;
-
-			switch (self.kind)
+			switch (self.asObject)
 			{
-			case ValueKind.Null:
-			case ValueKind.False:
-			case ValueKind.True:
-				return true;
-			case ValueKind.Int:
-				return self.asNumber.asInt == other.asNumber.asInt;
-			case ValueKind.Float:
-				return self.asNumber.asFloat == other.asNumber.asFloat;
-			case ValueKind.Object:
-				return self.asObject.Equals(other.asObject);
-			case ValueKind.Array:
+			case null:
+				return other.asObject is null;
+			case ValueKind.False _:
+				return other.asObject is ValueKind.False;
+			case ValueKind.True _:
+				return other.asObject is ValueKind.True;
+			case ValueKind.Int _:
+				return other.asObject is ValueKind.Int _ && self.asNumber.asInt == other.asNumber.asInt;
+			case ValueKind.Float _:
+				return other.asObject is ValueKind.Float _ && self.asNumber.asFloat == other.asNumber.asFloat;
+			case Value[] selfArray:
+				if (other.asObject is Value[] otherArray)
 				{
-					var selfArray = self.asObject as Value[];
-					var otherArray = other.asObject as Value[];
 					if (selfArray.Length != otherArray.Length)
 						return false;
 
@@ -139,39 +115,36 @@ namespace Flow
 
 					return true;
 				}
+				else
+				{
+					return false;
+				}
 			default:
-				return false;
+				return self.asObject.Equals(other.asObject);
 			}
 		}
 
 		public static void AppendTo(this Value self, StringBuilder sb)
 		{
-			switch (self.kind)
+			switch (self.asObject)
 			{
-			case ValueKind.Null:
+			case null:
 				sb.Append("null");
 				break;
-			case ValueKind.False:
+			case ValueKind.False _:
 				sb.Append("false");
 				break;
-			case ValueKind.True:
+			case ValueKind.True _:
 				sb.Append("true");
 				break;
-			case ValueKind.Int:
+			case ValueKind.Int _:
 				sb.Append(self.asNumber.asInt);
 				break;
-			case ValueKind.Float:
+			case ValueKind.Float _:
 				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", self.asNumber.asFloat);
 				break;
-			case ValueKind.Object:
-				if (self.asObject is string s)
-					sb.Append('"').Append(s).Append('"');
-				else
-					sb.Append(self.asObject);
-				break;
-			case ValueKind.Array:
+			case Value[] array:
 				{
-					var array = self.asObject as Value[];
 					sb.Append('[');
 					for (var i = 0; i < array.Length - 1; i++)
 					{
@@ -183,6 +156,12 @@ namespace Flow
 					sb.Append(']');
 					break;
 				}
+			case string s:
+				sb.Append('"').Append(s).Append('"');
+				break;
+			default:
+				sb.Append(self.asObject);
+				break;
 			}
 		}
 	}

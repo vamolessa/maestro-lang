@@ -23,9 +23,11 @@ namespace Flow
 
 			new ExactScanner("if").ForToken(TokenKind.If),
 			new ExactScanner("else").ForToken(TokenKind.Else),
+			new ExactScanner("iterate").ForToken(TokenKind.Iterate),
 
 			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
+			new ExactScanner("$$").ForToken(TokenKind.InputVariable),
 
 			new WhiteSpaceScanner().Ignore(),
 			new LineCommentScanner("#").Ignore(),

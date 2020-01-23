@@ -58,13 +58,13 @@ namespace Flow
 					VirtualMachineHelper.Collect(vm, ref stack.buffer[--stack.count]);
 					break;
 				case Instruction.LoadNull:
-					stack.PushBackUnchecked(new Value(ValueKind.Null));
+					stack.PushBackUnchecked(new Value(null));
 					break;
 				case Instruction.LoadFalse:
-					stack.PushBackUnchecked(new Value(ValueKind.False));
+					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
 					break;
 				case Instruction.LoadTrue:
-					stack.PushBackUnchecked(new Value(ValueKind.True));
+					stack.PushBackUnchecked(new Value(ValueKind.TrueKind));
 					break;
 				case Instruction.LoadLiteral:
 					{

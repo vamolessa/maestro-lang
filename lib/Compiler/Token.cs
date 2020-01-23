@@ -9,9 +9,9 @@ namespace Flow
 		OpenCurlyBrackets, CloseCurlyBrackets,
 
 		IntLiteral, FloatLiteral, StringLiteral, Null, True, False,
-		Identifier, Variable,
+		Identifier, Variable, InputVariable,
 
-		If, Else,
+		If, Else, Iterate,
 
 		COUNT,
 		End,
