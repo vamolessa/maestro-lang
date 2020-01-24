@@ -4,6 +4,16 @@ namespace Flow
 {
 	public static class VirtualMachineHelper
 	{
+		public static Value GetInput(this VirtualMachine vm, int index)
+		{
+			return vm.stack.buffer[index];
+		}
+
+		public static void PushValue(this VirtualMachine vm, Value value)
+		{
+			vm.stack.PushBackUnchecked(value);
+		}
+
 		internal static void TraceStack(VirtualMachine vm, StringBuilder sb)
 		{
 			sb.Append("     ");

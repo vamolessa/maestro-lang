@@ -43,18 +43,10 @@ namespace Flow
 						var instance = vm.commands.buffer[index];
 
 						stack.count -= inputCount + command.parameterCount;
-						var savedStackCount = stack.count;
+
 						vm.stack = stack;
-
-						instance.Invoke(new Stack(vm, inputCount, command.parameterCount));
+						instance.Invoke(vm, inputCount);
 						stack = vm.stack;
-
-						var returnCount = stack.count - savedStackCount;
-						if (returnCount != command.returnCount)
-						{
-							System.Console.WriteLine("WRONG NUMBER OF RETURNED VALUES!!! EXPECTED {0}. GOT {1}", command.returnCount, returnCount);
-							return;
-						}
 						break;
 					}
 				case Instruction.Pop:

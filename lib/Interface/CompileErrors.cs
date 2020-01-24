@@ -44,7 +44,7 @@ namespace Flow
 	{
 		public int got;
 		public string name;
-		public string Format() => $"Expected one value to assign to variable {name}. Got {got}";
+		public string Format() => $"Expected one value to assign to variable '{name}'. Got {got}";
 	}
 
 	internal struct InvalidTokenAfterPipeError : IFormattedMessage

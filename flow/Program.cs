@@ -22,34 +22,24 @@ namespace Flow
 			return sb.ToString();
 		}
 
-		public sealed class MyCommand : ICommand
+		public sealed class PrintCommand : ICommand<Tuple0, Tuple0>
 		{
-			public readonly string name;
-
-			public MyCommand(string name)
+			public Tuple0 Invoke(VirtualMachine vm, int inputCount, Tuple0 args)
 			{
-				this.name = name;
-			}
+				System.Console.WriteLine($"PRINTING {inputCount} INPUTS:");
+				for (var i = 0; i < inputCount; i++)
+					System.Console.WriteLine(vm.GetInput(i).ToString());
 
-			public void Invoke(Stack stack)
-			{
-				System.Console.WriteLine($"THIS IS A HELLO FROM MY COMMAND {name} WITH INPUT {stack.inputCount} AND ARGS {stack.argCount}");
-				stack.PushReturn(new Value(name));
-			}
-
-			public static CommandDefinition New(string name, byte paramCount)
-			{
-				return new CommandDefinition(name, paramCount, 1, () => new MyCommand(name));
+				return default;
 			}
 		}
 
-		public sealed class BypassCommand : ICommand
+		public sealed class BypassCommand : ICommand<Tuple0, Tuple1>
 		{
-			public void Invoke(Stack stack)
+			public Tuple1 Invoke(VirtualMachine vm, int inputCount, Tuple0 args)
 			{
-				var input = stack.GetInput(0);
-				System.Console.WriteLine($"BYPASS {input}");
-				stack.PushReturn(input);
+				System.Console.WriteLine($"BYPASS WITH {inputCount} INPUTS");
+				return inputCount > 0 ? vm.GetInput(0) : new Value(null);
 			}
 		}
 
@@ -59,9 +49,8 @@ namespace Flow
 			var source = new Source(new Uri("script.flow"), content);
 
 			var chunk = new ByteCodeChunk();
-			chunk.RegisterCommand(MyCommand.New("command", 1));
-			chunk.RegisterCommand(MyCommand.New("print", 0));
-			chunk.RegisterCommand(new CommandDefinition("bypass", 0, 1, () => new BypassCommand()));
+			chunk.RegisterCommand(CommandDefinition.Create("print", () => new PrintCommand()));
+			chunk.RegisterCommand(CommandDefinition.Create("bypass", () => new BypassCommand()));
 
 			var controller = new CompilerController();
 			var errors = controller.CompileSource(chunk, source);
