@@ -1,6 +1,6 @@
 namespace Flow
 {
-	public struct CallFrame
+	public struct StackFrame
 	{
 		public enum Type : ushort
 		{
@@ -9,15 +9,13 @@ namespace Flow
 		}
 
 		public int codeIndex;
-		public int baseStackIndex;
-		public ushort functionIndex;
+		public int stackIndex;
 		public Type type;
 
-		public CallFrame(int codeIndex, int baseStackIndex, ushort functionIndex, Type type)
+		public StackFrame(int codeIndex, int stackIndex, Type type)
 		{
 			this.codeIndex = codeIndex;
-			this.baseStackIndex = baseStackIndex;
-			this.functionIndex = functionIndex;
+			this.stackIndex = stackIndex;
 			this.type = type;
 		}
 	}
@@ -25,7 +23,7 @@ namespace Flow
 	public sealed class VirtualMachine
 	{
 		internal ByteCodeChunk chunk;
-		internal Buffer<CallFrame> callFrameStack = new Buffer<CallFrame>(4);
+		internal Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
 		internal Buffer<Value> stack = new Buffer<Value>(32);
 		internal Buffer<ICommand> commands = new Buffer<ICommand>(8);
 		internal Buffer<string> localVariableNames = new Buffer<string>(8);
@@ -35,7 +33,7 @@ namespace Flow
 		internal void Load(ByteCodeChunk chunk)
 		{
 			this.chunk = chunk;
-			callFrameStack.count = 0;
+			stackFrames.count = 0;
 			error = Option.None;
 
 			for (var i = 0; i < chunk.commandInstances.count; i++)
@@ -49,8 +47,8 @@ namespace Flow
 		public void Error(IFormattedMessage message)
 		{
 			var ip = -1;
-			if (callFrameStack.count > 0)
-				ip = callFrameStack.buffer[callFrameStack.count - 1].codeIndex;
+			if (stackFrames.count > 0)
+				ip = stackFrames.buffer[stackFrames.count - 1].codeIndex;
 
 			error = Option.Some(new RuntimeError(
 				ip,

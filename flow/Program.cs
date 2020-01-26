@@ -69,7 +69,7 @@ namespace Flow
 				var vm = new VirtualMachine();
 				vm.Load(chunk);
 
-				vm.callFrameStack.PushBackUnchecked(new CallFrame(0, 0, 0, CallFrame.Type.EntryPoint));
+				vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, StackFrame.Type.EntryPoint));
 				VirtualMachineInstructions.Run(vm);
 
 				System.Console.WriteLine("FINISH");

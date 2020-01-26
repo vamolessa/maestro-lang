@@ -13,8 +13,8 @@ namespace Flow
 
 			var bytes = vm.chunk.bytes.buffer;
 			var stack = vm.stack;
-			var codeIndex = vm.callFrameStack.buffer[vm.callFrameStack.count - 1].codeIndex;
-			var baseStackIndex = vm.callFrameStack.buffer[vm.callFrameStack.count - 1].baseStackIndex;
+			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
+			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
 
 			while (true)
 			{
@@ -30,7 +30,7 @@ namespace Flow
 				switch (nextInstruction)
 				{
 				case Instruction.Halt:
-					--vm.callFrameStack.count;
+					--vm.stackFrames.count;
 					vm.stack = stack;
 					return;
 				case Instruction.CallNativeCommand:
@@ -42,18 +42,26 @@ namespace Flow
 						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
 						var instance = vm.commands.buffer[index];
 
+						var previousStackCount = stack.count;
 						stack.count -= inputCount + command.parameterCount;
 
 						vm.stack = stack;
 						instance.Invoke(vm, inputCount);
 						stack = vm.stack;
+
+						for (var i = stack.count; i < previousStackCount; i++)
+							stack.buffer[i] = default;
 						break;
 					}
 				case Instruction.Pop:
-					--stack.count;
+					stack.buffer[--stack.count] = default;
 					break;
 				case Instruction.PopMultiple:
-					stack.count -= bytes[codeIndex++];
+					{
+						var count = bytes[codeIndex++];
+						while (--count >= 0)
+							stack.buffer[--stack.count] = default;
+					}
 					break;
 				case Instruction.LoadNull:
 					stack.PushBackUnchecked(new Value(null));
@@ -80,6 +88,7 @@ namespace Flow
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
 						stack.buffer[index] = stack.buffer[--stack.count];
+						stack.buffer[stack.count] = default;
 						break;
 					}
 				case Instruction.LoadLocal:
@@ -92,7 +101,8 @@ namespace Flow
 					{
 						var count = bytes[codeIndex++];
 						vm.localVariableNames.count -= count;
-						stack.count -= count;
+						while (--count >= 0)
+							stack.buffer[--stack.count] = default;
 						break;
 					}
 				case Instruction.JumpForward:
@@ -106,6 +116,7 @@ namespace Flow
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						if (!stack.buffer[--stack.count].IsTruthy())
 							codeIndex += offset;
+						stack.buffer[stack.count] = default;
 						break;
 					}
 				default:
