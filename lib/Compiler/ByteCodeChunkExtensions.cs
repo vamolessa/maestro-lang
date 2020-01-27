@@ -104,10 +104,9 @@ namespace Flow
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.PopMultiple:
 			case Instruction.PopLocalInfos:
-				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
-				return ThreeByteInstruction(self, instruction, index, sb);
+				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
 			case Instruction.PushLocalInfo:
@@ -138,16 +137,6 @@ namespace Flow
 			return ++index;
 		}
 
-		private static int ThreeByteInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
-		{
-			sb.Append(instruction.ToString());
-			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[++index]);
-			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[++index]);
-			return ++index;
-		}
-
 		private static int LoadLiteralInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
@@ -169,15 +158,13 @@ namespace Flow
 				chunk.bytes.buffer[++index],
 				chunk.bytes.buffer[++index]
 			);
-			var size = chunk.bytes.buffer[++index];
 
 			var name = chunk.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
 			sb.Append(name.asObject);
-			sb.Append("' size ");
-			sb.Append(size);
+			sb.Append("'");
 
 			return ++index;
 		}

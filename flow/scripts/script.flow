@@ -1,4 +1,8 @@
 if true | bypass {
-	("hello", "world") | $var;
-	$var | print;
+	#"hello", "world" | $var0, $var1;
+	#$var0, $var1 | print;
+
+	"hello" | $var0;
+	"world" | $var1;
+	($var0, $var1) | print;
 }

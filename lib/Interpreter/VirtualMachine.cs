@@ -23,12 +23,10 @@ namespace Flow
 	public readonly struct VariableInfo
 	{
 		public readonly string name;
-		public readonly byte size;
 
-		public VariableInfo(string name, byte size)
+		public VariableInfo(string name)
 		{
 			this.name = name;
-			this.size = size;
 		}
 	}
 

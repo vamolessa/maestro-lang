@@ -78,9 +78,8 @@ namespace Flow
 				case Instruction.PushLocalInfo:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var size = bytes[codeIndex++];
 						var name = vm.chunk.literals.buffer[index].asObject as string;
-						vm.localVariableInfos.PushBackUnchecked(new VariableInfo(name, size));
+						vm.localVariableInfos.PushBackUnchecked(new VariableInfo(name));
 						break;
 					}
 				case Instruction.PopLocalInfos:
@@ -89,22 +88,14 @@ namespace Flow
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						var size = bytes[codeIndex++];
-
-						while (size > 0)
-						{
-							stack.buffer[index++] = stack.buffer[--stack.count];
-							stack.buffer[stack.count] = default;
-						}
+						stack.buffer[index] = stack.buffer[--stack.count];
+						stack.buffer[stack.count] = default;
 						break;
 					}
 				case Instruction.LoadLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						var size = bytes[codeIndex++];
-
-						while (size-- > 0)
-							stack.PushBackUnchecked(stack.buffer[index++]);
+						stack.PushBackUnchecked(stack.buffer[index]);
 						break;
 					}
 				case Instruction.JumpForward:

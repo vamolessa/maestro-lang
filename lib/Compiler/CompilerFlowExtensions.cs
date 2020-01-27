@@ -27,11 +27,7 @@ namespace Flow
 			{
 				self.EmitInstruction(Instruction.PopLocalInfos);
 				self.EmitByte((byte)localCount);
-
-				var popSize = 0;
-				for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
-					popSize += self.localVariables.buffer[i].size;
-				self.EmitPop(popSize);
+				self.EmitPop(localCount);
 			}
 
 			self.localVariables.count -= localCount;

@@ -91,17 +91,16 @@ namespace Flow
 		public string Format() => "Can only assign variables at top level expressions";
 	}
 
-	internal struct WrongNumberOfValuesOnVariableAssignmentError : IFormattedMessage
+	internal struct ExpectedOneValueToAssignToVariableError : IFormattedMessage
 	{
 		public string variableName;
-		public int expected;
 		public int got;
-		public string Format() => $"Wrong number values when assigning to variable '{variableName}'. Expected {expected}. Got {got}";
+		public string Format() => $"Expected one value to assign to variable '{variableName}'. Got {got}";
 	}
 
-	internal struct VariableTooDeepToBeAddressedError : IFormattedMessage
+	internal struct TooManyVariablesError : IFormattedMessage
 	{
-		public string Format() => "Variable's location is too deep to be addressed";
+		public string Format() => $"Too many variables. Max is {byte.MaxValue}";
 	}
 
 	internal struct LocalVariableUnassignedError : IFormattedMessage
