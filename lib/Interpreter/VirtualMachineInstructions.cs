@@ -44,13 +44,13 @@ namespace Flow
 
 						var previousStackCount = stack.count;
 						stack.count -= inputCount + command.parameterCount;
+						var inputs = new Inputs(inputCount, stack.count, stack.buffer);
+						stack.GrowUnchecked(command.returnCount);
 
-						vm.stack = stack;
-						instance.Invoke(vm, inputCount);
-						stack = vm.stack;
+						instance.Invoke(inputs);
 
-						for (var i = stack.count; i < previousStackCount; i++)
-							stack.buffer[i] = default;
+						while (previousStackCount > stack.count)
+							stack.buffer[previousStackCount--] = default;
 						break;
 					}
 				case Instruction.Pop:
@@ -62,9 +62,6 @@ namespace Flow
 						while (--count >= 0)
 							stack.buffer[--stack.count] = default;
 					}
-					break;
-				case Instruction.LoadNull:
-					stack.PushBackUnchecked(new Value(null));
 					break;
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));

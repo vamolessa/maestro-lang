@@ -99,7 +99,6 @@ namespace Flow
 			{
 			case Instruction.Halt:
 			case Instruction.Pop:
-			case Instruction.LoadNull:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 				return OneByteInstruction(instruction, index, sb);

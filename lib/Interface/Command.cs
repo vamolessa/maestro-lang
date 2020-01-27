@@ -1,15 +1,35 @@
 namespace Flow
 {
-	public interface ICommand
+	public readonly struct Inputs
 	{
-		void Invoke(VirtualMachine vm, int inputCount);
+		public readonly int count;
+
+		internal readonly int startIndex;
+		internal readonly Value[] buffer;
+
+		public Value this[int index]
+		{
+			get { return buffer[startIndex + index]; }
+		}
+
+		internal Inputs(int count, int startIndex, Value[] buffer)
+		{
+			this.count = count;
+			this.startIndex = startIndex;
+			this.buffer = buffer;
+		}
+	}
+
+	internal interface ICommand
+	{
+		void Invoke(Inputs inputs);
 	}
 
 	public interface ICommand<A, R>
 		where A : struct, ITuple
 		where R : struct, ITuple
 	{
-		R Invoke(VirtualMachine vm, int inputCount, A args);
+		R Invoke(Inputs inputs, A args);
 	}
 
 	public sealed class CommandWrapper<A, R> : ICommand
@@ -23,12 +43,12 @@ namespace Flow
 			this.command = command;
 		}
 
-		public void Invoke(VirtualMachine vm, int inputCount)
+		public void Invoke(Inputs inputs)
 		{
 			var args = default(A);
-			args.FromStack(vm, vm.stack.count);
-			var ret = command.Invoke(vm, inputCount, args);
-			ret.PushToStack(vm);
+			args.Read(inputs.buffer, inputs.startIndex + inputs.count);
+			var ret = command.Invoke(inputs, args);
+			ret.Write(inputs.buffer, inputs.startIndex);
 		}
 	}
 
@@ -37,9 +57,9 @@ namespace Flow
 		public readonly string name;
 		public readonly byte parameterCount;
 		public readonly byte returnCount;
-		public readonly System.Func<ICommand> factory;
+		internal readonly System.Func<ICommand> factory;
 
-		public CommandDefinition(string name, byte parameterCount, byte returnCount, System.Func<ICommand> factory)
+		internal CommandDefinition(string name, byte parameterCount, byte returnCount, System.Func<ICommand> factory)
 		{
 			this.name = name;
 			this.parameterCount = parameterCount;

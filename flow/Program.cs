@@ -24,11 +24,11 @@ namespace Flow
 
 		public sealed class PrintCommand : ICommand<Tuple0, Tuple0>
 		{
-			public Tuple0 Invoke(VirtualMachine vm, int inputCount, Tuple0 args)
+			public Tuple0 Invoke(Inputs inputs, Tuple0 args)
 			{
-				System.Console.WriteLine($"PRINTING {inputCount} INPUTS:");
-				for (var i = 0; i < inputCount; i++)
-					System.Console.WriteLine(vm.GetInput(i).ToString());
+				System.Console.WriteLine($"PRINTING {inputs.count} INPUTS:");
+				for (var i = 0; i < inputs.count; i++)
+					System.Console.WriteLine(inputs[i].ToString());
 
 				return default;
 			}
@@ -36,10 +36,10 @@ namespace Flow
 
 		public sealed class BypassCommand : ICommand<Tuple0, Tuple1>
 		{
-			public Tuple1 Invoke(VirtualMachine vm, int inputCount, Tuple0 args)
+			public Tuple1 Invoke(Inputs inputs, Tuple0 args)
 			{
-				System.Console.WriteLine($"BYPASS WITH {inputCount} INPUTS");
-				return inputCount > 0 ? vm.GetInput(0) : new Value(null);
+				System.Console.WriteLine($"BYPASS WITH {inputs.count} INPUTS");
+				return inputs.count > 0 ? inputs[0] : new Value(null);
 			}
 		}
 

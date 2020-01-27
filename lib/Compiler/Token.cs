@@ -38,9 +38,7 @@ namespace Flow
 	{
 		None,
 		Pipe,
-		// Equality, // == !=
-		// Comparison, // < > <= >=
-		Term,// + -
+		Term, // + -
 		Factor, // * /
 		Unary, // ! -
 		Primary,

@@ -6,7 +6,6 @@ namespace Flow
 		CallNativeCommand,
 		Pop,
 		PopMultiple,
-		LoadNull,
 		LoadFalse,
 		LoadTrue,
 		LoadLiteral,
