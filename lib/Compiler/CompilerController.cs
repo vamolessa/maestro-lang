@@ -317,62 +317,65 @@ namespace Flow
 			}
 		}
 
-		private bool AssignLocal(Slice slice)
-		{
-			if (compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
-			{
-				compiler.EmitInstruction(Instruction.AssignLocal);
-				compiler.EmitByte(localIndex);
-
-				return false;
-			}
-			else
-			{
-				if (compiler.localVariables.count >= byte.MaxValue)
-					compiler.AddSoftError(slice, new TooManyVariablesError());
-
-				compiler.AddLocalVariable(slice, false);
-
-				return true;
-			}
-		}
-
 		private void AssignLocals(bool canAssign, byte valueCount)
 		{
 			var slice = compiler.parser.previousToken.slice;
 
-			var isDeclaration = AssignLocal(slice);
+			var slices = new Buffer<Slice>(1);
+			slices.PushBackUnchecked(slice);
+
+			var isAssignment = compiler.ResolveToLocalVariableIndex(slice, out var _);
 			var hasMixedAssignmentType = false;
-			var count = 1;
 
 			while (compiler.parser.Match(TokenKind.Comma))
 			{
 				compiler.parser.Consume(TokenKind.Variable, new ExpectedVariableAsAssignmentTargetError());
+
 				var varSlice = compiler.parser.previousToken.slice;
+				slices.PushBackUnchecked(varSlice);
 
-				var isAnotherDeclaration = AssignLocal(varSlice);
-				if (isAnotherDeclaration != isDeclaration)
+				var isAnotherAssignment = compiler.ResolveToLocalVariableIndex(varSlice, out var _);
+				if (isAssignment != isAnotherAssignment)
 					hasMixedAssignmentType = true;
-
-				slice = Slice.FromTo(slice, varSlice);
-				count += 1;
 			}
+
+			slice = Slice.FromTo(slices.buffer[0], compiler.parser.previousToken.slice);
 
 			if (!canAssign)
 			{
 				compiler.AddSoftError(slice, new CanOnlyAssignVariablesAtTopLevelExpressionsError());
 			}
-			else if (count != valueCount)
+			else if (slices.count != valueCount)
 			{
 				compiler.AddSoftError(slice, new WrongNumberOfValuesOnVariablesAssignmentError
 				{
 					expected = valueCount,
-					got = count
+					got = slices.count
 				});
 			}
 			else if (hasMixedAssignmentType)
 			{
 				compiler.AddSoftError(slice, new MixedAssignmentTypeError());
+			}
+			else if (isAssignment)
+			{
+				for (var i = slices.count - 1; i >= 0; i--)
+				{
+					var varSlice = slices.buffer[i];
+					compiler.ResolveToLocalVariableIndex(varSlice, out var localIndex);
+					compiler.EmitInstruction(Instruction.AssignLocal);
+					compiler.EmitByte(localIndex);
+				}
+			}
+			else
+			{
+				for (var i = 0; i < slices.count; i++)
+				{
+					var varSlice = slices.buffer[i];
+					if (compiler.localVariables.count >= byte.MaxValue)
+						compiler.AddSoftError(varSlice, new TooManyVariablesError());
+					compiler.AddLocalVariable(varSlice, false);
+				}
 			}
 		}
 
