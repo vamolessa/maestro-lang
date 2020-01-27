@@ -343,11 +343,11 @@ namespace Flow
 
 			if (!canAssign)
 			{
-				compiler.AddSoftError(slice, new CanOnlyAssignVariablesAtTopLevelExpressionsError());
+				compiler.AddSoftError(slice, new CanOnlyAssignToVariablesAtTopLevelExpressionsError());
 			}
 			else if (slices.count != valueCount)
 			{
-				compiler.AddSoftError(slice, new WrongNumberOfValuesOnVariablesAssignmentError
+				compiler.AddSoftError(slice, new WrongNumberOfVariablesOnAssignmentError
 				{
 					expected = valueCount,
 					got = slices.count

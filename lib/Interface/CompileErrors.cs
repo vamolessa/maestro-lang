@@ -48,12 +48,12 @@ namespace Flow
 	internal struct ExprectedOneValueAsIfConditionError : IFormattedMessage
 	{
 		public int got;
-		public string Format() => $"Expected one value as if condition. Got {got}";
+		public string Format() => $"Expected one value as 'if' condition. Got {got}";
 	}
 
 	internal struct ExpectedOpenCurlyBracesAfterIfConditionError : IFormattedMessage
 	{
-		public string Format() => "Expected '{' after if condition";
+		public string Format() => "Expected '{' after 'if' condition";
 	}
 
 	internal struct ExpectedOpenCurlyBracesAfterElseError : IFormattedMessage
@@ -64,12 +64,12 @@ namespace Flow
 	internal struct ExpectedTwoValuesAsIterateConditionError : IFormattedMessage
 	{
 		public int got;
-		public string Format() => $"Expected two values as iterate condition. Got {got}";
+		public string Format() => $"Expected two values as 'iterate' condition. Got {got}";
 	}
 
 	internal struct ExpectedOpenCurlyBracesAfterIterateConditionError : IFormattedMessage
 	{
-		public string Format() => "Expected '{' after iterate condition";
+		public string Format() => "Expected '{' after 'iterate' condition";
 	}
 
 	internal struct WrongNumberOfCommandArgumentsError : IFormattedMessage
@@ -91,21 +91,21 @@ namespace Flow
 		public string Format() => "Expected variable as assignment target";
 	}
 
-	internal struct CanOnlyAssignVariablesAtTopLevelExpressionsError : IFormattedMessage
+	internal struct CanOnlyAssignToVariablesAtTopLevelExpressionsError : IFormattedMessage
 	{
-		public string Format() => "Can only assign variables at top level expressions";
+		public string Format() => "Can only assign to variables at top level expressions";
 	}
 
 	internal struct MixedAssignmentTypeError : IFormattedMessage
 	{
-		public string Format() => "Can not mix variable assignment with variable declaration";
+		public string Format() => "Can not mix variable assignment and variable declaration";
 	}
 
-	internal struct WrongNumberOfValuesOnVariablesAssignmentError : IFormattedMessage
+	internal struct WrongNumberOfVariablesOnAssignmentError : IFormattedMessage
 	{
 		public int expected;
 		public int got;
-		public string Format() => $"Wrong number of values on variables assignment. Expected {expected}. Got {got}";
+		public string Format() => $"Wrong number of variables on assignment. Expected {expected}. Got {got}";
 	}
 
 	internal struct TooManyVariablesError : IFormattedMessage
