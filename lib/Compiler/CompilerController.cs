@@ -191,20 +191,9 @@ namespace Flow
 
 		internal static byte Grouping(CompilerController self)
 		{
-			var valueCount = 0;
-			while (
-				!self.compiler.parser.Check(TokenKind.End) &&
-				!self.compiler.parser.Check(TokenKind.CloseParenthesis)
-			)
-			{
-				var expression = self.Expression(false);
-				valueCount += expression.valueCount;
-				if (!self.compiler.parser.Match(TokenKind.Comma))
-					break;
-			}
-
+			var expression = self.Expression(false);
 			self.compiler.parser.Consume(TokenKind.CloseParenthesis, new ExpectedCloseParenthesisAfterExpressionError());
-			return (byte)valueCount;
+			return expression.valueCount;
 		}
 
 		private ExpressionResult Pipe(ExpressionResult previous, bool canAssignToVariable)
@@ -217,7 +206,7 @@ namespace Flow
 				switch (compiler.parser.previousToken.kind)
 				{
 				case TokenKind.Variable:
-					AssignLocal(canAssignToVariable, previous.valueCount);
+					AssignLocals(canAssignToVariable, previous.valueCount);
 					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 					return new ExpressionResult(slice, 0);
 				case TokenKind.Identifier:
@@ -234,6 +223,21 @@ namespace Flow
 			}
 
 			return previous;
+		}
+
+		internal static byte Comma(CompilerController self, ExpressionResult previous)
+		{
+			var expression = self.Expression(false);
+			var valueCount = previous.valueCount + expression.valueCount;
+
+			if (valueCount > byte.MaxValue)
+			{
+				var slice = Slice.FromTo(previous.slice, expression.slice);
+				self.compiler.AddSoftError(slice, new TooManyExpressionValuesError());
+				return byte.MaxValue;
+			}
+
+			return (byte)valueCount;
 		}
 
 		internal static byte Command(CompilerController self)
@@ -295,7 +299,7 @@ namespace Flow
 			}
 		}
 
-		private void AssignLocal(bool canAssign, byte valueCount)
+		private void AssignLocals(bool canAssign, byte valueCount)
 		{
 			var slice = compiler.parser.previousToken.slice;
 

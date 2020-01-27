@@ -38,9 +38,7 @@ namespace Flow
 	{
 		None,
 		Pipe,
-		Term, // + -
-		Factor, // * /
-		Unary, // ! -
+		Comma,
 		Primary,
 	}
 }

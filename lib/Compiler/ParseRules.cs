@@ -24,6 +24,7 @@ namespace Flow
 			Set(TokenKind.OpenParenthesis, CompilerController.Grouping, null, Precedence.None);
 			Set(TokenKind.OpenCurlyBrackets, null, null, Precedence.None);
 			Set(TokenKind.Pipe, null, null, Precedence.None);
+			Set(TokenKind.Comma, null, CompilerController.Comma, Precedence.Comma);
 			Set(TokenKind.If, null, null, Precedence.None);
 			Set(TokenKind.Else, null, null, Precedence.None);
 			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
