@@ -216,7 +216,6 @@ namespace Flow
 
 		private byte Pipe(ExpressionResult previous, bool canAssignToVariable)
 		{
-			var slice = compiler.parser.previousToken.slice;
 			var valueCount = previous.valueCount;
 
 			while (!compiler.parser.Check(TokenKind.End))
@@ -224,16 +223,23 @@ namespace Flow
 				compiler.parser.Next();
 				switch (compiler.parser.previousToken.kind)
 				{
+				case TokenKind.Comma:
+					valueCount += ParseWithPrecedence(Precedence.Comma).valueCount;
+					if (valueCount > byte.MaxValue)
+					{
+						var slice = Slice.FromTo(previous.slice, compiler.parser.previousToken.slice);
+						compiler.AddSoftError(slice, new TooManyExpressionValuesError());
+						valueCount = byte.MaxValue;
+					}
+					break;
 				case TokenKind.Variable:
 					AssignLocals(canAssignToVariable, valueCount);
-					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 					return 0;
 				case TokenKind.Identifier:
 					valueCount = PipedCommand(valueCount);
 					break;
 				default:
 					compiler.AddHardError(compiler.parser.previousToken.slice, new InvalidTokenAfterPipeError());
-					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 					return 0;
 				}
 
