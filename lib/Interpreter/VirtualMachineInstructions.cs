@@ -59,7 +59,7 @@ namespace Flow
 				case Instruction.PopMultiple:
 					{
 						var count = bytes[codeIndex++];
-						while (--count >= 0)
+						while (count-- > 0)
 							stack.buffer[--stack.count] = default;
 					}
 					break;
@@ -75,31 +75,36 @@ namespace Flow
 						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
 						break;
 					}
-				case Instruction.AddLocalName:
+				case Instruction.PushLocalInfo:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						vm.localVariableNames.PushBackUnchecked(vm.chunk.literals.buffer[index].asObject as string);
+						var size = bytes[codeIndex++];
+						var name = vm.chunk.literals.buffer[index].asObject as string;
+						vm.localVariableInfos.PushBackUnchecked(new VariableInfo(name, size));
 						break;
 					}
+				case Instruction.PopLocalInfos:
+					vm.localVariableInfos.count -= bytes[codeIndex++];
+					break;
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						stack.buffer[index] = stack.buffer[--stack.count];
-						stack.buffer[stack.count] = default;
+						var size = bytes[codeIndex++];
+
+						while (size > 0)
+						{
+							stack.buffer[index++] = stack.buffer[--stack.count];
+							stack.buffer[stack.count] = default;
+						}
 						break;
 					}
 				case Instruction.LoadLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						stack.PushBackUnchecked(stack.buffer[index]);
-						break;
-					}
-				case Instruction.PopLocals:
-					{
-						var count = bytes[codeIndex++];
-						vm.localVariableNames.count -= count;
-						while (--count >= 0)
-							stack.buffer[--stack.count] = default;
+						var size = bytes[codeIndex++];
+
+						while (size-- > 0)
+							stack.PushBackUnchecked(stack.buffer[index++]);
 						break;
 					}
 				case Instruction.JumpForward:

@@ -9,10 +9,10 @@ namespace Flow
 		LoadFalse,
 		LoadTrue,
 		LoadLiteral,
-		AddLocalName,
+		PushLocalInfo,
+		PopLocalInfos,
 		AssignLocal,
 		LoadLocal,
-		PopLocals,
 		JumpForward,
 		PopAndJumpForwardIfFalse,
 	}

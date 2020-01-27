@@ -89,6 +89,9 @@ namespace Flow
 			var current = stateFrameStack.PopLast();
 			this.EndScope(new Scope(0));
 			RestoreState(current);
+
+			if (stateFrameStack.count == 0)
+				this.EmitInstruction(Instruction.Halt);
 		}
 
 		public void AddSoftError(Slice slice, IFormattedMessage error)

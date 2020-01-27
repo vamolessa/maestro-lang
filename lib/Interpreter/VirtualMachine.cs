@@ -20,13 +20,25 @@ namespace Flow
 		}
 	}
 
+	public readonly struct VariableInfo
+	{
+		public readonly string name;
+		public readonly byte size;
+
+		public VariableInfo(string name, byte size)
+		{
+			this.name = name;
+			this.size = size;
+		}
+	}
+
 	public sealed class VirtualMachine
 	{
 		internal ByteCodeChunk chunk;
 		internal Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
 		internal Buffer<Value> stack = new Buffer<Value>(32);
 		internal Buffer<ICommand> commands = new Buffer<ICommand>(8);
-		internal Buffer<string> localVariableNames = new Buffer<string>(8);
+		internal Buffer<VariableInfo> localVariableInfos = new Buffer<VariableInfo>(8);
 
 		internal Option<RuntimeError> error;
 

@@ -17,11 +17,13 @@ namespace Flow
 	internal struct LocalVariable
 	{
 		public Slice slice;
+		public byte size;
 		public bool used;
 
-		public LocalVariable(Slice slice, bool used)
+		public LocalVariable(Slice slice, byte size, bool used)
 		{
 			this.slice = slice;
+			this.size = size;
 			this.used = used;
 		}
 	}

@@ -40,13 +40,6 @@ namespace Flow
 		public string Format() => $"Too many expression values. Max is {byte.MaxValue}";
 	}
 
-	internal struct ExpectedOneValueToAssignToVariableError : IFormattedMessage
-	{
-		public int got;
-		public string name;
-		public string Format() => $"Expected one value to assign to variable '{name}'. Got {got}";
-	}
-
 	internal struct InvalidTokenAfterPipeError : IFormattedMessage
 	{
 		public string Format() => "Expected variable or command after '|'";
@@ -98,9 +91,17 @@ namespace Flow
 		public string Format() => "Can only assign variables at top level expressions";
 	}
 
-	internal struct TooManyLocalVariablesError : IFormattedMessage
+	internal struct WrongNumberOfValuesOnVariableAssignmentError : IFormattedMessage
 	{
-		public string Format() => $"Too many variables. Max is {byte.MaxValue}";
+		public string variableName;
+		public int expected;
+		public int got;
+		public string Format() => $"Wrong number values when assigning to variable '{variableName}'. Expected {expected}. Got {got}";
+	}
+
+	internal struct VariableTooDeepToBeAddressedError : IFormattedMessage
+	{
+		public string Format() => "Variable's location is too deep to be addressed";
 	}
 
 	internal struct LocalVariableUnassignedError : IFormattedMessage

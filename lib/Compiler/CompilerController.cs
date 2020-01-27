@@ -217,24 +217,12 @@ namespace Flow
 				switch (compiler.parser.previousToken.kind)
 				{
 				case TokenKind.Variable:
-					if (previous.valueCount != 1)
-					{
-						var varSlice = compiler.parser.previousToken.slice;
-						compiler.AddSoftError(previous.slice, new ExpectedOneValueToAssignToVariableError
-						{
-							got = previous.valueCount,
-							name = CompilerHelper.GetSlice(compiler, varSlice)
-						});
-					}
-
-					AssignLocal(canAssignToVariable);
+					AssignLocal(canAssignToVariable, previous.valueCount);
 					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 					return new ExpressionResult(slice, 0);
 				case TokenKind.Identifier:
-					{
-						previous = PipeCommand(previous);
-						break;
-					}
+					previous = PipeCommand(previous);
+					break;
 				default:
 					compiler.AddHardError(compiler.parser.previousToken.slice, new InvalidTokenAfterPipeError());
 					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
@@ -307,7 +295,7 @@ namespace Flow
 			}
 		}
 
-		private void AssignLocal(bool canAssign)
+		private void AssignLocal(bool canAssign, byte size)
 		{
 			var slice = compiler.parser.previousToken.slice;
 
@@ -319,18 +307,24 @@ namespace Flow
 
 			if (compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
 			{
+				var localVarSize = compiler.localVariables.buffer[localIndex].size;
+				if (size != localVarSize)
+				{
+					compiler.AddSoftError(slice, new WrongNumberOfValuesOnVariableAssignmentError
+					{
+						variableName = CompilerHelper.GetSlice(compiler, slice),
+						expected = localVarSize,
+						got = size
+					});
+				}
+
 				compiler.EmitInstruction(Instruction.AssignLocal);
-				compiler.EmitByte((byte)localIndex);
+				compiler.EmitByte(compiler.GetLocalVariableStackIndex(localIndex));
+				compiler.EmitByte(localVarSize);
 			}
 			else
 			{
-				if (localIndex > byte.MaxValue)
-				{
-					compiler.AddSoftError(slice, new TooManyLocalVariablesError());
-					return;
-				}
-
-				compiler.AddLocalVariable(slice, false);
+				compiler.AddLocalVariable(slice, size, false);
 			}
 		}
 
@@ -341,16 +335,19 @@ namespace Flow
 			if (self.compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
 			{
 				self.compiler.localVariables.buffer[localIndex].used = true;
+				var size = self.compiler.localVariables.buffer[localIndex].size;
 
 				self.compiler.EmitInstruction(Instruction.LoadLocal);
-				self.compiler.EmitByte((byte)localIndex);
+				self.compiler.EmitByte(self.compiler.GetLocalVariableStackIndex(localIndex));
+				self.compiler.EmitByte(size);
+
+				return size;
 			}
 			else
 			{
 				self.compiler.AddSoftError(slice, new LocalVariableUnassignedError { name = CompilerHelper.GetSlice(self.compiler, slice) });
+				return 1;
 			}
-
-			return 1;
 		}
 
 		internal static byte Literal(CompilerController self)

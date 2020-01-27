@@ -103,14 +103,15 @@ namespace Flow
 			case Instruction.LoadTrue:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.PopMultiple:
+			case Instruction.PopLocalInfos:
+				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
-			case Instruction.PopLocals:
-				return TwoByteInstruction(self, instruction, index, sb);
+				return ThreeByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.AddLocalName:
-				return AddLocalNameInstruction(self, instruction, index, sb);
+			case Instruction.PushLocalInfo:
+				return PushLocalInfoInstruction(self, instruction, index, sb);
 			case Instruction.CallNativeCommand:
 				return CallCommandInstruction(self, instruction, index, sb);
 			case Instruction.JumpForward:
@@ -133,15 +134,25 @@ namespace Flow
 		{
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[index + 1]);
-			return index + 2;
+			sb.Append(chunk.bytes.buffer[++index]);
+			return ++index;
+		}
+
+		private static int ThreeByteInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		{
+			sb.Append(instruction.ToString());
+			sb.Append(' ');
+			sb.Append(chunk.bytes.buffer[++index]);
+			sb.Append(' ');
+			sb.Append(chunk.bytes.buffer[++index]);
+			return ++index;
 		}
 
 		private static int LoadLiteralInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[index + 1],
-				chunk.bytes.buffer[index + 2]
+				chunk.bytes.buffer[++index],
+				chunk.bytes.buffer[++index]
 			);
 			var value = chunk.literals.buffer[literalIndex];
 
@@ -149,58 +160,62 @@ namespace Flow
 			sb.Append(' ');
 			value.AppendTo(sb);
 
-			return index + 3;
+			return ++index;
 		}
 
-		private static int AddLocalNameInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int PushLocalInfoInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[index + 1],
-				chunk.bytes.buffer[index + 2]
+				chunk.bytes.buffer[++index],
+				chunk.bytes.buffer[++index]
 			);
+			var size = chunk.bytes.buffer[++index];
+
 			var name = chunk.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
-			sb.Append(' ');
-			name.AppendTo(sb);
+			sb.Append(" '");
+			sb.Append(name.asObject);
+			sb.Append("' size ");
+			sb.Append(size);
 
-			return index + 3;
+			return ++index;
 		}
 
 		private static int CallCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var instanceIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[index + 1],
-				chunk.bytes.buffer[index + 2]
+				chunk.bytes.buffer[++index],
+				chunk.bytes.buffer[++index]
 			);
-			var inputCount = chunk.bytes.buffer[index + 3];
+			var inputCount = chunk.bytes.buffer[++index];
 
 			var commandIndex = chunk.commandInstances.buffer[instanceIndex];
 			var command = chunk.commandDefinitions.buffer[commandIndex];
 
 			sb.Append(instruction.ToString());
-			sb.Append(' ');
+			sb.Append(" '");
 			sb.Append(command.name);
-			sb.Append(" with ");
+			sb.Append("' inputs ");
 			sb.Append(inputCount);
-			sb.Append(" inputs");
 
-			return index + 4;
+			return ++index;
 		}
 
 		private static int JumpInstruction(ByteCodeChunk chunk, Instruction instruction, int direction, int index, StringBuilder sb)
 		{
+			var offset = BytesHelper.BytesToUShort(
+				chunk.bytes.buffer[++index],
+				chunk.bytes.buffer[++index]
+			);
+
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
-			var offset = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[index + 1],
-				chunk.bytes.buffer[index + 2]
-			);
 			sb.Append(offset);
-			sb.Append(" (goto ");
-			sb.Append(index + 3 + offset * direction);
-			sb.Append(")");
-			return index + 3;
+			sb.Append(" goto ");
+			sb.Append(index + 1 + offset * direction);
+
+			return ++index;
 		}
 	}
 }
