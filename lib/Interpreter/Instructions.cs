@@ -13,7 +13,9 @@ namespace Flow
 		PopLocalInfos,
 		AssignLocal,
 		LoadLocal,
+		JumpBackward,
 		JumpForward,
 		PopAndJumpForwardIfFalse,
+		JumpForwardIfNull,
 	}
 }

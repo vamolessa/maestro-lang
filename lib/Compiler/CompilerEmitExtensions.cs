@@ -57,6 +57,25 @@ namespace Flow
 			self.EmitByte(inputCount);
 		}
 
+		public static int BeginEmitBackwardJump(this Compiler self)
+		{
+			return self.chunk.bytes.count;
+		}
+
+		public static void EndEmitBackwardJump(this Compiler self, Instruction instruction, int jumpIndex)
+		{
+			self.EmitInstruction(instruction);
+
+			var offset = self.chunk.bytes.count - jumpIndex + 2;
+			if (offset > ushort.MaxValue)
+			{
+				self.AddSoftError(self.parser.previousToken.slice, new TooMuchCodeToJumpOverError());
+				offset = 0;
+			}
+
+			self.EmitUShort((ushort)offset);
+		}
+
 		public static int BeginEmitForwardJump(this Compiler self, Instruction instruction)
 		{
 			self.EmitInstruction(instruction);
@@ -69,7 +88,10 @@ namespace Flow
 		{
 			var offset = self.chunk.bytes.count - jumpIndex - 2;
 			if (offset > ushort.MaxValue)
+			{
 				self.AddSoftError(self.parser.previousToken.slice, new TooMuchCodeToJumpOverError());
+				offset = 0;
+			}
 
 			BytesHelper.UShortToBytes(
 				(ushort)offset,

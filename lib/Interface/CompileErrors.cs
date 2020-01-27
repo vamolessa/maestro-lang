@@ -61,10 +61,10 @@ namespace Flow
 		public string Format() => "Expected '{' after else";
 	}
 
-	internal struct ExpectedTwoValuesAsIterateConditionError : IFormattedMessage
+	internal struct ExpectedOneValueAsIterateConditionError : IFormattedMessage
 	{
 		public int got;
-		public string Format() => $"Expected two values as 'iterate' condition. Got {got}";
+		public string Format() => $"Expected one value as 'iterate' condition. Got {got}";
 	}
 
 	internal struct ExpectedOpenCurlyBracesAfterIterateConditionError : IFormattedMessage
@@ -125,7 +125,7 @@ namespace Flow
 		public string Format() => $"Expected literal. Got {got}";
 	}
 
-	internal struct LocalVariableNotUsedError : IFormattedMessage
+	internal struct UnusedLocalVariableError : IFormattedMessage
 	{
 		public string name;
 		public string Format() => $"Variable '{name}' is never used";

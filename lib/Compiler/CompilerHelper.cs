@@ -14,15 +14,22 @@ namespace Flow
 		}
 	}
 
+	internal enum LocalVariableFlag
+	{
+		Unused,
+		Used,
+		Input,
+	}
+
 	internal struct LocalVariable
 	{
 		public Slice slice;
-		public bool used;
+		public LocalVariableFlag flag;
 
-		public LocalVariable(Slice slice, bool used)
+		public LocalVariable(Slice slice, LocalVariableFlag flag)
 		{
 			this.slice = slice;
-			this.used = used;
+			this.flag = flag;
 		}
 	}
 

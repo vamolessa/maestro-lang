@@ -2,21 +2,13 @@ namespace Flow
 {
 	public struct StackFrame
 	{
-		public enum Type : ushort
-		{
-			EntryPoint,
-			Function,
-		}
-
 		public int codeIndex;
 		public int stackIndex;
-		public Type type;
 
-		public StackFrame(int codeIndex, int stackIndex, Type type)
+		public StackFrame(int codeIndex, int stackIndex)
 		{
 			this.codeIndex = codeIndex;
 			this.stackIndex = stackIndex;
-			this.type = type;
 		}
 	}
 

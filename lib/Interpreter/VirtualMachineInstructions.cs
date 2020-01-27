@@ -98,6 +98,12 @@ namespace Flow
 						stack.PushBackUnchecked(stack.buffer[index]);
 						break;
 					}
+				case Instruction.JumpBackward:
+					{
+						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						codeIndex -= offset;
+						break;
+					}
 				case Instruction.JumpForward:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
@@ -110,6 +116,13 @@ namespace Flow
 						if (!stack.buffer[--stack.count].IsTruthy())
 							codeIndex += offset;
 						stack.buffer[stack.count] = default;
+						break;
+					}
+				case Instruction.JumpForwardIfNull:
+					{
+						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						if (stack.buffer[stack.count - 1].asObject is null)
+							codeIndex += offset;
 						break;
 					}
 				default:

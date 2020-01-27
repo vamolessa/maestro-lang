@@ -113,8 +113,11 @@ namespace Flow
 				return PushLocalInfoInstruction(self, instruction, index, sb);
 			case Instruction.CallNativeCommand:
 				return CallCommandInstruction(self, instruction, index, sb);
+			case Instruction.JumpBackward:
+				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
 			case Instruction.PopAndJumpForwardIfFalse:
+			case Instruction.JumpForwardIfNull:
 				return JumpInstruction(self, instruction, 1, index, sb);
 			default:
 				sb.Append("Unknown instruction ");

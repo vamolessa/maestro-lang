@@ -15,9 +15,9 @@ namespace Flow
 			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
 			{
 				var local = self.localVariables.buffer[i];
-				if (!local.used)
+				if (local.flag == LocalVariableFlag.Unused)
 				{
-					self.AddSoftError(local.slice, new LocalVariableNotUsedError { name = CompilerHelper.GetSlice(self, local.slice) });
+					self.AddSoftError(local.slice, new UnusedLocalVariableError { name = CompilerHelper.GetSlice(self, local.slice) });
 				}
 			}
 

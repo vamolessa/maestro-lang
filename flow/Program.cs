@@ -43,6 +43,24 @@ namespace Flow
 			}
 		}
 
+		public sealed class ElementsCommand : ICommand<Tuple0, Tuple1>
+		{
+			public int currentIndex = 0;
+
+			public Tuple1 Invoke(Inputs inputs, Tuple0 args)
+			{
+				if (currentIndex < inputs.count)
+				{
+					return inputs[currentIndex++];
+				}
+				else
+				{
+					currentIndex = 0;
+					return default;
+				}
+			}
+		}
+
 		public static void Main(string[] args)
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.flow");
@@ -51,6 +69,7 @@ namespace Flow
 			var chunk = new ByteCodeChunk();
 			chunk.RegisterCommand(CommandDefinition.Create("print", () => new PrintCommand()));
 			chunk.RegisterCommand(CommandDefinition.Create("bypass", () => new BypassCommand()));
+			chunk.RegisterCommand(CommandDefinition.Create("elements", () => new ElementsCommand()));
 
 			var controller = new CompilerController();
 			var errors = controller.CompileSource(chunk, source);
@@ -69,7 +88,7 @@ namespace Flow
 				var vm = new VirtualMachine();
 				vm.Load(chunk);
 
-				vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, StackFrame.Type.EntryPoint));
+				vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0));
 				VirtualMachineInstructions.Run(vm);
 
 				System.Console.WriteLine("FINISH");

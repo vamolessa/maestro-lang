@@ -87,7 +87,7 @@ namespace Flow
 		{
 			if (!TryParseWithPrecedence(precedence, out var result))
 			{
-				compiler.AddHardError(compiler.parser.previousToken.slice, new ExpectedExpressionError());
+				compiler.AddHardError(result.slice, new ExpectedExpressionError());
 			}
 
 			return result;
@@ -175,21 +175,30 @@ namespace Flow
 
 		private void IterateStatement()
 		{
-			// BACKWARD JUMP
+			var loopJump = compiler.BeginEmitBackwardJump();
 
+			var scope = compiler.BeginScope();
 			var expression = Expression(false);
-			if (expression.valueCount != 2)
+			if (expression.valueCount != 1)
 			{
-				compiler.AddSoftError(expression.slice, new ExpectedTwoValuesAsIterateConditionError
+				compiler.AddSoftError(expression.slice, new ExpectedOneValueAsIterateConditionError
 				{
 					got = expression.valueCount
 				});
 			}
 
+			var breakJump = compiler.BeginEmitForwardJump(Instruction.JumpForwardIfNull);
+
+			compiler.AddLocalVariable(default, LocalVariableFlag.Input);
+
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new ExpectedOpenCurlyBracesAfterIterateConditionError());
 			Block();
 
-			// BACKWARD JUMP
+			compiler.EndScope(scope);
+			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
+			compiler.EndEmitForwardJump(breakJump);
+
+			compiler.EmitPop(1);
 		}
 
 		private void Block()
@@ -380,7 +389,7 @@ namespace Flow
 					var varSlice = slices.buffer[i];
 					if (compiler.localVariables.count >= byte.MaxValue)
 						compiler.AddSoftError(varSlice, new TooManyVariablesError());
-					compiler.AddLocalVariable(varSlice, false);
+					compiler.AddLocalVariable(varSlice, LocalVariableFlag.Unused);
 				}
 			}
 		}
@@ -391,7 +400,10 @@ namespace Flow
 
 			if (self.compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
 			{
-				self.compiler.localVariables.buffer[localIndex].used = true;
+				ref var flag = ref self.compiler.localVariables.buffer[localIndex].flag;
+				if (flag == LocalVariableFlag.Unused)
+					flag = LocalVariableFlag.Used;
+
 				self.compiler.EmitInstruction(Instruction.LoadLocal);
 				self.compiler.EmitByte(localIndex);
 			}
