@@ -19,6 +19,25 @@ namespace Flow
 			return true;
 		}
 
+		public static int MatchFirstDigit(string str, int index)
+		{
+			if (index >= str.Length)
+				return 0;
+
+			var firstCh = str[index];
+			if (char.IsDigit(firstCh))
+				return 1;
+
+			if (firstCh != '+' && firstCh != '-')
+				return 0;
+
+			index += 1;
+			if (index >= str.Length)
+				return 0;
+
+			return char.IsDigit(str, index) ? 2 : 0;
+		}
+
 		public abstract int Scan(string input, int index);
 
 		public Scanner ForToken(TokenKind tokenKind)
@@ -127,10 +146,11 @@ namespace Flow
 	{
 		public override int Scan(string input, int index)
 		{
-			if (index >= input.Length || !char.IsDigit(input, index))
+			var matchOffset = MatchFirstDigit(input, index);
+			if (matchOffset == 0)
 				return 0;
 
-			for (var i = index + 1; i < input.Length; i++)
+			for (var i = index + matchOffset; i < input.Length; i++)
 			{
 				if (!char.IsDigit(input, i))
 					return i - index;
@@ -144,10 +164,11 @@ namespace Flow
 	{
 		public override int Scan(string input, int index)
 		{
-			if (index >= input.Length || !char.IsDigit(input, index))
+			var matchOffset = MatchFirstDigit(input, index);
+			if (matchOffset == 0)
 				return 0;
 
-			var i = index + 1;
+			var i = index + matchOffset;
 			for (; i < input.Length; i++)
 			{
 				if (!char.IsDigit(input, i))

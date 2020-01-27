@@ -1,3 +1,1 @@
-if 3, 5 | bypass {
-	"hello", "world" | print;
-}
++2, -34 | print;
