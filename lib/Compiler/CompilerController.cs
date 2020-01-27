@@ -83,6 +83,16 @@ namespace Flow
 			return true;
 		}
 
+		private ExpressionResult ParseWithPrecedence(Precedence precedence)
+		{
+			if (!TryParseWithPrecedence(precedence, out var result))
+			{
+				compiler.AddHardError(compiler.parser.previousToken.slice, new ExpectedExpressionError());
+			}
+
+			return result;
+		}
+
 		private void Statement()
 		{
 			if (compiler.parser.Match(TokenKind.If))
@@ -106,13 +116,21 @@ namespace Flow
 
 		private ExpressionResult Expression(bool canAssignToVariable)
 		{
-			if (!TryParseWithPrecedence(Precedence.Pipe, out var result))
-				compiler.AddHardError(compiler.parser.previousToken.slice, new ExpectedExpressionError());
+			var expression = ParseWithPrecedence(Precedence.Expression);
 
 			if (compiler.parser.Match(TokenKind.Pipe))
-				result = Pipe(result, canAssignToVariable);
+			{
+				var valueCount = Pipe(expression, canAssignToVariable);
+				expression = new ExpressionResult(
+					Slice.FromTo(
+						expression.slice,
+						compiler.parser.previousToken.slice
+					),
+					valueCount
+				);
+			}
 
-			return result;
+			return expression;
 		}
 
 		private bool TryValue(out ExpressionResult result)
@@ -196,9 +214,10 @@ namespace Flow
 			return expression.valueCount;
 		}
 
-		private ExpressionResult Pipe(ExpressionResult previous, bool canAssignToVariable)
+		private byte Pipe(ExpressionResult previous, bool canAssignToVariable)
 		{
 			var slice = compiler.parser.previousToken.slice;
+			var valueCount = previous.valueCount;
 
 			while (!compiler.parser.Check(TokenKind.End))
 			{
@@ -206,28 +225,28 @@ namespace Flow
 				switch (compiler.parser.previousToken.kind)
 				{
 				case TokenKind.Variable:
-					AssignLocals(canAssignToVariable, previous.valueCount);
+					AssignLocals(canAssignToVariable, valueCount);
 					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
-					return new ExpressionResult(slice, 0);
+					return 0;
 				case TokenKind.Identifier:
-					previous = PipeCommand(previous);
+					valueCount = PipedCommand(valueCount);
 					break;
 				default:
 					compiler.AddHardError(compiler.parser.previousToken.slice, new InvalidTokenAfterPipeError());
 					slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
-					return new ExpressionResult(slice, 0);
+					return 0;
 				}
 
 				if (!compiler.parser.Match(TokenKind.Pipe))
 					break;
 			}
 
-			return previous;
+			return valueCount;
 		}
 
 		internal static byte Comma(CompilerController self, ExpressionResult previous)
 		{
-			var expression = self.Expression(false);
+			var expression = self.ParseWithPrecedence(Precedence.Comma + 1);
 			var valueCount = previous.valueCount + expression.valueCount;
 
 			if (valueCount > byte.MaxValue)
@@ -242,11 +261,10 @@ namespace Flow
 
 		internal static byte Command(CompilerController self)
 		{
-			var result = new ExpressionResult(self.compiler.parser.previousToken.slice, 0);
-			return self.PipeCommand(result).valueCount;
+			return self.PipedCommand(0);
 		}
 
-		private ExpressionResult PipeCommand(ExpressionResult previous)
+		private byte PipedCommand(byte valueCount)
 		{
 			var commandSlice = compiler.parser.previousToken.slice;
 			var slice = commandSlice;
@@ -276,7 +294,7 @@ namespace Flow
 			if (commandIndex < 0)
 			{
 				compiler.AddSoftError(slice, new CommandNotRegisteredError { name = CompilerHelper.GetSlice(compiler, commandSlice) });
-				return new ExpressionResult(slice, 0);
+				return 0;
 			}
 			else
 			{
@@ -292,36 +310,21 @@ namespace Flow
 				}
 				else
 				{
-					compiler.EmitCallNativeCommand(commandIndex, previous.valueCount);
+					compiler.EmitCallNativeCommand(commandIndex, valueCount);
 				}
 
-				return new ExpressionResult(slice, command.returnCount);
+				return command.returnCount;
 			}
 		}
 
-		private void AssignLocals(bool canAssign, byte valueCount)
+		private bool AssignLocal(Slice slice)
 		{
-			var slice = compiler.parser.previousToken.slice;
-
-			if (!canAssign)
-			{
-				compiler.AddSoftError(slice, new CanOnlyAssignVariablesAtTopLevelExpressionsError());
-				return;
-			}
-
 			if (compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
 			{
-				if (valueCount != 1)
-				{
-					compiler.AddSoftError(slice, new ExpectedOneValueToAssignToVariableError
-					{
-						variableName = CompilerHelper.GetSlice(compiler, slice),
-						got = valueCount
-					});
-				}
-
 				compiler.EmitInstruction(Instruction.AssignLocal);
 				compiler.EmitByte(localIndex);
+
+				return false;
 			}
 			else
 			{
@@ -329,6 +332,47 @@ namespace Flow
 					compiler.AddSoftError(slice, new TooManyVariablesError());
 
 				compiler.AddLocalVariable(slice, false);
+
+				return true;
+			}
+		}
+
+		private void AssignLocals(bool canAssign, byte valueCount)
+		{
+			var slice = compiler.parser.previousToken.slice;
+
+			var isDeclaration = AssignLocal(slice);
+			var hasMixedAssignmentType = false;
+			var count = 1;
+
+			while (compiler.parser.Match(TokenKind.Comma))
+			{
+				compiler.parser.Consume(TokenKind.Variable, new ExpectedVariableAsAssignmentTargetError());
+				var varSlice = compiler.parser.previousToken.slice;
+
+				var isAnotherDeclaration = AssignLocal(varSlice);
+				if (isAnotherDeclaration != isDeclaration)
+					hasMixedAssignmentType = true;
+
+				slice = Slice.FromTo(slice, varSlice);
+				count += 1;
+			}
+
+			if (!canAssign)
+			{
+				compiler.AddSoftError(slice, new CanOnlyAssignVariablesAtTopLevelExpressionsError());
+			}
+			else if (count != valueCount)
+			{
+				compiler.AddSoftError(slice, new WrongNumberOfValuesOnVariablesAssignmentError
+				{
+					expected = valueCount,
+					got = count
+				});
+			}
+			else if (hasMixedAssignmentType)
+			{
+				compiler.AddSoftError(slice, new MixedAssignmentTypeError());
 			}
 		}
 

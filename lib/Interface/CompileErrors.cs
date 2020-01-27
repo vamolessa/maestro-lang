@@ -86,16 +86,26 @@ namespace Flow
 		public string Format() => $"Command '{name}' not registered";
 	}
 
+	internal struct ExpectedVariableAsAssignmentTargetError : IFormattedMessage
+	{
+		public string Format() => "Expected variable as assignment target";
+	}
+
 	internal struct CanOnlyAssignVariablesAtTopLevelExpressionsError : IFormattedMessage
 	{
 		public string Format() => "Can only assign variables at top level expressions";
 	}
 
-	internal struct ExpectedOneValueToAssignToVariableError : IFormattedMessage
+	internal struct MixedAssignmentTypeError : IFormattedMessage
 	{
-		public string variableName;
+		public string Format() => "Can not mix variable assignment with variable declaration";
+	}
+
+	internal struct WrongNumberOfValuesOnVariablesAssignmentError : IFormattedMessage
+	{
+		public int expected;
 		public int got;
-		public string Format() => $"Expected one value to assign to variable '{variableName}'. Got {got}";
+		public string Format() => $"Wrong number of values on variables assignment. Expected {expected}. Got {got}";
 	}
 
 	internal struct TooManyVariablesError : IFormattedMessage

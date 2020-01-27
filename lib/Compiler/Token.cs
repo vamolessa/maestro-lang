@@ -37,7 +37,7 @@ namespace Flow
 	internal enum Precedence
 	{
 		None,
-		Pipe,
+		Expression,
 		Comma,
 		Primary,
 	}
