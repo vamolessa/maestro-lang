@@ -68,6 +68,17 @@ namespace Flow
 		public string Format() => "Expected '{' after else";
 	}
 
+	internal struct ExpectedTwoValuesAsIterateConditionError : IFormattedMessage
+	{
+		public int got;
+		public string Format() => $"Expected two values as iterate condition. Got {got}";
+	}
+
+	internal struct ExpectedOpenCurlyBracesAfterIterateConditionError : IFormattedMessage
+	{
+		public string Format() => "Expected '{' after iterate condition";
+	}
+
 	internal struct WrongNumberOfCommandArgumentsError : IFormattedMessage
 	{
 		public string commandName;

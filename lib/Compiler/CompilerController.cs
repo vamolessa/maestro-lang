@@ -87,6 +87,8 @@ namespace Flow
 		{
 			if (compiler.parser.Match(TokenKind.If))
 				IfStatement();
+			else if (compiler.parser.Match(TokenKind.Iterate))
+				IterateStatement();
 			else
 				ExpressionStatement();
 		}
@@ -129,10 +131,9 @@ namespace Flow
 				});
 			}
 
-			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new ExpectedOpenCurlyBracesAfterIfConditionError());
-
 			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopAndJumpForwardIfFalse);
 
+			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new ExpectedOpenCurlyBracesAfterIfConditionError());
 			Block();
 
 			var thenJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
@@ -152,6 +153,25 @@ namespace Flow
 			}
 
 			compiler.EndEmitForwardJump(thenJump);
+		}
+
+		private void IterateStatement()
+		{
+			// BACKWARD JUMP
+
+			var expression = Expression(false);
+			if (expression.valueCount != 2)
+			{
+				compiler.AddSoftError(expression.slice, new ExpectedTwoValuesAsIterateConditionError
+				{
+					got = expression.valueCount
+				});
+			}
+
+			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new ExpectedOpenCurlyBracesAfterIterateConditionError());
+			Block();
+
+			// BACKWARD JUMP
 		}
 
 		private void Block()
