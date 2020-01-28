@@ -17,7 +17,7 @@ namespace Flow
 				var local = self.localVariables.buffer[i];
 				if (local.flag == LocalVariableFlag.Unused)
 				{
-					self.AddSoftError(local.slice, new UnusedLocalVariableError { name = CompilerHelper.GetSlice(self, local.slice) });
+					self.AddSoftError(local.slice, new CompileErrors.Variables.UnusedLocalVariable { name = CompilerHelper.GetSlice(self, local.slice) });
 				}
 			}
 

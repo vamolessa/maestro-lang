@@ -66,30 +66,24 @@ namespace Flow
 			var content = System.IO.File.ReadAllText("scripts/script.flow");
 			var source = new Source(new Uri("script.flow"), content);
 
-			var chunk = new ByteCodeChunk();
-			chunk.RegisterCommand(CommandDefinition.Create("print", () => new PrintCommand()));
-			chunk.RegisterCommand(CommandDefinition.Create("bypass", () => new BypassCommand()));
-			chunk.RegisterCommand(CommandDefinition.Create("elements", () => new ElementsCommand()));
+			var engine = new Engine();
+			engine.RegisterCommand("print", () => new PrintCommand());
+			engine.RegisterCommand("bypass", () => new PrintCommand());
+			engine.RegisterCommand("elements", () => new PrintCommand());
 
-			var controller = new CompilerController();
-			var errors = controller.CompileSource(chunk, source);
-
-			if (errors.count > 0)
+			var result = engine.CompileSource(source, Mode.Debug, null);
+			if (result.errors.count > 0)
 			{
-				var formattedErrors = GetFormattedCompileErrors(errors, source);
+				var formattedErrors = GetFormattedCompileErrors(result.errors, source);
 				System.Console.WriteLine(formattedErrors);
 			}
 			else
 			{
 				var sb = new StringBuilder();
-				chunk.Disassemble(sb);
+				result.Disassemble(sb);
 				System.Console.WriteLine(sb);
 
-				var vm = new VirtualMachine();
-				vm.Load(chunk);
-
-				vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0));
-				VirtualMachineInstructions.Run(vm);
+				engine.Execute(result);
 
 				System.Console.WriteLine("FINISH");
 			}

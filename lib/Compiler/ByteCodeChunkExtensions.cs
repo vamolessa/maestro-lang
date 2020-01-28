@@ -2,11 +2,11 @@ using System.Text;
 
 namespace Flow
 {
-	public sealed class ByteCodeChunkDebugView
+	internal sealed class ByteCodeChunkDebugView
 	{
-		public readonly string[] lines;
+		internal readonly string[] lines;
 
-		public ByteCodeChunkDebugView(ByteCodeChunk chunk)
+		internal ByteCodeChunkDebugView(ByteCodeChunk chunk)
 		{
 			var sb = new StringBuilder();
 			chunk.Disassemble(sb);
@@ -14,9 +14,9 @@ namespace Flow
 		}
 	}
 
-	public static class ByteCodeChunkExtensions
+	internal static class ByteCodeChunkExtensions
 	{
-		public static int FindSourceIndex(this ByteCodeChunk self, int codeIndex)
+		internal static int FindSourceIndex(this ByteCodeChunk self, int codeIndex)
 		{
 			for (var i = 0; i < self.sourceStartIndexes.count; i++)
 			{
@@ -27,7 +27,7 @@ namespace Flow
 			return -1;
 		}
 
-		public static void Disassemble(this ByteCodeChunk self, StringBuilder sb)
+		internal static void Disassemble(this ByteCodeChunk self, StringBuilder sb)
 		{
 			sb.Append("== ");
 			sb.Append(self.bytes.count);
@@ -88,7 +88,7 @@ namespace Flow
 				sb.AppendFormat("{0,4} ", currentPosition.lineIndex);
 		}
 
-		public static int DisassembleInstruction(this ByteCodeChunk self, int index, StringBuilder sb)
+		internal static int DisassembleInstruction(this ByteCodeChunk self, int index, StringBuilder sb)
 		{
 			sb.AppendFormat("{0:0000} ", index);
 

@@ -69,7 +69,7 @@ namespace Flow
 			var offset = self.chunk.bytes.count - jumpIndex + 2;
 			if (offset > ushort.MaxValue)
 			{
-				self.AddSoftError(self.parser.previousToken.slice, new TooMuchCodeToJumpOverError());
+				self.AddSoftError(self.parser.previousToken.slice, new CompileErrors.General.TooMuchCodeToJumpOver());
 				offset = 0;
 			}
 
@@ -89,7 +89,7 @@ namespace Flow
 			var offset = self.chunk.bytes.count - jumpIndex - 2;
 			if (offset > ushort.MaxValue)
 			{
-				self.AddSoftError(self.parser.previousToken.slice, new TooMuchCodeToJumpOverError());
+				self.AddSoftError(self.parser.previousToken.slice, new CompileErrors.General.TooMuchCodeToJumpOver());
 				offset = 0;
 			}
 

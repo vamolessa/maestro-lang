@@ -21,7 +21,7 @@ namespace Flow
 			}
 
 			Set(TokenKind.SemiColon, null, null, Precedence.None);
-			Set(TokenKind.OpenParenthesis, CompilerController.Grouping, null, Precedence.None);
+			Set(TokenKind.OpenParenthesis, CompilerController.Group, null, Precedence.None);
 			Set(TokenKind.OpenCurlyBrackets, null, null, Precedence.None);
 			Set(TokenKind.CloseParenthesis, null, null, Precedence.None);
 			Set(TokenKind.CloseCurlyBrackets, null, null, Precedence.None);
@@ -29,6 +29,9 @@ namespace Flow
 			Set(TokenKind.Comma, null, CompilerController.Comma, Precedence.Comma);
 			Set(TokenKind.If, null, null, Precedence.None);
 			Set(TokenKind.Else, null, null, Precedence.None);
+			Set(TokenKind.Iterate, null, null, Precedence.None);
+			Set(TokenKind.Command, null, null, Precedence.None);
+			Set(TokenKind.External, null, null, Precedence.None);
 			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
 			Set(TokenKind.Variable, CompilerController.LoadLocal, null, Precedence.None);
 			Set(TokenKind.InputVariable, CompilerController.LoadLocal, null, Precedence.None);

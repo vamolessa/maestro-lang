@@ -3,35 +3,23 @@ using System.Diagnostics;
 namespace Flow
 {
 	[DebuggerTypeProxy(typeof(ByteCodeChunkDebugView))]
-	public sealed class ByteCodeChunk
+	internal sealed class ByteCodeChunk
 	{
-		public Buffer<byte> bytes = new Buffer<byte>(256);
-		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
-		public Buffer<int> sourceStartIndexes = new Buffer<int>();
+		internal Buffer<byte> bytes = new Buffer<byte>(256);
+		internal Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
+		internal Buffer<int> sourceStartIndexes = new Buffer<int>();
 
-		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(16);
-		public Buffer<int> commandInstances = new Buffer<int>(32);
-		public Buffer<Value> literals = new Buffer<Value>(32);
+		internal Buffer<ExternalCommandDefinition> commandDefinitions = new Buffer<ExternalCommandDefinition>(16);
+		internal Buffer<int> commandInstances = new Buffer<int>(32);
+		internal Buffer<Value> literals = new Buffer<Value>(32);
 
-		public bool RegisterCommand(CommandDefinition command)
-		{
-			for (var i = 0; i < commandDefinitions.count; i++)
-			{
-				if (command.name == commandDefinitions.buffer[i].name)
-					return false;
-			}
-
-			commandDefinitions.PushBack(command);
-			return true;
-		}
-
-		public void WriteByte(byte value, Slice slice)
+		internal void WriteByte(byte value, Slice slice)
 		{
 			bytes.PushBack(value);
 			sourceSlices.PushBack(slice);
 		}
 
-		public int AddLiteral(Value value)
+		internal int AddLiteral(Value value)
 		{
 			for (var i = 0; i < literals.count; i++)
 			{
@@ -41,6 +29,18 @@ namespace Flow
 
 			literals.PushBack(value);
 			return literals.count - 1;
+		}
+
+		internal bool AddExternalCommand(ExternalCommandDefinition command)
+		{
+			for (var i = 0; i < commandDefinitions.count; i++)
+			{
+				if (command.name == commandDefinitions.buffer[i].name)
+					return false;
+			}
+
+			commandDefinitions.PushBack(command);
+			return true;
 		}
 	}
 }

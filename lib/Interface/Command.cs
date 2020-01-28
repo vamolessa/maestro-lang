@@ -52,31 +52,37 @@ namespace Flow
 		}
 	}
 
-	public readonly struct CommandDefinition
+	internal readonly struct ExternalCommandBinding
+	{
+		public readonly ExternalCommandDefinition definition;
+		public readonly System.Func<ICommand> factory;
+
+		public ExternalCommandBinding(ExternalCommandDefinition definition, System.Func<ICommand> factory)
+		{
+			this.definition = definition;
+			this.factory = factory;
+		}
+	}
+
+	internal readonly struct ExternalCommandDefinition
 	{
 		public readonly string name;
 		public readonly byte parameterCount;
 		public readonly byte returnCount;
-		internal readonly System.Func<ICommand> factory;
 
-		internal CommandDefinition(string name, byte parameterCount, byte returnCount, System.Func<ICommand> factory)
+		public ExternalCommandDefinition(string name, byte parameterCount, byte returnCount)
 		{
 			this.name = name;
 			this.parameterCount = parameterCount;
 			this.returnCount = returnCount;
-			this.factory = factory;
 		}
 
-		public static CommandDefinition Create<A, R>(string name, System.Func<ICommand<A, R>> factory)
-			where A : struct, ITuple
-			where R : struct, ITuple
+		public bool IsEqualTo(ExternalCommandDefinition other)
 		{
-			return new CommandDefinition(
-				name,
-				default(A).Size,
-				default(R).Size,
-				() => new CommandWrapper<A, R>(factory())
-			);
+			return
+				name == other.name &&
+				parameterCount == other.parameterCount &&
+				returnCount == other.returnCount;
 		}
 	}
 }

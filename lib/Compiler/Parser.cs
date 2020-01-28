@@ -31,7 +31,7 @@ namespace Flow
 				if (currentToken.kind != TokenKind.Error)
 					break;
 
-				onError(currentToken.slice, new InvalidTokenError());
+				onError(currentToken.slice, new CompileErrors.General.InvalidToken());
 			}
 		}
 

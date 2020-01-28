@@ -16,6 +16,13 @@ namespace Flow
 			count = 0;
 		}
 
+		public void ZeroReset()
+		{
+			for (var i = 0; i < buffer.Length; i++)
+				buffer[i] = default;
+			count = 0;
+		}
+
 		public void Grow(int size)
 		{
 			if (buffer == null)

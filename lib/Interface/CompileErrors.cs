@@ -1,133 +1,192 @@
-namespace Flow
+namespace Flow.CompileErrors
 {
-	internal struct NeverError : IFormattedMessage
+	namespace General
 	{
-		public string Format() => string.Empty;
+		internal struct InvalidToken : IFormattedMessage
+		{
+			public string Format() => "Invalid char";
+		}
+
+		internal struct TooMuchCodeToJumpOver : IFormattedMessage
+		{
+			public string Format() => "Too much code to jump over";
+		}
+
+		internal struct ExpectedExpression : IFormattedMessage
+		{
+			public string Format() => "Expected expression";
+		}
+
+		internal struct ExpectedSemiColonAfterStatement : IFormattedMessage
+		{
+			public string Format() => "Expected ';' after statement expression";
+		}
 	}
 
-	internal struct InvalidTokenError : IFormattedMessage
+	namespace ExternalCommands
 	{
-		public string Format() => "Invalid char";
+		internal struct ExpectedExternalCommandIdentifier : IFormattedMessage
+		{
+			public string Format() => "Expected external command name";
+		}
+
+		internal struct ExpectedExternalCommandParameterCount : IFormattedMessage
+		{
+			public string Format() => "Expected external command parameter count number";
+		}
+
+		internal struct ExpectedExternalCommandReturnCount : IFormattedMessage
+		{
+			public string Format() => "Expected external command return count number";
+		}
+
+		internal struct TooManyExternalCommandParameters : IFormattedMessage
+		{
+			public string Format() => $"Too many external command parameters. Max is {byte.MaxValue}";
+		}
+
+		internal struct TooManyExternalCommandReturnValues : IFormattedMessage
+		{
+			public string Format() => $"Too many external command return values. Max is {byte.MaxValue}";
+		}
 	}
 
-	internal struct TooMuchCodeToJumpOverError : IFormattedMessage
+	namespace Commands
 	{
-		public string Format() => "Too much code to jump over";
+		internal struct WrongNumberOfCommandArguments : IFormattedMessage
+		{
+			public string commandName;
+			public int expected;
+			public int got;
+			public string Format() => $"Wrong number of arguments for command '{commandName}'. Expected {expected}. Got {got}";
+		}
+
+		internal struct CommandNotRegistered : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Command '{name}' not registered";
+		}
+
+		internal struct CommandNameAlreadyRegistered : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Command name '{name}' already registered";
+		}
 	}
 
-	internal struct ExpectedExpressionError : IFormattedMessage
+	namespace If
 	{
-		public string Format() => "Expected expression";
+		internal struct ExprectedOneValueAsIfCondition : IFormattedMessage
+		{
+			public int got;
+			public string Format() => $"Expected one value as 'if' condition. Got {got}";
+		}
+
+		internal struct ExpectedOpenCurlyBracesAfterIfCondition : IFormattedMessage
+		{
+			public string Format() => "Expected '{' after 'if' condition";
+		}
+
+		internal struct ExpectedOpenCurlyBracesAfterElse : IFormattedMessage
+		{
+			public string Format() => "Expected '{' after else";
+		}
 	}
 
-	internal struct ExpectedSemiColonAfterStatementError : IFormattedMessage
+	namespace Iterate
 	{
-		public string Format() => "Expected ';' after statement expression";
+		internal struct ExpectedOneValueAsIterateCondition : IFormattedMessage
+		{
+			public int got;
+			public string Format() => $"Expected one value as 'iterate' condition. Got {got}";
+		}
+
+		internal struct ExpectedOpenCurlyBracesAfterIterateCondition : IFormattedMessage
+		{
+			public string Format() => "Expected '{' after 'iterate' condition";
+		}
 	}
 
-	internal struct ExpectedCloseCurlyBracketsAfterBlockError : IFormattedMessage
+	namespace Block
 	{
-		public string Format() => "Expected '}' after block";
+		internal struct ExpectedCloseCurlyBracketsAfterBlock : IFormattedMessage
+		{
+			public string Format() => "Expected '}' after block";
+		}
 	}
 
-	internal struct ExpectedCloseParenthesisAfterExpressionError : IFormattedMessage
+	namespace Group
 	{
-		public string Format() => "Expected ')' after expression";
+		internal struct ExpectedCloseParenthesisAfterExpression : IFormattedMessage
+		{
+			public string Format() => "Expected ')' after expression";
+		}
 	}
 
-	internal struct TooManyExpressionValuesError : IFormattedMessage
+	namespace Pipe
 	{
-		public string Format() => $"Too many expression values. Max is {byte.MaxValue}";
+		internal struct InvalidTokenAfterPipe : IFormattedMessage
+		{
+			public string Format() => "Expected variable or command after '|'";
+		}
 	}
 
-	internal struct InvalidTokenAfterPipeError : IFormattedMessage
+	namespace Comma
 	{
-		public string Format() => "Expected variable or command after '|'";
+		internal struct TooManyExpressionValues : IFormattedMessage
+		{
+			public string Format() => $"Too many expression values. Max is {byte.MaxValue}";
+		}
 	}
 
-	internal struct ExprectedOneValueAsIfConditionError : IFormattedMessage
+	namespace Variables
 	{
-		public int got;
-		public string Format() => $"Expected one value as 'if' condition. Got {got}";
+		internal struct ExpectedVariableAsAssignmentTarget : IFormattedMessage
+		{
+			public string Format() => "Expected variable as assignment target";
+		}
+
+		internal struct CanOnlyAssignToVariablesAtTopLevelExpressions : IFormattedMessage
+		{
+			public string Format() => "Can only assign to variables at top level expressions";
+		}
+
+		internal struct MixedAssignmentType : IFormattedMessage
+		{
+			public string Format() => "Can not mix variable assignment and variable declaration";
+		}
+
+		internal struct WrongNumberOfVariablesOnAssignment : IFormattedMessage
+		{
+			public int expected;
+			public int got;
+			public string Format() => $"Wrong number of variables on assignment. Expected {expected}. Got {got}";
+		}
+
+		internal struct TooManyVariables : IFormattedMessage
+		{
+			public string Format() => $"Too many variables. Max is {byte.MaxValue}";
+		}
+
+		internal struct LocalVariableUnassigned : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Use of unassigned '{name}' variable";
+		}
+
+		internal struct UnusedLocalVariable : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Variable '{name}' is never used";
+		}
 	}
 
-	internal struct ExpectedOpenCurlyBracesAfterIfConditionError : IFormattedMessage
+	namespace Literals
 	{
-		public string Format() => "Expected '{' after 'if' condition";
-	}
-
-	internal struct ExpectedOpenCurlyBracesAfterElseError : IFormattedMessage
-	{
-		public string Format() => "Expected '{' after else";
-	}
-
-	internal struct ExpectedOneValueAsIterateConditionError : IFormattedMessage
-	{
-		public int got;
-		public string Format() => $"Expected one value as 'iterate' condition. Got {got}";
-	}
-
-	internal struct ExpectedOpenCurlyBracesAfterIterateConditionError : IFormattedMessage
-	{
-		public string Format() => "Expected '{' after 'iterate' condition";
-	}
-
-	internal struct WrongNumberOfCommandArgumentsError : IFormattedMessage
-	{
-		public string commandName;
-		public int expected;
-		public int got;
-		public string Format() => $"Wrong number of arguments for command '{commandName}'. Expected {expected}. Got {got}";
-	}
-
-	internal struct CommandNotRegisteredError : IFormattedMessage
-	{
-		public string name;
-		public string Format() => $"Command '{name}' not registered";
-	}
-
-	internal struct ExpectedVariableAsAssignmentTargetError : IFormattedMessage
-	{
-		public string Format() => "Expected variable as assignment target";
-	}
-
-	internal struct CanOnlyAssignToVariablesAtTopLevelExpressionsError : IFormattedMessage
-	{
-		public string Format() => "Can only assign to variables at top level expressions";
-	}
-
-	internal struct MixedAssignmentTypeError : IFormattedMessage
-	{
-		public string Format() => "Can not mix variable assignment and variable declaration";
-	}
-
-	internal struct WrongNumberOfVariablesOnAssignmentError : IFormattedMessage
-	{
-		public int expected;
-		public int got;
-		public string Format() => $"Wrong number of variables on assignment. Expected {expected}. Got {got}";
-	}
-
-	internal struct TooManyVariablesError : IFormattedMessage
-	{
-		public string Format() => $"Too many variables. Max is {byte.MaxValue}";
-	}
-
-	internal struct LocalVariableUnassignedError : IFormattedMessage
-	{
-		public string name;
-		public string Format() => $"Use of unassigned '{name}' variable";
-	}
-
-	internal struct ExpectedLiteralError : IFormattedMessage
-	{
-		public TokenKind got;
-		public string Format() => $"Expected literal. Got {got}";
-	}
-
-	internal struct UnusedLocalVariableError : IFormattedMessage
-	{
-		public string name;
-		public string Format() => $"Variable '{name}' is never used";
+		internal struct ExpectedLiteral : IFormattedMessage
+		{
+			public TokenKind got;
+			public string Format() => $"Expected literal. Got {got}";
+		}
 	}
 }

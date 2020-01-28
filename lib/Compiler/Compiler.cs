@@ -48,7 +48,7 @@ namespace Flow
 		public void Reset(ByteCodeChunk chunk)
 		{
 			this.chunk = chunk;
-			errors.count = 0;
+			errors.ZeroReset();
 			stateFrameStack.count = 0;
 		}
 

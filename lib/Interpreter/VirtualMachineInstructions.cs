@@ -40,7 +40,7 @@ namespace Flow
 
 						var commandIndex = vm.chunk.commandInstances.buffer[index];
 						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
-						var instance = vm.commands.buffer[index];
+						var instance = vm.commandInstances.buffer[index];
 
 						var previousStackCount = stack.count;
 						stack.count -= inputCount + command.parameterCount;

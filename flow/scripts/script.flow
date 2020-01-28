@@ -1,3 +1,6 @@
+external elements 0 1;
+external print 0 0;
+
 iterate 1, 2, 3 | elements {
 	$$ | print;
 }
