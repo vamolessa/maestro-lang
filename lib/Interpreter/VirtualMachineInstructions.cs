@@ -5,7 +5,7 @@ namespace Flow
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static void Run(VirtualMachine vm)
+		public static void Execute(VirtualMachine vm)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();

@@ -68,22 +68,24 @@ namespace Flow
 
 			var engine = new Engine();
 			engine.RegisterCommand("print", () => new PrintCommand());
-			engine.RegisterCommand("bypass", () => new PrintCommand());
-			engine.RegisterCommand("elements", () => new PrintCommand());
+			engine.RegisterCommand("bypass", () => new BypassCommand());
+			engine.RegisterCommand("elements", () => new ElementsCommand());
 
-			var result = engine.CompileSource(source, Mode.Debug, null);
-			if (result.errors.count > 0)
+			var compileResult = engine.CompileSource(source, Mode.Debug, null);
+			if (compileResult.errors.count > 0)
 			{
-				var formattedErrors = GetFormattedCompileErrors(result.errors, source);
+				var formattedErrors = GetFormattedCompileErrors(compileResult.errors, source);
 				System.Console.WriteLine(formattedErrors);
 			}
 			else
 			{
 				var sb = new StringBuilder();
-				result.Disassemble(sb);
+				compileResult.Disassemble(sb);
 				System.Console.WriteLine(sb);
 
-				engine.Execute(result);
+				var executeResult = engine.Execute(compileResult);
+				if (executeResult.isSome)
+					System.Console.WriteLine(executeResult.value.message.Format());
 
 				System.Console.WriteLine("FINISH");
 			}

@@ -69,7 +69,7 @@ namespace Flow
 				return loadResult;
 
 			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0));
-			VirtualMachineInstructions.Run(vm);
+			VirtualMachineInstructions.Execute(vm);
 
 			return Option.None;
 		}

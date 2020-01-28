@@ -18,8 +18,12 @@ namespace Flow
 
 		public void ZeroReset()
 		{
-			for (var i = 0; i < buffer.Length; i++)
-				buffer[i] = default;
+			if (buffer != null)
+			{
+				for (var i = 0; i < buffer.Length; i++)
+					buffer[i] = default;
+			}
+			
 			count = 0;
 		}
 
