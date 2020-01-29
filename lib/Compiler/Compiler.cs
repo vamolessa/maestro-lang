@@ -2,7 +2,7 @@ namespace Flow
 {
 	internal sealed class Compiler
 	{
-		private readonly struct StateFrame
+		private readonly struct State
 		{
 			public readonly string sourceContent;
 			public readonly int sourceIndex;
@@ -11,7 +11,7 @@ namespace Flow
 			public readonly Token previousToken;
 			public readonly Token currentToken;
 
-			public StateFrame(string sourceContent, int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
+			public State(string sourceContent, int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
 			{
 				this.sourceContent = sourceContent;
 				this.sourceIndex = sourceIndex;
@@ -22,6 +22,7 @@ namespace Flow
 			}
 		}
 
+		public Mode mode;
 		public readonly Parser parser;
 		public ByteCodeChunk chunk;
 
@@ -31,9 +32,8 @@ namespace Flow
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
 		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
-		public int scopeDepth;
 
-		private Buffer<StateFrame> stateFrameStack = new Buffer<StateFrame>();
+		private Buffer<State> stateStack = new Buffer<State>();
 
 		public Compiler()
 		{
@@ -45,28 +45,27 @@ namespace Flow
 			parser = new Parser(AddTokenizerError);
 		}
 
-		public void Reset(ByteCodeChunk chunk)
+		public void Reset(Mode mode, ByteCodeChunk chunk)
 		{
+			this.mode = mode;
 			this.chunk = chunk;
+
 			errors.ZeroReset();
-			stateFrameStack.count = 0;
+			stateStack.ZeroReset();
 		}
 
-		private void RestoreState(StateFrame state)
+		private void RestoreState(State state)
 		{
 			parser.tokenizer.Reset(state.sourceContent, state.tokenizerIndex);
 			parser.Reset(state.previousToken, state.currentToken);
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
-
-			localVariables.count = 0;
-			scopeDepth = 0;
 		}
 
 		public void BeginSource(string source, int sourceIndex)
 		{
-			stateFrameStack.PushBack(new StateFrame(
+			stateStack.PushBack(new State(
 				parser.tokenizer.source,
 				this.sourceIndex,
 
@@ -75,7 +74,7 @@ namespace Flow
 				parser.currentToken
 			));
 
-			RestoreState(new StateFrame(
+			RestoreState(new State(
 				source,
 				sourceIndex,
 				0,
@@ -86,11 +85,11 @@ namespace Flow
 
 		public void EndSource()
 		{
-			var current = stateFrameStack.PopLast();
+			var current = stateStack.PopLast();
 			this.EndScope(new Scope(0));
 			RestoreState(current);
 
-			if (stateFrameStack.count == 0)
+			if (stateStack.count == 0)
 				this.EmitInstruction(Instruction.Halt);
 		}
 

@@ -101,17 +101,18 @@ namespace Flow
 			case Instruction.Pop:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
+			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.PopMultiple:
-			case Instruction.PopLocalInfos:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
+			case Instruction.DebugPopLocalInfos:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.PushLocalInfo:
-				return PushLocalInfoInstruction(self, instruction, index, sb);
-			case Instruction.CallNativeCommand:
+			case Instruction.DebugPushLocalInfo:
+				return DebugPushLocalInfoInstruction(self, instruction, index, sb);
+			case Instruction.ExecuteNativeCommand:
 				return CallCommandInstruction(self, instruction, index, sb);
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
@@ -155,7 +156,7 @@ namespace Flow
 			return ++index;
 		}
 
-		private static int PushLocalInfoInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int DebugPushLocalInfoInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[++index],

@@ -4,14 +4,11 @@ namespace Flow
 	{
 		public static Scope BeginScope(this Compiler self)
 		{
-			self.scopeDepth += 1;
 			return new Scope(self.localVariables.count);
 		}
 
 		public static void EndScope(this Compiler self, Scope scope)
 		{
-			self.scopeDepth -= 1;
-
 			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
 			{
 				var local = self.localVariables.buffer[i];
@@ -25,8 +22,12 @@ namespace Flow
 
 			if (localCount > 0)
 			{
-				self.EmitInstruction(Instruction.PopLocalInfos);
-				self.EmitByte((byte)localCount);
+				if (self.mode == Mode.Debug)
+				{
+					self.EmitInstruction(Instruction.DebugPopLocalInfos);
+					self.EmitByte((byte)localCount);
+				}
+
 				self.EmitPop(localCount);
 			}
 

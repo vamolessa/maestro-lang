@@ -10,6 +10,13 @@ namespace Flow
 			for (var i = 0; i < vm.stack.count; i++)
 			{
 				sb.Append('(');
+				if (i < vm.debugInfo.localVariables.count)
+				{
+					var localInfo = vm.debugInfo.localVariables.buffer[i];
+					sb.Append(localInfo.name);
+					sb.Append(": ");
+				}
+
 				vm.stack.buffer[i].AppendTo(sb);
 				sb.Append(") ");
 			}

@@ -4,19 +4,24 @@ namespace Flow
 	{
 		public static byte AddLocalVariable(this Compiler self, Slice slice, LocalVariableFlag flag)
 		{
-			var name = flag != LocalVariableFlag.Input ?
-				CompilerHelper.GetSlice(self, slice) :
-				"$$";
-			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
+			if (self.mode == Mode.Debug)
+			{
+				var name = flag != LocalVariableFlag.Input ?
+					CompilerHelper.GetSlice(self, slice) :
+					"$$";
+				var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
 
-			self.EmitInstruction(Instruction.PushLocalInfo);
-			self.EmitUShort((ushort)nameLiteralIndex);
+				self.EmitInstruction(Instruction.DebugPushLocalInfo);
+				self.EmitUShort((ushort)nameLiteralIndex);
+			}
 
 			if (
 				flag == LocalVariableFlag.Unused &&
 				self.parser.tokenizer.source[slice.index + 1] == '_'
 			)
+			{
 				flag = LocalVariableFlag.Used;
+			}
 
 			self.localVariables.PushBack(new LocalVariable(slice, flag));
 

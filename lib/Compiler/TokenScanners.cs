@@ -18,6 +18,7 @@ namespace Flow
 			new ExactScanner("false").ForToken(TokenKind.False),
 			new ExactScanner("true").ForToken(TokenKind.True),
 
+			new ExactScanner("import").ForToken(TokenKind.Import),
 			new ExactScanner("if").ForToken(TokenKind.If),
 			new ExactScanner("else").ForToken(TokenKind.Else),
 			new ExactScanner("iterate").ForToken(TokenKind.Iterate),

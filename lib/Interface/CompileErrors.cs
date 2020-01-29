@@ -23,6 +23,27 @@ namespace Flow.CompileErrors
 		}
 	}
 
+	namespace Imports
+	{
+		internal struct ExpectedImportPathString : IFormattedMessage
+		{
+			public string Format() => "Expected import path string";
+		}
+
+		internal struct NoImportResolverProvided : IFormattedMessage
+		{
+			public string uri;
+			public string Format() => $"No import resovler provided. Could not import '{uri}'";
+		}
+
+		internal struct CouldNotResolveImport : IFormattedMessage
+		{
+			public string importUri;
+			public string fromUri;
+			public string Format() => $"Could not resolve '{importUri}' from '{fromUri}'";
+		}
+	}
+
 	namespace ExternalCommands
 	{
 		internal struct ExpectedExternalCommandIdentifier : IFormattedMessage

@@ -24,7 +24,7 @@ namespace Flow
 
 		public sealed class PrintCommand : ICommand<Tuple0, Tuple0>
 		{
-			public Tuple0 Invoke(Inputs inputs, Tuple0 args)
+			public Tuple0 Execute(Inputs inputs, Tuple0 args)
 			{
 				System.Console.WriteLine($"PRINTING {inputs.count} INPUTS:");
 				for (var i = 0; i < inputs.count; i++)
@@ -36,7 +36,7 @@ namespace Flow
 
 		public sealed class BypassCommand : ICommand<Tuple0, Tuple1>
 		{
-			public Tuple1 Invoke(Inputs inputs, Tuple0 args)
+			public Tuple1 Execute(Inputs inputs, Tuple0 args)
 			{
 				System.Console.WriteLine($"BYPASS WITH {inputs.count} INPUTS");
 				return inputs.count > 0 ? inputs[0] : new Value(null);
@@ -47,7 +47,7 @@ namespace Flow
 		{
 			public int currentIndex = 0;
 
-			public Tuple1 Invoke(Inputs inputs, Tuple0 args)
+			public Tuple1 Execute(Inputs inputs, Tuple0 args)
 			{
 				if (currentIndex < inputs.count)
 				{

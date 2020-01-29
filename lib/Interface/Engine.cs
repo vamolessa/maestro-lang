@@ -10,9 +10,15 @@ namespace Flow
 		Debug
 	}
 
-	public interface IModuleResolver
+	public interface IImportResolver
 	{
-		Option<string> ResolveModuleSource(Uri requestingSourceUri, Uri moduleUri);
+		Option<string> ResolveSource(Uri requestingSourceUri, Uri importUri);
+	}
+
+	public interface IDebugger
+	{
+		void Reset(Buffer<Source> sources);
+		void OnDebugHook();
 	}
 
 	internal sealed class ExternalCommandBindingRegistry
@@ -48,15 +54,30 @@ namespace Flow
 					default(A).Size,
 					default(R).Size
 				),
-				() => new CommandWrapper<A, R>(commandFactory())
+				() =>
+				{
+					var command = commandFactory();
+					return (inputs) =>
+					{
+						var args = default(A);
+						args.Read(inputs.buffer, inputs.startIndex + inputs.count);
+						var ret = command.Execute(inputs, args);
+						ret.Write(inputs.buffer, inputs.startIndex);
+					};
+				}
 			));
 		}
 
-		public CompileResult CompileSource(Source source, Mode mode, Option<IModuleResolver> moduleResolver)
+		public CompileResult CompileSource(Source source, Mode mode, Option<IImportResolver> importResolver)
 		{
 			var chunk = new ByteCodeChunk();
-			var errors = controller.CompileSource(chunk, /*moduleResolver, mode,*/ source);
+			var errors = controller.CompileSource(chunk, importResolver, mode, source);
 			return new CompileResult(errors, chunk, controller.compiledSources);
+		}
+
+		public void SetDebugger(Option<IDebugger> debugger)
+		{
+			vm.debugger = debugger;
 		}
 
 		public Option<RuntimeError> Execute(CompileResult result)

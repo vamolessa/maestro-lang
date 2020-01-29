@@ -3,15 +3,15 @@ using System.Diagnostics;
 namespace Flow
 {
 	[DebuggerTypeProxy(typeof(ByteCodeChunkDebugView))]
-	internal sealed class ByteCodeChunk
+	public sealed class ByteCodeChunk
 	{
-		internal Buffer<byte> bytes = new Buffer<byte>(256);
-		internal Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
-		internal Buffer<int> sourceStartIndexes = new Buffer<int>();
+		public Buffer<byte> bytes = new Buffer<byte>(256);
+		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
+		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
-		internal Buffer<ExternalCommandDefinition> commandDefinitions = new Buffer<ExternalCommandDefinition>(16);
-		internal Buffer<int> commandInstances = new Buffer<int>(32);
-		internal Buffer<Value> literals = new Buffer<Value>(32);
+		public Buffer<ExternalCommandDefinition> commandDefinitions = new Buffer<ExternalCommandDefinition>(16);
+		public Buffer<int> commandInstances = new Buffer<int>(32);
+		public Buffer<Value> literals = new Buffer<Value>(32);
 
 		internal void WriteByte(byte value, Slice slice)
 		{

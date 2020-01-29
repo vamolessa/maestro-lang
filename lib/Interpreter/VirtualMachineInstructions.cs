@@ -33,7 +33,7 @@ namespace Flow
 					--vm.stackFrames.count;
 					vm.stack = stack;
 					return;
-				case Instruction.CallNativeCommand:
+				case Instruction.ExecuteNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						var inputCount = bytes[codeIndex++];
@@ -75,16 +75,6 @@ namespace Flow
 						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
 						break;
 					}
-				case Instruction.PushLocalInfo:
-					{
-						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var name = vm.chunk.literals.buffer[index].asObject as string;
-						vm.localVariableInfos.PushBackUnchecked(new VariableInfo(name));
-						break;
-					}
-				case Instruction.PopLocalInfos:
-					vm.localVariableInfos.count -= bytes[codeIndex++];
-					break;
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
@@ -125,6 +115,24 @@ namespace Flow
 							codeIndex += offset;
 						break;
 					}
+				case Instruction.DebugHook:
+					if (vm.debugger.isSome)
+					{
+						vm.stack = stack;
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
+						vm.debugger.value.OnDebugHook();
+					}
+					break;
+				case Instruction.DebugPushLocalInfo:
+					{
+						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var name = vm.chunk.literals.buffer[index].asObject as string;
+						vm.debugInfo.localVariables.PushBack(new DebugInfo.VariableInfo(name));
+						break;
+					}
+				case Instruction.DebugPopLocalInfos:
+					vm.debugInfo.localVariables.count -= bytes[codeIndex++];
+					break;
 				default:
 					goto case Instruction.Halt;
 				}

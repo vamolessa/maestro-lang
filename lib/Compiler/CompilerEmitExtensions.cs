@@ -16,6 +16,8 @@ namespace Flow
 
 		public static void EmitInstruction(this Compiler self, Instruction instruction)
 		{
+			if (self.mode == Mode.Debug && instruction < Instruction.DebugHook)
+				self.EmitByte((byte)Instruction.DebugHook);
 			self.EmitByte((byte)instruction);
 		}
 
@@ -52,7 +54,7 @@ namespace Flow
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
 			self.chunk.commandInstances.PushBack(commandIndex);
-			self.EmitInstruction(Instruction.CallNativeCommand);
+			self.EmitInstruction(Instruction.ExecuteNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
 			self.EmitByte(inputCount);
 		}

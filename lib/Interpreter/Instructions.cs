@@ -3,19 +3,21 @@ namespace Flow
 	internal enum Instruction
 	{
 		Halt,
-		CallNativeCommand,
+		ExecuteNativeCommand,
 		Pop,
 		PopMultiple,
 		LoadFalse,
 		LoadTrue,
 		LoadLiteral,
-		PushLocalInfo,
-		PopLocalInfos,
 		AssignLocal,
 		LoadLocal,
 		JumpBackward,
 		JumpForward,
 		PopAndJumpForwardIfFalse,
 		JumpForwardIfNull,
+
+		DebugHook,
+		DebugPushLocalInfo,
+		DebugPopLocalInfos,
 	}
 }

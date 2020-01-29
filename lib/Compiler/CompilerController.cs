@@ -6,13 +6,16 @@ namespace Flow
 		public Buffer<Source> compiledSources = new Buffer<Source>(1);
 
 		private readonly ParseRules parseRules = new ParseRules();
+		private Option<IImportResolver> importResolver = Option.None;
 
-		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Source source)
+		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Option<IImportResolver> importResolver, Mode mode, Source source)
 		{
+			this.importResolver = importResolver;
 			compiledSources.ZeroReset();
 
-			compiler.Reset(chunk);
+			compiler.Reset(mode, chunk);
 			Compile(source);
+
 			return compiler.errors;
 		}
 
@@ -21,10 +24,9 @@ namespace Flow
 			compiler.BeginSource(source.content, compiledSources.count);
 			compiledSources.PushBack(source);
 
-			//var finishedModuleImports = false;
 			compiler.parser.Next();
 			while (!compiler.parser.Match(TokenKind.End))
-				Statement();
+				Declaration();
 
 			compiler.EndSource();
 		}
@@ -42,6 +44,46 @@ namespace Flow
 				compiler.isInPanicMode = false;
 				break;
 			}
+		}
+
+		private void Declaration()
+		{
+			if (compiler.parser.Match(TokenKind.Import))
+				ImportDeclaration();
+			else
+				Statement();
+		}
+
+		private void ImportDeclaration()
+		{
+			var slice = compiler.parser.previousToken.slice;
+			compiler.parser.Consume(TokenKind.StringLiteral, new CompileErrors.Imports.ExpectedImportPathString());
+			var modulePath = CompilerHelper.GetParsedString(compiler);
+			slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
+
+			if (!importResolver.isSome)
+			{
+				compiler.AddSoftError(slice, new CompileErrors.Imports.NoImportResolverProvided { uri = modulePath });
+				return;
+			}
+
+			var currentSource = compiledSources.buffer[compiledSources.count - 1];
+			var moduleUri = Uri.Resolve(currentSource.uri, modulePath);
+
+			for (var i = 0; i < compiledSources.count; i++)
+			{
+				if (compiledSources.buffer[i].uri.value == moduleUri.value)
+					return;
+			}
+
+			var moduleSource = importResolver.value.ResolveSource(currentSource.uri, moduleUri);
+			if (!moduleSource.isSome)
+			{
+				compiler.AddSoftError(slice, new CompileErrors.Imports.CouldNotResolveImport { importUri = moduleUri.value, fromUri = currentSource.uri.value });
+				return;
+			}
+
+			Compile(new Source(moduleUri, moduleSource.value));
 		}
 
 		private void Statement()

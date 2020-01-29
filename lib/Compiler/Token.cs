@@ -10,7 +10,7 @@ namespace Flow
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable, InputVariable,
 
-		If, Else, Iterate, Command, External,
+		Import, If, Else, Iterate, Command, External,
 
 		COUNT,
 		End,

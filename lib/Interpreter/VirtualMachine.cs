@@ -12,23 +12,34 @@ namespace Flow
 		}
 	}
 
-	public readonly struct VariableInfo
+	public struct DebugInfo
 	{
-		public readonly string name;
-
-		public VariableInfo(string name)
+		public readonly struct VariableInfo
 		{
-			this.name = name;
+			public readonly string name;
+
+			public VariableInfo(string name)
+			{
+				this.name = name;
+			}
+		}
+
+		public Buffer<VariableInfo> localVariables;
+
+		public void Clear()
+		{
+			localVariables.ZeroReset();
 		}
 	}
 
-	internal sealed class VirtualMachine
+	public sealed class VirtualMachine
 	{
-		internal ByteCodeChunk chunk;
-		internal Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
-		internal Buffer<Value> stack = new Buffer<Value>(32);
-		internal Buffer<ICommand> commandInstances = new Buffer<ICommand>(8);
-		internal Buffer<VariableInfo> localVariableInfos = new Buffer<VariableInfo>(8);
+		public ByteCodeChunk chunk;
+		public Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
+		public Buffer<Value> stack = new Buffer<Value>(32);
+		internal Buffer<CommandCallback> commandInstances = new Buffer<CommandCallback>(8);
+		public DebugInfo debugInfo;
+		internal Option<IDebugger> debugger;
 
 		internal Option<RuntimeError> Load(ByteCodeChunk chunk, ExternalCommandBindingRegistry registry)
 		{
@@ -37,7 +48,7 @@ namespace Flow
 			stackFrames.count = 0;
 			stack.ZeroReset();
 			commandInstances.ZeroReset();
-			localVariableInfos.ZeroReset();
+			debugInfo.Clear();
 
 			for (var i = 0; i < chunk.commandInstances.count; i++)
 			{
