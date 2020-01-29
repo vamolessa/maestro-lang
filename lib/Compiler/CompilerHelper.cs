@@ -16,8 +16,9 @@ namespace Flow
 
 	internal enum LocalVariableFlag
 	{
-		Unused,
-		Used,
+		NotRead,
+		Unwritten,
+		Fulfilled,
 		Input,
 	}
 
@@ -30,6 +31,18 @@ namespace Flow
 		{
 			this.slice = slice;
 			this.flag = flag;
+		}
+
+		public void PerformedRead()
+		{
+			if (flag == LocalVariableFlag.NotRead)
+				flag = LocalVariableFlag.Fulfilled;
+		}
+
+		public void PerformedWrite()
+		{
+			if (flag == LocalVariableFlag.Unwritten)
+				flag = LocalVariableFlag.Fulfilled;
 		}
 	}
 

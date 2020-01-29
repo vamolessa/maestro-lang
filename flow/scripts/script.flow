@@ -4,6 +4,6 @@ external print 0 0;
 45 | $myVar;
 $myVar | print;
 
-#command my_command $my_arg0 $my_arg1 {
+command my_command $input0 $input1 -> $output0 $output1 {
 	# do stuff!
-#}
+}

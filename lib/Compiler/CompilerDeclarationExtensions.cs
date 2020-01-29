@@ -16,11 +16,11 @@ namespace Flow
 			}
 
 			if (
-				flag == LocalVariableFlag.Unused &&
+				flag == LocalVariableFlag.NotRead &&
 				self.parser.tokenizer.source[slice.index + 1] == '_'
 			)
 			{
-				flag = LocalVariableFlag.Used;
+				flag = LocalVariableFlag.Fulfilled;
 			}
 
 			self.localVariables.PushBack(new LocalVariable(slice, flag));

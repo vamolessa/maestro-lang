@@ -7,6 +7,7 @@ namespace Flow
 
 		private readonly ParseRules parseRules = new ParseRules();
 		private Option<IImportResolver> importResolver = Option.None;
+		private Buffer<Slice> slicesCache = new Buffer<Slice>(1);
 
 		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Option<IImportResolver> importResolver, Mode mode, Source source)
 		{
@@ -50,6 +51,10 @@ namespace Flow
 		{
 			if (compiler.parser.Match(TokenKind.Import))
 				ImportDeclaration();
+			else if (compiler.parser.Match(TokenKind.External))
+				ExternalCommandDeclaration();
+			else if (compiler.parser.Match(TokenKind.Command))
+				CommandDeclaration();
 			else
 				Statement();
 		}
@@ -59,6 +64,8 @@ namespace Flow
 			var slice = compiler.parser.previousToken.slice;
 			compiler.parser.Consume(TokenKind.StringLiteral, new CompileErrors.Imports.ExpectedImportPathString());
 			var modulePath = CompilerHelper.GetParsedString(compiler);
+			compiler.parser.Consume(TokenKind.SemiColon, new CompileErrors.Imports.ExpectedSemiColonAfterImport());
+
 			slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 
 			if (!importResolver.isSome)
@@ -88,9 +95,7 @@ namespace Flow
 
 		private void Statement()
 		{
-			if (compiler.parser.Match(TokenKind.External))
-				ExternalCommandStatement();
-			else if (compiler.parser.Match(TokenKind.If))
+			if (compiler.parser.Match(TokenKind.If))
 				IfStatement();
 			else if (compiler.parser.Match(TokenKind.Iterate))
 				IterateStatement();
@@ -98,7 +103,7 @@ namespace Flow
 				ExpressionStatement();
 		}
 
-		private void ExternalCommandStatement()
+		private void ExternalCommandDeclaration()
 		{
 			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternalCommands.ExpectedExternalCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
@@ -120,11 +125,65 @@ namespace Flow
 				returnCount = byte.MaxValue;
 			}
 
-			compiler.parser.Consume(TokenKind.SemiColon, new CompileErrors.General.ExpectedSemiColonAfterStatement());
+			compiler.parser.Consume(TokenKind.SemiColon, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternCommand());
 
 			var success = compiler.chunk.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount, (byte)returnCount));
 			if (!success)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameAlreadyRegistered { name = name });
+		}
+
+		private void CommandDeclaration()
+		{
+			// command my_command $input0 $input1 -> $output0 $output1 {}
+
+			var skipJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
+
+			compiler.parser.Consume(TokenKind.Identifier, null);
+			var nameSlice = compiler.parser.previousToken.slice;
+			var name = CompilerHelper.GetSlice(compiler, nameSlice);
+
+			var parameterCount = 0;
+			var parametersSlice = compiler.parser.currentToken.slice;
+			while (
+				!compiler.parser.Check(TokenKind.End) &&
+				!compiler.parser.Check(TokenKind.Arrow) &&
+				!compiler.parser.Check(TokenKind.OpenCurlyBrackets)
+			)
+			{
+				compiler.parser.Consume(TokenKind.Variable, null);
+				var parameterSlice = compiler.parser.previousToken.slice;
+				parametersSlice = Slice.FromTo(parametersSlice, parameterSlice);
+				parameterCount += 1;
+			}
+
+			if (parameterCount > byte.MaxValue)
+				compiler.AddSoftError(parametersSlice, null);
+
+			var returnCount = 0;
+			if (compiler.parser.Match(TokenKind.Arrow))
+			{
+				var returnsSlice = compiler.parser.currentToken.slice;
+				while (
+					!compiler.parser.Check(TokenKind.End) &&
+					!compiler.parser.Check(TokenKind.OpenCurlyBrackets)
+				)
+				{
+					compiler.parser.Consume(TokenKind.Variable, null);
+					var returnSlice = compiler.parser.previousToken.slice;
+					returnsSlice = Slice.FromTo(returnsSlice, returnSlice);
+					returnCount += 1;
+				}
+			}
+
+			if (returnCount > byte.MaxValue)
+				compiler.AddSoftError(parametersSlice, null);
+
+			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, null);
+			Block();
+
+			// EMIT RETURN
+
+			compiler.EndEmitForwardJump(skipJump);
 		}
 
 		private void IfStatement()
@@ -407,8 +466,8 @@ namespace Flow
 		{
 			var slice = compiler.parser.previousToken.slice;
 
-			var slices = new Buffer<Slice>(1);
-			slices.PushBackUnchecked(slice);
+			slicesCache.count = 0;
+			slicesCache.PushBackUnchecked(slice);
 
 			var isAssignment = compiler.ResolveToLocalVariableIndex(slice, out var _);
 			var hasMixedAssignmentType = false;
@@ -418,25 +477,25 @@ namespace Flow
 				compiler.parser.Consume(TokenKind.Variable, new CompileErrors.Variables.ExpectedVariableAsAssignmentTarget());
 
 				var varSlice = compiler.parser.previousToken.slice;
-				slices.PushBackUnchecked(varSlice);
+				slicesCache.PushBackUnchecked(varSlice);
 
 				var isAnotherAssignment = compiler.ResolveToLocalVariableIndex(varSlice, out var _);
 				if (isAssignment != isAnotherAssignment)
 					hasMixedAssignmentType = true;
 			}
 
-			slice = Slice.FromTo(slices.buffer[0], compiler.parser.previousToken.slice);
+			slice = Slice.FromTo(slicesCache.buffer[0], compiler.parser.previousToken.slice);
 
 			if (!canAssign)
 			{
 				compiler.AddSoftError(slice, new CompileErrors.Variables.CanOnlyAssignToVariablesAtTopLevelExpressions());
 			}
-			else if (slices.count != valueCount)
+			else if (slicesCache.count != valueCount)
 			{
 				compiler.AddSoftError(slice, new CompileErrors.Variables.WrongNumberOfVariablesOnAssignment
 				{
 					expected = valueCount,
-					got = slices.count
+					got = slicesCache.count
 				});
 			}
 			else if (hasMixedAssignmentType)
@@ -445,9 +504,9 @@ namespace Flow
 			}
 			else if (isAssignment)
 			{
-				for (var i = slices.count - 1; i >= 0; i--)
+				for (var i = slicesCache.count - 1; i >= 0; i--)
 				{
-					var varSlice = slices.buffer[i];
+					var varSlice = slicesCache.buffer[i];
 					compiler.ResolveToLocalVariableIndex(varSlice, out var localIndex);
 					compiler.EmitInstruction(Instruction.AssignLocal);
 					compiler.EmitByte(localIndex);
@@ -455,12 +514,12 @@ namespace Flow
 			}
 			else
 			{
-				for (var i = 0; i < slices.count; i++)
+				for (var i = 0; i < slicesCache.count; i++)
 				{
-					var varSlice = slices.buffer[i];
+					var varSlice = slicesCache.buffer[i];
 					if (compiler.localVariables.count >= byte.MaxValue)
 						compiler.AddSoftError(varSlice, new CompileErrors.Variables.TooManyVariables());
-					compiler.AddLocalVariable(varSlice, LocalVariableFlag.Unused);
+					compiler.AddLocalVariable(varSlice, LocalVariableFlag.NotRead);
 				}
 			}
 		}
@@ -471,9 +530,7 @@ namespace Flow
 
 			if (self.compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
 			{
-				ref var flag = ref self.compiler.localVariables.buffer[localIndex].flag;
-				if (flag == LocalVariableFlag.Unused)
-					flag = LocalVariableFlag.Used;
+				self.compiler.localVariables.buffer[localIndex].PerformedRead();
 
 				self.compiler.EmitInstruction(Instruction.LoadLocal);
 				self.compiler.EmitByte(localIndex);

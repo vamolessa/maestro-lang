@@ -42,6 +42,11 @@ namespace Flow.CompileErrors
 			public string fromUri;
 			public string Format() => $"Could not resolve '{importUri}' from '{fromUri}'";
 		}
+
+		internal struct ExpectedSemiColonAfterImport : IFormattedMessage
+		{
+			public string Format() => "Expected ';' after import";
+		}
 	}
 
 	namespace ExternalCommands
@@ -69,6 +74,11 @@ namespace Flow.CompileErrors
 		internal struct TooManyExternalCommandReturnValues : IFormattedMessage
 		{
 			public string Format() => $"Too many external command return values. Max is {byte.MaxValue}";
+		}
+
+		internal struct ExpectedSemiColonAfterExternCommand : IFormattedMessage
+		{
+			public string Format() => "Expected ';' after extern command";
 		}
 	}
 
@@ -195,10 +205,16 @@ namespace Flow.CompileErrors
 			public string Format() => $"Use of unassigned '{name}' variable";
 		}
 
-		internal struct UnusedLocalVariable : IFormattedMessage
+		internal struct NotReadLocalVariable : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Variable '{name}' is never used";
+			public string Format() => $"Variable '{name}'s value is never read";
+		}
+
+		internal struct UnwrittenOutputVariable : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Output variable '{name}' is never written to";
 		}
 	}
 

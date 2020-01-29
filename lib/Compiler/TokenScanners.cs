@@ -24,6 +24,7 @@ namespace Flow
 			new ExactScanner("iterate").ForToken(TokenKind.Iterate),
 			new ExactScanner("command").ForToken(TokenKind.Command),
 			new ExactScanner("external").ForToken(TokenKind.External),
+			new ExactScanner("->").ForToken(TokenKind.Arrow),
 
 			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
