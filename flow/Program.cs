@@ -4,29 +4,10 @@ namespace Flow
 {
 	public static class Program
 	{
-		public static string GetFormattedCompileErrors(Buffer<CompileError> errors, Source source)
-		{
-			var sb = new StringBuilder();
-
-			for (var i = 0; i < errors.count; i++)
-			{
-				var e = errors.buffer[i];
-				sb.Append(e.message.Format());
-
-				if (e.slice.index > 0 || e.slice.length > 0)
-				{
-					FormattingHelper.AddHighlightSlice(source.uri.value, source.content, e.slice, sb);
-				}
-			}
-
-			return sb.ToString();
-		}
-
 		public sealed class PrintCommand : ICommand<Tuple0, Tuple0>
 		{
-			public Tuple0 Execute(Inputs inputs, Tuple0 args)
+			public Result<Tuple0> Execute(Inputs inputs, Tuple0 args)
 			{
-				System.Console.WriteLine($"PRINTING {inputs.count} INPUTS:");
 				for (var i = 0; i < inputs.count; i++)
 					System.Console.WriteLine(inputs[i].ToString());
 
@@ -36,9 +17,8 @@ namespace Flow
 
 		public sealed class BypassCommand : ICommand<Tuple0, Tuple1>
 		{
-			public Tuple1 Execute(Inputs inputs, Tuple0 args)
+			public Result<Tuple1> Execute(Inputs inputs, Tuple0 args)
 			{
-				System.Console.WriteLine($"BYPASS WITH {inputs.count} INPUTS");
 				return inputs.count > 0 ? inputs[0] : new Value(null);
 			}
 		}
@@ -47,7 +27,7 @@ namespace Flow
 		{
 			public int currentIndex = 0;
 
-			public Tuple1 Execute(Inputs inputs, Tuple0 args)
+			public Result<Tuple1> Execute(Inputs inputs, Tuple0 args)
 			{
 				if (currentIndex < inputs.count)
 				{
@@ -71,21 +51,29 @@ namespace Flow
 			engine.RegisterCommand("bypass", () => new BypassCommand());
 			engine.RegisterCommand("elements", () => new ElementsCommand());
 
+			var sb = new StringBuilder();
+
 			var compileResult = engine.CompileSource(source, Mode.Debug, null);
-			if (compileResult.errors.count > 0)
+			if (compileResult.HasErrors)
 			{
-				var formattedErrors = GetFormattedCompileErrors(compileResult.errors, source);
-				System.Console.WriteLine(formattedErrors);
+				sb.Clear();
+				compileResult.FormatErrors(sb);
+				System.Console.WriteLine(sb);
 			}
 			else
 			{
-				var sb = new StringBuilder();
-				compileResult.Disassemble(sb);
+				sb.Clear();
+				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
 				var executeResult = engine.Execute(compileResult);
-				if (executeResult.isSome)
-					System.Console.WriteLine(executeResult.value.message.Format());
+				if (executeResult.HasError)
+				{
+					sb.Clear();
+					executeResult.FormatError(sb);
+					executeResult.FomratCallStackTrace(sb);
+					System.Console.WriteLine(sb);
+				}
 
 				System.Console.WriteLine("FINISH");
 			}

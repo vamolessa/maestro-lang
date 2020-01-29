@@ -24,10 +24,10 @@ namespace Flow
 		where A : struct, ITuple
 		where R : struct, ITuple
 	{
-		R Execute(Inputs inputs, A args);
+		Result<R> Execute(Inputs inputs, A args);
 	}
 
-	internal delegate void CommandCallback(Inputs inputs);
+	internal delegate IFormattedMessage CommandCallback(Inputs inputs);
 
 	internal readonly struct ExternalCommandBinding
 	{

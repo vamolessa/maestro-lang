@@ -61,8 +61,11 @@ namespace Flow
 					{
 						var args = default(A);
 						args.Read(inputs.buffer, inputs.startIndex + inputs.count);
-						var ret = command.Execute(inputs, args);
-						ret.Write(inputs.buffer, inputs.startIndex);
+
+						var result = command.Execute(inputs, args);
+						result.ok.Write(inputs.buffer, inputs.startIndex);
+
+						return result.error;
 					};
 				}
 			));
@@ -72,7 +75,13 @@ namespace Flow
 		{
 			var chunk = new ByteCodeChunk();
 			var errors = controller.CompileSource(chunk, importResolver, mode, source);
-			return new CompileResult(errors, chunk, controller.compiledSources);
+
+			return new CompileResult(
+				chunk,
+				errors.count > 0 ?
+					new CompileResult.Data(errors, controller.compiledSources) :
+					null
+			);
 		}
 
 		public void SetDebugger(Option<IDebugger> debugger)
@@ -80,19 +89,41 @@ namespace Flow
 			vm.debugger = debugger;
 		}
 
-		public Option<RuntimeError> Execute(CompileResult result)
+		public ExecuteResult Execute(CompileResult result)
 		{
-			if (result.errors.count > 0)
-				return vm.NewError(new RuntimeErrors.HasCompileErrors());
+			if (result.HasErrors)
+			{
+				return new ExecuteResult(new ExecuteResult.Data(
+					vm.NewError(new RuntimeErrors.HasCompileErrors()),
+					result.chunk,
+					result.data.sources,
+					default
+				));
+			}
 
-			var loadResult = vm.Load(result.chunk, externalCommandRegistry);
-			if (loadResult.isSome)
-				return loadResult;
+			var loadError = vm.Load(result.chunk, externalCommandRegistry);
+			if (loadError.isSome)
+			{
+				return new ExecuteResult(new ExecuteResult.Data(
+					loadError.value,
+					result.chunk,
+					result.data.sources,
+					default
+				));
+			}
 
-			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0));
-			VirtualMachineInstructions.Execute(vm);
+			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, -1));
+			var executeError = VirtualMachineInstructions.Execute(vm);
 
-			return Option.None;
+			return new ExecuteResult(executeError.isSome ?
+				new ExecuteResult.Data(
+					executeError.value,
+					result.chunk,
+					result.data.sources,
+					vm.stackFrames
+				) :
+				null
+			);
 		}
 	}
 }

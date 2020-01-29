@@ -5,7 +5,7 @@ namespace Flow
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static void Execute(VirtualMachine vm)
+		public static Option<RuntimeError> Execute(VirtualMachine vm)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
@@ -32,7 +32,7 @@ namespace Flow
 				case Instruction.Halt:
 					--vm.stackFrames.count;
 					vm.stack = stack;
-					return;
+					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
@@ -47,10 +47,13 @@ namespace Flow
 						var inputs = new Inputs(inputCount, stack.count, stack.buffer);
 						stack.GrowUnchecked(command.returnCount);
 
-						instance.Invoke(inputs);
+						var error = instance.Invoke(inputs);
 
 						while (previousStackCount > stack.count)
 							stack.buffer[previousStackCount--] = default;
+
+						if (error is IFormattedMessage errorMessage)
+							return vm.NewError(errorMessage);
 						break;
 					}
 				case Instruction.Pop:

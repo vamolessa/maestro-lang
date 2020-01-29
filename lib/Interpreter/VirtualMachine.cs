@@ -4,11 +4,13 @@ namespace Flow
 	{
 		public int codeIndex;
 		public int stackIndex;
+		public int commandDefinitionIndex;
 
-		public StackFrame(int codeIndex, int stackIndex)
+		public StackFrame(int codeIndex, int stackIndex, int commandDefinitionIndex)
 		{
 			this.codeIndex = codeIndex;
 			this.stackIndex = stackIndex;
+			this.commandDefinitionIndex = commandDefinitionIndex;
 		}
 	}
 
