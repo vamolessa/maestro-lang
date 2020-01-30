@@ -9,9 +9,11 @@ namespace Flow
 		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
 		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
-		public Buffer<ExternalCommandDefinition> commandDefinitions = new Buffer<ExternalCommandDefinition>(16);
-		public Buffer<int> commandInstances = new Buffer<int>(32);
 		public Buffer<Value> literals = new Buffer<Value>(32);
+		public Buffer<ExternalCommandDefinition> externalCommandDefinitions = new Buffer<ExternalCommandDefinition>(16);
+		internal Buffer<CommandInstance> externalCommandInstances = new Buffer<CommandInstance>(32);
+		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
+		internal Buffer<CommandInstance> commandInstances = new Buffer<CommandInstance>(8);
 
 		internal void WriteByte(byte value, Slice slice)
 		{
@@ -31,15 +33,27 @@ namespace Flow
 			return literals.count - 1;
 		}
 
-		internal bool AddExternalCommand(ExternalCommandDefinition command)
+		internal bool AddExternalCommand(ExternalCommandDefinition definition)
 		{
-			for (var i = 0; i < commandDefinitions.count; i++)
+			for (var i = 0; i < externalCommandDefinitions.count; i++)
 			{
-				if (command.name == commandDefinitions.buffer[i].name)
+				if (definition.name == externalCommandDefinitions.buffer[i].name)
 					return false;
 			}
 
-			commandDefinitions.PushBack(command);
+			externalCommandDefinitions.PushBack(definition);
+			return true;
+		}
+
+		internal bool AddCommand(CommandDefinition definition)
+		{
+			for (var i = 0; i < commandDefinitions.count; i++)
+			{
+				if (definition.name == commandDefinitions.buffer[i].name)
+					return false;
+			}
+
+			commandDefinitions.PushBack(definition);
 			return true;
 		}
 	}

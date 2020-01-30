@@ -1,3 +1,6 @@
-commands
+pipe input with $$
+call commands
+test command cleanup
+
 tests!!
 serialize bytecodechunk ??

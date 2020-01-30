@@ -52,11 +52,10 @@ namespace Flow
 
 		public static void EmitCallNativeCommand(this Compiler self, int commandIndex, byte inputCount)
 		{
-			var instanceIndex = self.chunk.commandInstances.count;
-			self.chunk.commandInstances.PushBack(commandIndex);
+			var instanceIndex = self.chunk.externalCommandInstances.count;
+			self.chunk.externalCommandInstances.PushBack(new CommandInstance(commandIndex, inputCount));
 			self.EmitInstruction(Instruction.ExecuteNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
-			self.EmitByte(inputCount);
 		}
 
 		public static int BeginEmitBackwardJump(this Compiler self)

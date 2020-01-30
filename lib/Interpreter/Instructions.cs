@@ -4,6 +4,8 @@ namespace Flow
 	{
 		Halt,
 		ExecuteNativeCommand,
+		ExecuteCommand,
+		Return,
 		Pop,
 		PopMultiple,
 		LoadFalse,

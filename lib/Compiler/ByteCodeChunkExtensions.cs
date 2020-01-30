@@ -98,6 +98,7 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
+			case Instruction.Return:
 			case Instruction.Pop:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
@@ -113,7 +114,9 @@ namespace Flow
 			case Instruction.DebugPushLocalInfo:
 				return DebugPushLocalInfoInstruction(self, instruction, index, sb);
 			case Instruction.ExecuteNativeCommand:
-				return CallCommandInstruction(self, instruction, index, sb);
+				return ExecuteExternalCommandInstruction(self, instruction, index, sb);
+			case Instruction.ExecuteCommand:
+				return ExecuteCommandInstruction(self, instruction, index, sb);
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
@@ -173,22 +176,40 @@ namespace Flow
 			return ++index;
 		}
 
-		private static int CallCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int ExecuteExternalCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var instanceIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[++index],
 				chunk.bytes.buffer[++index]
 			);
-			var inputCount = chunk.bytes.buffer[++index];
 
-			var commandIndex = chunk.commandInstances.buffer[instanceIndex];
-			var command = chunk.commandDefinitions.buffer[commandIndex];
+			var instance = chunk.externalCommandInstances.buffer[instanceIndex];
+			var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
-			sb.Append(command.name);
+			sb.Append(definition.name);
 			sb.Append("' inputs ");
-			sb.Append(inputCount);
+			sb.Append(instance.inputCount);
+
+			return ++index;
+		}
+
+		private static int ExecuteCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		{
+			var instanceIndex = BytesHelper.BytesToUShort(
+				chunk.bytes.buffer[++index],
+				chunk.bytes.buffer[++index]
+			);
+
+			var instance = chunk.externalCommandInstances.buffer[instanceIndex];
+			var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+
+			sb.Append(instruction.ToString());
+			sb.Append(" '");
+			sb.Append(definition.name);
+			sb.Append("' inputs ");
+			sb.Append(instance.inputCount);
 
 			return ++index;
 		}

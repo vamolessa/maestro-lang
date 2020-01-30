@@ -13,8 +13,8 @@ namespace Flow
 
 			var bytes = vm.chunk.bytes.buffer;
 			var stack = vm.stack;
-			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
-			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
+			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex;
+			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
 
 			while (true)
 			{
@@ -36,24 +36,62 @@ namespace Flow
 				case Instruction.ExecuteNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var inputCount = bytes[codeIndex++];
 
-						var commandIndex = vm.chunk.commandInstances.buffer[index];
-						var command = vm.chunk.commandDefinitions.buffer[commandIndex];
-						var instance = vm.commandInstances.buffer[index];
+						var instance = vm.chunk.externalCommandInstances.buffer[index];
+						var definition = vm.chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+						var command = vm.externalCommandInstances.buffer[index];
 
 						var previousStackCount = stack.count;
-						stack.count -= inputCount + command.parameterCount;
-						var inputs = new Inputs(inputCount, stack.count, stack.buffer);
-						stack.GrowUnchecked(command.returnCount);
+						stack.count -= instance.inputCount + definition.parameterCount;
+						var inputs = new Inputs(instance.inputCount, stack.count, stack.buffer);
+						stack.GrowUnchecked(definition.returnCount);
 
-						var error = instance.Invoke(inputs);
+						var error = command.Invoke(inputs);
 
 						while (previousStackCount > stack.count)
 							stack.buffer[previousStackCount--] = default;
 
 						if (error is IFormattedMessage errorMessage)
 							return vm.NewError(errorMessage);
+						break;
+					}
+				case Instruction.ExecuteCommand:
+					{
+						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+
+						var instance = vm.chunk.commandInstances.buffer[index];
+						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
+
+						stack.count -= definition.parameterCount + definition.returnCount;
+
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex = codeIndex;
+						vm.stackFrames.PushBackUnchecked(new StackFrame(
+							definition.codeIndex,
+							stack.count,
+							index
+						));
+
+						codeIndex = definition.codeIndex;
+						baseStackIndex = stack.count;
+						break;
+					}
+				case Instruction.Return:
+					{
+						var frame = vm.stackFrames.buffer[--vm.stackFrames.count];
+						var instance = vm.chunk.commandInstances.buffer[frame.commandInstanceIndex];
+						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
+
+						var resetStackIndex = frame.baseStackIndex - instance.inputCount;
+						var returnStartIndex = frame.commandInstanceIndex + definition.parameterCount;
+
+						for (var i = 0; i < definition.returnCount; i++)
+							stack.buffer[resetStackIndex++] = stack.buffer[returnStartIndex + i];
+
+						while (resetStackIndex < stack.count)
+							stack.buffer[resetStackIndex++] = default;
+
+						codeIndex = frame.callingCodeIndex;
+						baseStackIndex = frame.baseStackIndex;
 						break;
 					}
 				case Instruction.Pop:
@@ -122,7 +160,7 @@ namespace Flow
 					if (vm.debugger.isSome)
 					{
 						vm.stack = stack;
-						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex = codeIndex;
 						vm.debugger.value.OnDebugHook();
 					}
 					break;

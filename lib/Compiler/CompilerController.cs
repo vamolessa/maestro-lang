@@ -134,11 +134,9 @@ namespace Flow
 
 		private void CommandDeclaration()
 		{
-			// command my_command $input0 $input1 -> $output0 $output1 {}
-
 			var skipJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
 
-			compiler.parser.Consume(TokenKind.Identifier, null);
+			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.Commands.ExpectedCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
@@ -150,14 +148,17 @@ namespace Flow
 				!compiler.parser.Check(TokenKind.OpenCurlyBrackets)
 			)
 			{
-				compiler.parser.Consume(TokenKind.Variable, null);
+				compiler.parser.Consume(TokenKind.Variable, new CompileErrors.Commands.ExpectedCommandParameterVariable());
 				var parameterSlice = compiler.parser.previousToken.slice;
 				parametersSlice = Slice.FromTo(parametersSlice, parameterSlice);
 				parameterCount += 1;
 			}
 
 			if (parameterCount > byte.MaxValue)
-				compiler.AddSoftError(parametersSlice, null);
+			{
+				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyExternalCommandParameterVariables());
+				parameterCount = byte.MaxValue;
+			}
 
 			var returnCount = 0;
 			if (compiler.parser.Match(TokenKind.Arrow))
@@ -168,7 +169,7 @@ namespace Flow
 					!compiler.parser.Check(TokenKind.OpenCurlyBrackets)
 				)
 				{
-					compiler.parser.Consume(TokenKind.Variable, null);
+					compiler.parser.Consume(TokenKind.Variable, new CompileErrors.Commands.ExpectedCommandReturnVariable());
 					var returnSlice = compiler.parser.previousToken.slice;
 					returnsSlice = Slice.FromTo(returnsSlice, returnSlice);
 					returnCount += 1;
@@ -176,13 +177,15 @@ namespace Flow
 			}
 
 			if (returnCount > byte.MaxValue)
-				compiler.AddSoftError(parametersSlice, null);
+			{
+				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyExternalCommandReturnVariables());
+				returnCount = byte.MaxValue;
+			}
 
-			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, null);
+			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			// EMIT RETURN
-
+			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
 		}
 
@@ -422,9 +425,9 @@ namespace Flow
 			}
 
 			var commandIndex = -1;
-			for (var i = 0; i < compiler.chunk.commandDefinitions.count; i++)
+			for (var i = 0; i < compiler.chunk.externalCommandDefinitions.count; i++)
 			{
-				var command = compiler.chunk.commandDefinitions.buffer[i];
+				var command = compiler.chunk.externalCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(
 					compiler.parser.tokenizer.source,
 					commandSlice,
@@ -443,7 +446,7 @@ namespace Flow
 			}
 			else
 			{
-				var command = compiler.chunk.commandDefinitions.buffer[commandIndex];
+				var command = compiler.chunk.externalCommandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments

@@ -84,6 +84,36 @@ namespace Flow.CompileErrors
 
 	namespace Commands
 	{
+		internal struct ExpectedCommandIdentifier : IFormattedMessage
+		{
+			public string Format() => "Expected command name";
+		}
+
+		internal struct ExpectedCommandParameterVariable : IFormattedMessage
+		{
+			public string Format() => "Expected command parameter variable";
+		}
+
+		internal struct ExpectedCommandReturnVariable : IFormattedMessage
+		{
+			public string Format() => "Expected command return variable";
+		}
+
+		internal struct TooManyExternalCommandParameterVariables : IFormattedMessage
+		{
+			public string Format() => $"Too many command parameter variables. Max is {byte.MaxValue}";
+		}
+
+		internal struct TooManyExternalCommandReturnVariables : IFormattedMessage
+		{
+			public string Format() => $"Too many command return variables. Max is {byte.MaxValue}";
+		}
+
+		internal struct ExpectedOpenCurlyBracesBeforeCommandBody : IFormattedMessage
+		{
+			public string Format() => "Expected '{' before command body";
+		}
+
 		internal struct WrongNumberOfCommandArguments : IFormattedMessage
 		{
 			public string commandName;

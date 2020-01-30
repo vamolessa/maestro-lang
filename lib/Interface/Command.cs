@@ -41,6 +41,18 @@ namespace Flow
 		}
 	}
 
+	internal readonly struct CommandInstance
+	{
+		public readonly int definitionIndex;
+		public readonly byte inputCount;
+
+		public CommandInstance(int definitionIndex, byte inputCount)
+		{
+			this.definitionIndex = definitionIndex;
+			this.inputCount = inputCount;
+		}
+	}
+
 	public readonly struct ExternalCommandDefinition
 	{
 		public readonly string name;
@@ -50,6 +62,30 @@ namespace Flow
 		public ExternalCommandDefinition(string name, byte parameterCount, byte returnCount)
 		{
 			this.name = name;
+			this.parameterCount = parameterCount;
+			this.returnCount = returnCount;
+		}
+
+		public bool IsEqualTo(ExternalCommandDefinition other)
+		{
+			return
+				name == other.name &&
+				parameterCount == other.parameterCount &&
+				returnCount == other.returnCount;
+		}
+	}
+
+	public readonly struct CommandDefinition
+	{
+		public readonly string name;
+		public readonly int codeIndex;
+		public readonly byte parameterCount;
+		public readonly byte returnCount;
+
+		public CommandDefinition(string name, int codeIndex, byte parameterCount, byte returnCount)
+		{
+			this.name = name;
+			this.codeIndex = codeIndex;
 			this.parameterCount = parameterCount;
 			this.returnCount = returnCount;
 		}

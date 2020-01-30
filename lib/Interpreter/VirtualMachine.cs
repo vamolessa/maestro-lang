@@ -2,15 +2,15 @@ namespace Flow
 {
 	public struct StackFrame
 	{
-		public int codeIndex;
-		public int stackIndex;
-		public int commandDefinitionIndex;
+		public int callingCodeIndex;
+		public int baseStackIndex;
+		public int commandInstanceIndex;
 
-		public StackFrame(int codeIndex, int stackIndex, int commandDefinitionIndex)
+		public StackFrame(int codeIndex, int stackIndex, int commandInstanceIndex)
 		{
-			this.codeIndex = codeIndex;
-			this.stackIndex = stackIndex;
-			this.commandDefinitionIndex = commandDefinitionIndex;
+			this.callingCodeIndex = codeIndex;
+			this.baseStackIndex = stackIndex;
+			this.commandInstanceIndex = commandInstanceIndex;
 		}
 	}
 
@@ -39,7 +39,7 @@ namespace Flow
 		public ByteCodeChunk chunk;
 		public Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
 		public Buffer<Value> stack = new Buffer<Value>(32);
-		internal Buffer<CommandCallback> commandInstances = new Buffer<CommandCallback>(8);
+		internal Buffer<CommandCallback> externalCommandInstances = new Buffer<CommandCallback>(8);
 		public DebugInfo debugInfo;
 		internal Option<IDebugger> debugger;
 
@@ -49,37 +49,37 @@ namespace Flow
 
 			stackFrames.count = 0;
 			stack.ZeroReset();
-			commandInstances.ZeroReset();
+			externalCommandInstances.ZeroReset();
 			debugInfo.Clear();
 
-			for (var i = 0; i < chunk.commandInstances.count; i++)
+			for (var i = 0; i < chunk.externalCommandInstances.count; i++)
 			{
-				var index = chunk.commandInstances.buffer[i];
-				var command = chunk.commandDefinitions.buffer[index];
+				var instance = chunk.externalCommandInstances.buffer[i];
+				var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
 
-				var binding = registry.Find(command.name);
+				var binding = registry.Find(definition.name);
 				if (!binding.isSome)
 				{
 					return NewError(new RuntimeErrors.ExternalCommandNotFound
 					{
-						name = command.name
+						name = definition.name
 					});
 				}
 
-				if (!binding.value.definition.IsEqualTo(command))
+				if (!binding.value.definition.IsEqualTo(definition))
 				{
 					return NewError(new RuntimeErrors.IncompatibleExternalCommand
 					{
-						name = command.name,
-						expectedParameters = command.parameterCount,
-						expectedReturns = command.returnCount,
+						name = definition.name,
+						expectedParameters = definition.parameterCount,
+						expectedReturns = definition.returnCount,
 						gotParameters = binding.value.definition.parameterCount,
 						gotReturns = binding.value.definition.returnCount
 					});
 				}
 
-				var instance = binding.value.factory();
-				commandInstances.PushBackUnchecked(instance);
+				var command = binding.value.factory();
+				externalCommandInstances.PushBackUnchecked(command);
 			}
 
 			return Option.None;
@@ -89,7 +89,7 @@ namespace Flow
 		{
 			var ip = -1;
 			if (stackFrames.count > 0)
-				ip = stackFrames.buffer[stackFrames.count - 1].codeIndex;
+				ip = stackFrames.buffer[stackFrames.count - 1].callingCodeIndex;
 
 			return new RuntimeError(
 				ip,

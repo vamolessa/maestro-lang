@@ -111,7 +111,7 @@ namespace Flow
 			for (var i = data.stackFrames.count - 1; i >= 0; i--)
 			{
 				var frame = data.stackFrames.buffer[i];
-				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
+				var codeIndex = System.Math.Max(frame.callingCodeIndex - 1, 0);
 				var sourceIndex = data.chunk.sourceSlices.buffer[codeIndex].index;
 				var source = data.sources.buffer[data.chunk.FindSourceIndex(codeIndex)];
 
@@ -123,9 +123,9 @@ namespace Flow
 				sb.Append(pos.lineIndex + 1);
 				sb.Append("] ");
 
-				if (frame.commandDefinitionIndex >= 0)
+				if (frame.commandInstanceIndex >= 0)
 				{
-					var commandName = data.chunk.commandDefinitions.buffer[frame.commandDefinitionIndex].name;
+					var commandName = data.chunk.externalCommandDefinitions.buffer[frame.commandInstanceIndex].name;
 					sb.Append(commandName);
 					sb.Append(": ");
 				}
