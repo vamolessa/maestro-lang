@@ -23,7 +23,7 @@ namespace Flow
 		{
 			Option<byte> CheckAndReturnIndex(int localIndex)
 			{
-				if (localIndex < self.baseVariableIndex)
+				if (localIndex < self.variablesBaseIndex)
 				{
 					self.AddSoftError(slice, new CompileErrors.Variables.CanNotAccessVariableOutsideOfScope
 					{

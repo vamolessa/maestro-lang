@@ -206,8 +206,7 @@ namespace Flow
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
 			sb.Append(definition.name);
-			sb.Append("' inputs ");
-			sb.Append(instance.inputCount);
+			sb.Append("'");
 
 			return ++index;
 		}
@@ -225,8 +224,7 @@ namespace Flow
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
 			sb.Append(definition.name);
-			sb.Append("' inputs ");
-			sb.Append(instance.inputCount);
+			sb.Append("'");
 
 			return ++index;
 		}

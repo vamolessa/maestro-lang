@@ -28,6 +28,7 @@ namespace Flow
 				default:
 					debugSb.Clear();
 					vm.stack = stack;
+					vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex = baseStackIndex;
 					VirtualMachineHelper.TraceStack(vm, debugSb);
 					vm.chunk.DisassembleInstruction(codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
@@ -51,14 +52,17 @@ namespace Flow
 						var command = vm.externalCommandInstances.buffer[index];
 
 						var previousStackCount = stack.count;
-						stack.count -= instance.inputCount + definition.parameterCount;
-						var inputs = new Inputs(instance.inputCount, stack.count, stack.buffer);
+						stack.count -= definition.parameterCount;
+						var inputCount = stack.buffer[--stack.count].asNumber.asInt;
+						stack.count -= inputCount;
+
+						var inputs = new Inputs(inputCount, stack.count, stack.buffer);
 						stack.GrowUnchecked(definition.returnCount);
 
 						var error = command.Invoke(inputs);
 
 						while (previousStackCount > stack.count)
-							stack.buffer[previousStackCount--] = default;
+							stack.buffer[--previousStackCount] = default;
 
 						if (error is IFormattedMessage errorMessage)
 							return vm.NewError(errorMessage);
@@ -74,8 +78,8 @@ namespace Flow
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
 
+						baseStackIndex = stack.count - 1 - definition.parameterCount;
 						stack.GrowUnchecked(definition.returnCount);
-						baseStackIndex = stack.count - definition.parameterCount - definition.returnCount;
 
 						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, baseStackIndex, index));
 						break;
@@ -86,16 +90,15 @@ namespace Flow
 						var instance = vm.chunk.commandInstances.buffer[frame.commandInstanceIndex];
 						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
 
-						var resetStackIndex = frame.baseStackIndex - instance.inputCount;
-						var returnStartIndex = frame.baseStackIndex + definition.parameterCount;
+						var inputCount = stack.buffer[frame.baseStackIndex].asNumber.asInt;
+						stack.count = frame.baseStackIndex - inputCount;
+						var returnStartIndex = frame.baseStackIndex + 1 + definition.parameterCount;
 
 						for (var i = 0; i < definition.returnCount; i++)
-							stack.buffer[resetStackIndex++] = stack.buffer[returnStartIndex + i];
+							stack.buffer[stack.count++] = stack.buffer[returnStartIndex++];
 
-						while (resetStackIndex < stack.count)
-							stack.buffer[resetStackIndex++] = default;
-
-						stack.count = baseStackIndex + definition.returnCount;
+						while (returnStartIndex > stack.count)
+							stack.buffer[--returnStartIndex] = default;
 
 						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 						codeIndex = frame.codeIndex;

@@ -52,7 +52,7 @@ namespace Flow
 
 		public static void EmitLocalInstruction(this Compiler self, Instruction instruction, byte localIndex)
 		{
-			var index = localIndex - self.baseVariableIndex;
+			var index = localIndex - self.variablesBaseIndex;
 			if (index < 0)
 				return;
 
@@ -60,18 +60,18 @@ namespace Flow
 			self.EmitByte((byte)index);
 		}
 
-		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex, byte inputCount)
+		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex)
 		{
 			var instanceIndex = self.chunk.externalCommandInstances.count;
-			self.chunk.externalCommandInstances.PushBack(new CommandInstance(commandIndex, inputCount));
+			self.chunk.externalCommandInstances.PushBack(new CommandInstance(commandIndex));
 			self.EmitInstruction(Instruction.ExecuteNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
 
-		public static void EmitExecuteCommand(this Compiler self, int commandIndex, byte inputCount)
+		public static void EmitExecuteCommand(this Compiler self, int commandIndex)
 		{
 			var instanceIndex = self.chunk.commandInstances.count;
-			self.chunk.commandInstances.PushBack(new CommandInstance(commandIndex, inputCount));
+			self.chunk.commandInstances.PushBack(new CommandInstance(commandIndex));
 			self.EmitInstruction(Instruction.ExecuteCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}

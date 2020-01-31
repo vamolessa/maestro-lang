@@ -44,12 +44,10 @@ namespace Flow
 	internal readonly struct CommandInstance
 	{
 		public readonly int definitionIndex;
-		public readonly byte inputCount;
 
-		public CommandInstance(int definitionIndex, byte inputCount)
+		public CommandInstance(int definitionIndex)
 		{
 			this.definitionIndex = definitionIndex;
-			this.inputCount = inputCount;
 		}
 	}
 

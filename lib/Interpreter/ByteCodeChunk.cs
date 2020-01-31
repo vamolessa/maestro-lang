@@ -18,7 +18,7 @@ namespace Flow
 		internal ByteCodeChunk()
 		{
 			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0, 0));
-			commandInstances.PushBackUnchecked(new CommandInstance(0, 0));
+			commandInstances.PushBackUnchecked(new CommandInstance(0));
 		}
 
 		internal void WriteByte(byte value, Slice slice)

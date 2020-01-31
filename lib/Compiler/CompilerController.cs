@@ -142,8 +142,10 @@ namespace Flow
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
-			compiler.baseVariableIndex = compiler.localVariables.count;
+			compiler.variablesBaseIndex = compiler.localVariables.count;
 			var scope = compiler.BeginScope();
+
+			compiler.AddLocalVariable(new Slice(), LocalVariableFlag.Fulfilled);
 
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
@@ -194,10 +196,8 @@ namespace Flow
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			compiler.CheckVariablesFulfillment(scope);
-			compiler.localVariables.count -= parameterCount + returnCount;
-			compiler.baseVariableIndex = 0;
-			compiler.EmitPopLocalsInfo(parameterCount + returnCount);
+			compiler.EndScopeKeepingLocalValues(scope);
+			compiler.variablesBaseIndex = 0;
 
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
@@ -435,6 +435,8 @@ namespace Flow
 			var commandSlice = compiler.parser.previousToken.slice;
 			var slice = commandSlice;
 
+			compiler.EmitLoadLiteral(new Value(valueCount));
+
 			var argCount = 0;
 			while (TryValue(out var valueResult))
 			{
@@ -456,7 +458,7 @@ namespace Flow
 				}
 				else
 				{
-					compiler.EmitExecuteNativeCommand(externalCommandIndex, valueCount);
+					compiler.EmitExecuteNativeCommand(externalCommandIndex);
 				}
 
 				return externalCommand.returnCount;
@@ -475,7 +477,7 @@ namespace Flow
 				}
 				else
 				{
-					compiler.EmitExecuteCommand(commandIndex, valueCount);
+					compiler.EmitExecuteCommand(commandIndex);
 				}
 
 				return command.returnCount;
