@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -38,6 +39,7 @@ namespace Flow
 		}
 	}
 
+	[DebuggerTypeProxy(typeof(ValueDebugView))]
 	public readonly struct Value
 	{
 		public readonly Number asNumber;
@@ -137,6 +139,18 @@ namespace Flow
 				sb.Append(self.asObject);
 				break;
 			}
+		}
+	}
+
+	internal sealed class ValueDebugView
+	{
+		internal readonly string formatted;
+
+		internal ValueDebugView(Value value)
+		{
+			var sb = new StringBuilder();
+			value.AppendTo(sb);
+			formatted = sb.ToString();
 		}
 	}
 }

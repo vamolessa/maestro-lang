@@ -105,6 +105,7 @@ namespace Flow
 
 		private void ExternalCommandDeclaration()
 		{
+			compiler.parser.Consume(TokenKind.Command, new CompileErrors.ExternalCommands.ExpectedCommandKeyword());
 			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternalCommands.ExpectedExternalCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
@@ -141,6 +142,9 @@ namespace Flow
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
+			compiler.baseVariableIndex = compiler.localVariables.count;
+			var scope = compiler.BeginScope();
+
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
 			while (
@@ -153,6 +157,8 @@ namespace Flow
 				var parameterSlice = compiler.parser.previousToken.slice;
 				parametersSlice = Slice.FromTo(parametersSlice, parameterSlice);
 				parameterCount += 1;
+
+				compiler.AddLocalVariable(parameterSlice, LocalVariableFlag.NotRead);
 			}
 
 			if (parameterCount > byte.MaxValue)
@@ -174,6 +180,8 @@ namespace Flow
 					var returnSlice = compiler.parser.previousToken.slice;
 					returnsSlice = Slice.FromTo(returnsSlice, returnSlice);
 					returnCount += 1;
+
+					compiler.AddLocalVariable(returnSlice, LocalVariableFlag.Unwritten);
 				}
 			}
 
@@ -185,6 +193,11 @@ namespace Flow
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
+
+			compiler.CheckVariablesFulfillment(scope);
+			compiler.localVariables.count -= parameterCount + returnCount;
+			compiler.baseVariableIndex = 0;
+			compiler.EmitPopLocalsInfo(parameterCount + returnCount);
 
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
@@ -429,7 +442,7 @@ namespace Flow
 				argCount += valueResult.valueCount;
 			}
 
-			if (compiler.ResolveToExternalCommandIndex(commandSlice, out var externalCommandIndex))
+			if (compiler.ResolveToExternalCommandIndex(commandSlice).TryGet(out var externalCommandIndex))
 			{
 				var externalCommand = compiler.chunk.externalCommandDefinitions.buffer[externalCommandIndex];
 				if (argCount != externalCommand.parameterCount)
@@ -448,7 +461,7 @@ namespace Flow
 
 				return externalCommand.returnCount;
 			}
-			else if (compiler.ResolveToCommandIndex(commandSlice, out var commandIndex))
+			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))
 			{
 				var command = compiler.chunk.commandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)
@@ -481,7 +494,7 @@ namespace Flow
 			slicesCache.count = 0;
 			slicesCache.PushBackUnchecked(slice);
 
-			var isAssignment = compiler.ResolveToLocalVariableIndex(slice, out var _);
+			var isAssignment = compiler.ResolveToLocalVariableIndex(slice).isSome;
 			var hasMixedAssignmentType = false;
 
 			while (compiler.parser.Match(TokenKind.Comma))
@@ -491,7 +504,7 @@ namespace Flow
 				var varSlice = compiler.parser.previousToken.slice;
 				slicesCache.PushBackUnchecked(varSlice);
 
-				var isAnotherAssignment = compiler.ResolveToLocalVariableIndex(varSlice, out var _);
+				var isAnotherAssignment = compiler.ResolveToLocalVariableIndex(varSlice).isSome;
 				if (isAssignment != isAnotherAssignment)
 					hasMixedAssignmentType = true;
 			}
@@ -519,9 +532,10 @@ namespace Flow
 				for (var i = slicesCache.count - 1; i >= 0; i--)
 				{
 					var varSlice = slicesCache.buffer[i];
-					compiler.ResolveToLocalVariableIndex(varSlice, out var localIndex);
-					compiler.EmitInstruction(Instruction.AssignLocal);
-					compiler.EmitByte(localIndex);
+					var localIndex = compiler.ResolveToLocalVariableIndex(varSlice).value;
+					compiler.EmitLocalInstruction(Instruction.AssignLocal, localIndex);
+
+					compiler.localVariables.buffer[localIndex].PerformedWrite();
 				}
 			}
 			else
@@ -540,12 +554,17 @@ namespace Flow
 		{
 			var slice = self.compiler.parser.previousToken.slice;
 
-			if (self.compiler.ResolveToLocalVariableIndex(slice, out var localIndex))
+			if (self.compiler.ResolveToLocalVariableIndex(slice).TryGet(out var localIndex))
 			{
-				self.compiler.localVariables.buffer[localIndex].PerformedRead();
+				ref var variable = ref self.compiler.localVariables.buffer[localIndex];
+				variable.PerformedRead();
 
-				self.compiler.EmitInstruction(Instruction.LoadLocal);
-				self.compiler.EmitByte(localIndex);
+				if (variable.flag == LocalVariableFlag.Unwritten)
+				{
+					self.compiler.AddSoftError(slice, new CompileErrors.Variables.LocalVariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
+				}
+
+				self.compiler.EmitLocalInstruction(Instruction.LoadLocal, localIndex);
 			}
 			else
 			{
@@ -553,6 +572,11 @@ namespace Flow
 			}
 
 			return 1;
+		}
+
+		internal static byte LoadInput(CompilerController self)
+		{
+			return LoadLocal(self);
 		}
 
 		internal static byte Literal(CompilerController self)

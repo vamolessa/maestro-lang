@@ -2,12 +2,7 @@ namespace Flow
 {
 	internal static class CompilerFlowExtensions
 	{
-		public static Scope BeginScope(this Compiler self)
-		{
-			return new Scope(self.localVariables.count);
-		}
-
-		public static void EndScope(this Compiler self, Scope scope)
+		public static void CheckVariablesFulfillment(this Compiler self, Scope scope)
 		{
 			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
 			{
@@ -22,21 +17,23 @@ namespace Flow
 					break;
 				}
 			}
+		}
+
+		public static Scope BeginScope(this Compiler self)
+		{
+			return new Scope(self.localVariables.count);
+		}
+
+		public static void EndScope(this Compiler self, Scope scope)
+		{
+			self.CheckVariablesFulfillment(scope);
 
 			var localCount = self.localVariables.count - scope.localVariablesStartIndex;
-
-			if (localCount > 0)
-			{
-				if (self.mode == Mode.Debug)
-				{
-					self.EmitInstruction(Instruction.DebugPopLocalInfos);
-					self.EmitByte((byte)localCount);
-				}
-
-				self.EmitPop(localCount);
-			}
-
 			self.localVariables.count -= localCount;
+
+			self.EmitPopLocalsInfo(localCount);
+			self.EmitPop(localCount);
+
 		}
 	}
 }

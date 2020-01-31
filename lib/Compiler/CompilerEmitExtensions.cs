@@ -50,6 +50,16 @@ namespace Flow
 			self.EmitUShort((ushort)index);
 		}
 
+		public static void EmitLocalInstruction(this Compiler self, Instruction instruction, byte localIndex)
+		{
+			var index = localIndex - self.baseVariableIndex;
+			if (index < 0)
+				return;
+
+			self.EmitInstruction(instruction);
+			self.EmitByte((byte)index);
+		}
+
 		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex, byte inputCount)
 		{
 			var instanceIndex = self.chunk.externalCommandInstances.count;
@@ -106,6 +116,32 @@ namespace Flow
 				(ushort)offset,
 				out self.chunk.bytes.buffer[jumpIndex],
 				out self.chunk.bytes.buffer[jumpIndex + 1]
+			);
+		}
+
+		public static void EmitPushLocalInfo(this Compiler self, Slice slice, LocalVariableFlag flag)
+		{
+			if (self.mode != Mode.Debug)
+				return;
+
+			var name = flag != LocalVariableFlag.Input ?
+				CompilerHelper.GetSlice(self, slice) :
+				"$$";
+			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
+
+			self.EmitInstruction(Instruction.DebugPushLocalInfo);
+			self.EmitUShort((ushort)nameLiteralIndex);
+		}
+
+		public static void EmitPopLocalsInfo(this Compiler self, int localCount)
+		{
+			if (self.mode != Mode.Debug || localCount <= 0)
+				return;
+
+			self.EmitInstruction(Instruction.DebugPopLocalInfos);
+			self.EmitByte(localCount <= byte.MaxValue ?
+				(byte)localCount :
+				byte.MaxValue
 			);
 		}
 	}

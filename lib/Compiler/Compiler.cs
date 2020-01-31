@@ -32,6 +32,7 @@ namespace Flow
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
 		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
+		public int baseVariableIndex = 0;
 
 		private Buffer<State> stateStack = new Buffer<State>();
 
@@ -61,6 +62,7 @@ namespace Flow
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
+			baseVariableIndex = 0;
 		}
 
 		public void BeginSource(string source, int sourceIndex)

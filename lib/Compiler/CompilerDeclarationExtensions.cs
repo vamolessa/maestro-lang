@@ -4,16 +4,7 @@ namespace Flow
 	{
 		public static byte AddLocalVariable(this Compiler self, Slice slice, LocalVariableFlag flag)
 		{
-			if (self.mode == Mode.Debug)
-			{
-				var name = flag != LocalVariableFlag.Input ?
-					CompilerHelper.GetSlice(self, slice) :
-					"$$";
-				var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
-
-				self.EmitInstruction(Instruction.DebugPushLocalInfo);
-				self.EmitUShort((ushort)nameLiteralIndex);
-			}
+			self.EmitPushLocalInfo(slice, flag);
 
 			if (
 				flag == LocalVariableFlag.NotRead &&
@@ -28,8 +19,27 @@ namespace Flow
 			return unchecked((byte)(self.localVariables.count - 1));
 		}
 
-		public static bool ResolveToLocalVariableIndex(this Compiler self, Slice slice, out byte index)
+		public static Option<byte> ResolveToLocalVariableIndex(this Compiler self, Slice slice)
 		{
+			Option<byte> CheckAndReturnIndex(int localIndex)
+			{
+				if (localIndex < self.baseVariableIndex)
+				{
+					self.AddSoftError(slice, new CompileErrors.Variables.CanNotAccessVariableOutsideOfScope
+					{
+						name = CompilerHelper.GetSlice(self, slice)
+					});
+
+					return Option.None;
+				}
+				else
+				{
+					return localIndex < byte.MaxValue ?
+						(byte)localIndex :
+						byte.MaxValue;
+				}
+			}
+
 			var source = self.parser.tokenizer.source;
 
 			if (CompilerHelper.AreEqual(source, slice, "$$"))
@@ -38,10 +48,7 @@ namespace Flow
 				{
 					var local = self.localVariables.buffer[i];
 					if (local.flag == LocalVariableFlag.Input)
-					{
-						index = unchecked((byte)i);
-						return true;
-					}
+						return CheckAndReturnIndex(i);
 				}
 			}
 
@@ -49,46 +56,34 @@ namespace Flow
 			{
 				var local = self.localVariables.buffer[i];
 				if (CompilerHelper.AreEqual(source, slice, local.slice))
-				{
-					index = unchecked((byte)i);
-					return true;
-				}
+					return CheckAndReturnIndex(i);
 			}
 
-			index = 0;
-			return false;
+			return Option.None;
 		}
 
-		public static bool ResolveToExternalCommandIndex(this Compiler self, Slice slice, out int index)
+		public static Option<int> ResolveToExternalCommandIndex(this Compiler self, Slice slice)
 		{
 			for (var i = 0; i < self.chunk.externalCommandDefinitions.count; i++)
 			{
 				var command = self.chunk.externalCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
-				{
-					index = i;
-					return true;
-				}
+					return i;
 			}
 
-			index = -1;
-			return false;
+			return Option.None;
 		}
 
-		public static bool ResolveToCommandIndex(this Compiler self, Slice slice, out int index)
+		public static Option<int> ResolveToCommandIndex(this Compiler self, Slice slice)
 		{
 			for (var i = 0; i < self.chunk.commandDefinitions.count; i++)
 			{
 				var command = self.chunk.commandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
-				{
-					index = i;
-					return true;
-				}
+					return i;
 			}
 
-			index = -1;
-			return false;
+			return Option.None;
 		}
 	}
 }

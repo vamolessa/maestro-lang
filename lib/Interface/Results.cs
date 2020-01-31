@@ -98,7 +98,7 @@ namespace Flow
 			for (var i = data.stackFrames.count - 1; i >= 0; i--)
 			{
 				var frame = data.stackFrames.buffer[i];
-				var codeIndex = System.Math.Max(frame.callingCodeIndex - 1, 0);
+				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 				var sourceIndex = data.chunk.sourceSlices.buffer[codeIndex].index;
 				var source = data.sources.buffer[data.chunk.FindSourceIndex(codeIndex)];
 

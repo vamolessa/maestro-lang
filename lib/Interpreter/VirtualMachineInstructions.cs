@@ -13,19 +13,25 @@ namespace Flow
 
 			var bytes = vm.chunk.bytes.buffer;
 			var stack = vm.stack;
-			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex;
+			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
 
 			while (true)
 			{
 #if DEBUG_TRACE
-				if ((Instruction)bytes[codeIndex] != Instruction.DebugHook)
+				switch ((Instruction)bytes[codeIndex])
 				{
+				case Instruction.DebugHook:
+				case Instruction.DebugPushLocalInfo:
+				case Instruction.DebugPopLocalInfos:
+					break;
+				default:
 					debugSb.Clear();
 					vm.stack = stack;
 					VirtualMachineHelper.TraceStack(vm, debugSb);
 					vm.chunk.DisassembleInstruction(codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
+					break;
 				}
 #endif
 
@@ -65,17 +71,13 @@ namespace Flow
 						var instance = vm.chunk.commandInstances.buffer[index];
 						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
 
-						stack.count -= definition.parameterCount + definition.returnCount;
-
-						vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex = codeIndex;
-						vm.stackFrames.PushBackUnchecked(new StackFrame(
-							definition.codeIndex,
-							stack.count,
-							index
-						));
-
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
-						baseStackIndex = stack.count;
+
+						stack.GrowUnchecked(definition.returnCount);
+						baseStackIndex = stack.count - definition.parameterCount - definition.returnCount;
+
+						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, baseStackIndex, index));
 						break;
 					}
 				case Instruction.Return:
@@ -85,7 +87,7 @@ namespace Flow
 						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
 
 						var resetStackIndex = frame.baseStackIndex - instance.inputCount;
-						var returnStartIndex = frame.commandInstanceIndex + definition.parameterCount;
+						var returnStartIndex = frame.baseStackIndex + definition.parameterCount;
 
 						for (var i = 0; i < definition.returnCount; i++)
 							stack.buffer[resetStackIndex++] = stack.buffer[returnStartIndex + i];
@@ -93,7 +95,10 @@ namespace Flow
 						while (resetStackIndex < stack.count)
 							stack.buffer[resetStackIndex++] = default;
 
-						codeIndex = frame.callingCodeIndex;
+						stack.count = baseStackIndex + definition.returnCount;
+
+						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
+						codeIndex = frame.codeIndex;
 						baseStackIndex = frame.baseStackIndex;
 						break;
 					}
@@ -163,7 +168,7 @@ namespace Flow
 					if (vm.debugger.isSome)
 					{
 						vm.stack = stack;
-						vm.stackFrames.buffer[vm.stackFrames.count - 1].callingCodeIndex = codeIndex;
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						vm.debugger.value.OnDebugHook();
 					}
 					break;

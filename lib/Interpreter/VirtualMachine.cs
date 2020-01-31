@@ -2,13 +2,13 @@ namespace Flow
 {
 	public struct StackFrame
 	{
-		public int callingCodeIndex;
+		public int codeIndex;
 		public int baseStackIndex;
 		public int commandInstanceIndex;
 
 		public StackFrame(int codeIndex, int stackIndex, int commandInstanceIndex)
 		{
-			this.callingCodeIndex = codeIndex;
+			this.codeIndex = codeIndex;
 			this.baseStackIndex = stackIndex;
 			this.commandInstanceIndex = commandInstanceIndex;
 		}
@@ -89,7 +89,7 @@ namespace Flow
 		{
 			var ip = -1;
 			if (stackFrames.count > 0)
-				ip = stackFrames.buffer[stackFrames.count - 1].callingCodeIndex;
+				ip = stackFrames.buffer[stackFrames.count - 1].codeIndex;
 
 			return new RuntimeError(
 				ip,

@@ -33,5 +33,17 @@ namespace Flow
 		{
 			return new Option<T>(value);
 		}
+
+		public bool TryGet(out T value)
+		{
+			if (isSome)
+			{
+				value = this.value;
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
 	}
 }

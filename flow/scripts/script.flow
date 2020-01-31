@@ -1,8 +1,18 @@
-external elements 0 1;
-external print 0 0;
+external command elements 0 1;
+external command print 0 0;
+
+"sera" | $random_var;
 
 command my_command $param0 $param1 -> $ret0 $ret1 {
-	"hello from my command" | print;
+	"hello from my command. args:" | $message;
+	$message | print;
+
+	$param0 | print;
+	$param1 | print;
+	12 | $ret0;
+	45 | $ret1;
 }
 
-my_command 0 0;
+my_command 1 2 | print;
+
+$random_var | print;

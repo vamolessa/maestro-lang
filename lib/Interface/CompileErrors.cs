@@ -51,6 +51,11 @@ namespace Flow.CompileErrors
 
 	namespace ExternalCommands
 	{
+		internal struct ExpectedCommandKeyword : IFormattedMessage
+		{
+			public string Format() => "Expected 'command' keyword";
+		}
+
 		internal struct ExpectedExternalCommandIdentifier : IFormattedMessage
 		{
 			public string Format() => "Expected external command name";
@@ -210,6 +215,12 @@ namespace Flow.CompileErrors
 
 	namespace Variables
 	{
+		internal struct CanNotAccessVariableOutsideOfScope : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Can not access variable '{name}' outside of current scope";
+		}
+
 		internal struct ExpectedVariableAsAssignmentTarget : IFormattedMessage
 		{
 			public string Format() => "Expected variable as assignment target";
