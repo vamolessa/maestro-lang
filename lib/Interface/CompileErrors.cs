@@ -80,6 +80,14 @@ namespace Flow.CompileErrors
 		{
 			public string Format() => "Expected ';' after extern command";
 		}
+
+		internal struct WrongNumberOfExternalCommandArguments : IFormattedMessage
+		{
+			public string commandName;
+			public int expected;
+			public int got;
+			public string Format() => $"Wrong number of arguments for external command '{commandName}'. Expected {expected}. Got {got}";
+		}
 	}
 
 	namespace Commands

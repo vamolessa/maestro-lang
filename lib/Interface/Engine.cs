@@ -78,9 +78,8 @@ namespace Flow
 
 			return new CompileResult(
 				chunk,
-				errors.count > 0 ?
-					new CompileResult.Data(errors, controller.compiledSources) :
-					null
+				controller.compiledSources,
+				errors
 			);
 		}
 
@@ -96,7 +95,7 @@ namespace Flow
 				return new ExecuteResult(new ExecuteResult.Data(
 					vm.NewError(new RuntimeErrors.HasCompileErrors()),
 					result.chunk,
-					result.data.sources,
+					result.sources,
 					default
 				));
 			}
@@ -107,7 +106,7 @@ namespace Flow
 				return new ExecuteResult(new ExecuteResult.Data(
 					loadError.value,
 					result.chunk,
-					result.data.sources,
+					result.sources,
 					default
 				));
 			}
@@ -119,7 +118,7 @@ namespace Flow
 				new ExecuteResult.Data(
 					executeError.value,
 					result.chunk,
-					result.data.sources,
+					result.sources,
 					vm.stackFrames
 				) :
 				null

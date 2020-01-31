@@ -58,5 +58,37 @@ namespace Flow
 			index = 0;
 			return false;
 		}
+
+		public static bool ResolveToExternalCommandIndex(this Compiler self, Slice slice, out int index)
+		{
+			for (var i = 0; i < self.chunk.externalCommandDefinitions.count; i++)
+			{
+				var command = self.chunk.externalCommandDefinitions.buffer[i];
+				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
+				{
+					index = i;
+					return true;
+				}
+			}
+
+			index = -1;
+			return false;
+		}
+
+		public static bool ResolveToCommandIndex(this Compiler self, Slice slice, out int index)
+		{
+			for (var i = 0; i < self.chunk.commandDefinitions.count; i++)
+			{
+				var command = self.chunk.commandDefinitions.buffer[i];
+				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
+				{
+					index = i;
+					return true;
+				}
+			}
+
+			index = -1;
+			return false;
+		}
 	}
 }

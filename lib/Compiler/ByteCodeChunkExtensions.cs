@@ -36,6 +36,7 @@ namespace Flow
 
 			for (var index = 0; index < self.bytes.count;)
 			{
+				PrintCommandName(self, index, sb);
 				index = DisassembleInstruction(self, index, sb);
 				sb.AppendLine();
 			}
@@ -57,18 +58,31 @@ namespace Flow
 				var source = sources[sourceIndex];
 				if (sourceIndex != currentSourceIndex)
 				{
-					sb.Append("== ");
-					sb.Append(source.uri);
-					sb.AppendLine(" ==");
+					sb.AppendLine(source.uri.value);
 					currentSourceIndex = sourceIndex;
 				}
 
+				PrintCommandName(self, index, sb);
 				PrintLineNumber(self, source.content, index, sb);
 				index = DisassembleInstruction(self, index, sb);
 				sb.AppendLine();
 			}
 
 			sb.AppendLine("== end ==");
+		}
+
+		private static void PrintCommandName(ByteCodeChunk self, int codeIndex, StringBuilder sb)
+		{
+			for (var i = 0; i < self.commandDefinitions.count; i++)
+			{
+				var definition = self.commandDefinitions.buffer[i];
+				if (definition.codeIndex == codeIndex)
+				{
+					sb.Append("  // ");
+					sb.AppendLine(definition.name);
+					break;
+				}
+			}
 		}
 
 		private static void PrintLineNumber(ByteCodeChunk self, string source, int index, StringBuilder sb)

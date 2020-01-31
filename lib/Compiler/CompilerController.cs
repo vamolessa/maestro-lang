@@ -135,6 +135,7 @@ namespace Flow
 		private void CommandDeclaration()
 		{
 			var skipJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
+			var commandCodeIndex = compiler.chunk.bytes.count;
 
 			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.Commands.ExpectedCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
@@ -187,6 +188,10 @@ namespace Flow
 
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
+
+			var success = compiler.chunk.AddCommand(new CommandDefinition(name, commandCodeIndex, (byte)parameterCount, (byte)returnCount));
+			if (!success)
+				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameAlreadyRegistered { name = name });
 		}
 
 		private void IfStatement()
@@ -424,29 +429,28 @@ namespace Flow
 				argCount += valueResult.valueCount;
 			}
 
-			var commandIndex = -1;
-			for (var i = 0; i < compiler.chunk.externalCommandDefinitions.count; i++)
+			if (compiler.ResolveToExternalCommandIndex(commandSlice, out var externalCommandIndex))
 			{
-				var command = compiler.chunk.externalCommandDefinitions.buffer[i];
-				if (CompilerHelper.AreEqual(
-					compiler.parser.tokenizer.source,
-					commandSlice,
-					command.name
-				))
+				var externalCommand = compiler.chunk.externalCommandDefinitions.buffer[externalCommandIndex];
+				if (argCount != externalCommand.parameterCount)
 				{
-					commandIndex = i;
-					break;
+					compiler.AddSoftError(slice, new CompileErrors.ExternalCommands.WrongNumberOfExternalCommandArguments
+					{
+						commandName = externalCommand.name,
+						expected = externalCommand.parameterCount,
+						got = argCount
+					});
 				}
-			}
+				else
+				{
+					compiler.EmitExecuteNativeCommand(externalCommandIndex, valueCount);
+				}
 
-			if (commandIndex < 0)
-			{
-				compiler.AddSoftError(slice, new CompileErrors.Commands.CommandNotRegistered { name = CompilerHelper.GetSlice(compiler, commandSlice) });
-				return 0;
+				return externalCommand.returnCount;
 			}
-			else
+			else if (compiler.ResolveToCommandIndex(commandSlice, out var commandIndex))
 			{
-				var command = compiler.chunk.externalCommandDefinitions.buffer[commandIndex];
+				var command = compiler.chunk.commandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments
@@ -458,10 +462,15 @@ namespace Flow
 				}
 				else
 				{
-					compiler.EmitCallNativeCommand(commandIndex, valueCount);
+					compiler.EmitExecuteCommand(commandIndex, valueCount);
 				}
 
 				return command.returnCount;
+			}
+			else
+			{
+				compiler.AddSoftError(slice, new CompileErrors.Commands.CommandNotRegistered { name = CompilerHelper.GetSlice(compiler, commandSlice) });
+				return 0;
 			}
 		}
 

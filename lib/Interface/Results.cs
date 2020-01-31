@@ -4,50 +4,37 @@ namespace Flow
 {
 	public readonly struct CompileResult
 	{
-		internal sealed class Data
-		{
-			internal readonly Buffer<CompileError> errors;
-			internal readonly Buffer<Source> sources;
-
-			internal Data(Buffer<CompileError> errors, Buffer<Source> sources)
-			{
-				this.errors = errors;
-				this.sources = sources;
-			}
-		}
-
 		internal readonly ByteCodeChunk chunk;
-		internal readonly Data data;
+		internal readonly Buffer<Source> sources;
+		internal readonly Buffer<CompileError> errors;
 
 		public bool HasErrors
 		{
-			get { return data != null; }
+			get { return errors.count > 0; }
 		}
 
-		internal CompileResult(ByteCodeChunk chunk, Data data)
+		internal CompileResult(ByteCodeChunk chunk, Buffer<Source> sources, Buffer<CompileError> errors)
 		{
 			this.chunk = chunk;
-			this.data = data;
+			this.sources = sources;
+			this.errors = errors;
 		}
 
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
-			chunk.Disassemble(sb);
+			chunk.Disassemble(sources.buffer, sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
 		{
-			if (data == null)
-				return;
-
-			for (var i = 0; i < data.errors.count; i++)
+			for (var i = 0; i < errors.count; i++)
 			{
-				var error = data.errors.buffer[i];
+				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
-					var source = data.sources.buffer[error.sourceIndex];
+					var source = sources.buffer[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
 						source.uri.value,
 						source.content,

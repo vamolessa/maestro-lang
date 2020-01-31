@@ -50,11 +50,19 @@ namespace Flow
 			self.EmitUShort((ushort)index);
 		}
 
-		public static void EmitCallNativeCommand(this Compiler self, int commandIndex, byte inputCount)
+		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex, byte inputCount)
 		{
 			var instanceIndex = self.chunk.externalCommandInstances.count;
 			self.chunk.externalCommandInstances.PushBack(new CommandInstance(commandIndex, inputCount));
 			self.EmitInstruction(Instruction.ExecuteNativeCommand);
+			self.EmitUShort((ushort)instanceIndex);
+		}
+
+		public static void EmitExecuteCommand(this Compiler self, int commandIndex, byte inputCount)
+		{
+			var instanceIndex = self.chunk.commandInstances.count;
+			self.chunk.commandInstances.PushBack(new CommandInstance(commandIndex, inputCount));
+			self.EmitInstruction(Instruction.ExecuteCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
 

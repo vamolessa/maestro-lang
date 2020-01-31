@@ -5,5 +5,5 @@ external print 0 0;
 $myVar | print;
 
 command my_command $input0 $input1 -> $output0 $output1 {
-	# do stuff!
+	"hello from my command" | print;
 }

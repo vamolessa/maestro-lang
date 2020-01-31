@@ -65,6 +65,8 @@ namespace Flow
 
 		public void BeginSource(string source, int sourceIndex)
 		{
+			chunk.sourceStartIndexes.PushBack(chunk.bytes.count);
+
 			stateStack.PushBack(new State(
 				parser.tokenizer.source,
 				this.sourceIndex,
