@@ -45,5 +45,10 @@ namespace Flow
 			value = default;
 			return false;
 		}
+
+		public T GetOr(T defaultValue)
+		{
+			return isSome ? value : defaultValue;
+		}
 	}
 }

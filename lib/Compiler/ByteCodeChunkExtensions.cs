@@ -116,12 +116,19 @@ namespace Flow
 			{
 			case Instruction.Halt:
 			case Instruction.Return:
-			case Instruction.Pop:
+			case Instruction.PopOne:
+			case Instruction.PopUnknown:
+			case Instruction.KeepOne:
+			case Instruction.AppendBothUnkown:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
+			case Instruction.PushExpressionSize:
 			case Instruction.PopMultiple:
+			case Instruction.KeepMultiple:
+			case Instruction.AppendBottomUnknown:
+			case Instruction.AppendTopUnknown:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 			case Instruction.DebugPopLocalInfos:

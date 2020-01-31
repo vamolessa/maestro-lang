@@ -5,9 +5,9 @@ namespace Flow
 	internal readonly struct ExpressionResult
 	{
 		public readonly Slice slice;
-		public readonly byte valueCount;
+		public readonly Option<byte> valueCount;
 
-		public ExpressionResult(Slice slice, byte count)
+		public ExpressionResult(Slice slice, Option<byte> count)
 		{
 			this.slice = slice;
 			this.valueCount = count;

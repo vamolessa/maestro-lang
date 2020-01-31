@@ -15,6 +15,7 @@ namespace Flow
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
+			var expressionSizes = new Buffer<byte>(8);
 
 			while (true)
 			{
@@ -105,16 +106,83 @@ namespace Flow
 						baseStackIndex = frame.baseStackIndex;
 						break;
 					}
-				case Instruction.Pop:
+				case Instruction.PopOne:
 					stack.buffer[--stack.count] = default;
+					break;
+				case Instruction.PushExpressionSize:
+					expressionSizes.PushBackUnchecked(bytes[codeIndex++]);
 					break;
 				case Instruction.PopMultiple:
 					{
 						var count = bytes[codeIndex++];
 						while (count-- > 0)
 							stack.buffer[--stack.count] = default;
+						break;
 					}
-					break;
+				case Instruction.PopUnknown:
+					{
+						var count = stack.buffer[--stack.count].asNumber.asInt;
+						stack.buffer[stack.count] = default;
+
+						while (count-- > 0)
+							stack.buffer[--stack.count] = default;
+						break;
+					}
+				case Instruction.KeepOne:
+					{
+						var count = stack.buffer[--stack.count].asNumber.asInt;
+						stack.buffer[stack.count] = default;
+
+						while (--count > 0)
+							stack.buffer[--stack.count] = default;
+						break;
+					}
+				case Instruction.KeepMultiple:
+					{
+						var count = bytes[codeIndex++] - stack.buffer[--stack.count].asNumber.asInt;
+						stack.buffer[stack.count] = default;
+
+						if (count < 0)
+						{
+							while (count++ < 0)
+								stack.buffer[--stack.count] = default;
+						}
+						else
+						{
+							stack.GrowUnchecked(count);
+						}
+						break;
+					}
+				case Instruction.AppendBottomUnknown:
+					{
+						var topCount = bytes[codeIndex++];
+						var bottomIndex = --stack.count - topCount;
+						var bottomCount = stack.buffer[bottomIndex].asNumber.asInt;
+
+						while (bottomIndex < stack.count)
+							stack.buffer[bottomIndex] = stack.buffer[++bottomIndex];
+						stack.buffer[stack.count++] = new Value(topCount + bottomCount);
+						break;
+					}
+				case Instruction.AppendTopUnknown:
+					{
+						var bottomCount = bytes[codeIndex++];
+						var topCount = stack.buffer[stack.count - 1].asNumber.asInt;
+						stack.buffer[stack.count - 1] = new Value(topCount + bottomCount);
+						break;
+					}
+				case Instruction.AppendBothUnkown:
+					{
+						var topCount = stack.buffer[--stack.count].asNumber.asInt;
+						var bottomIndex = --stack.count - topCount;
+						var bottomCount = stack.buffer[bottomIndex].asNumber.asInt;
+
+						while (bottomIndex < stack.count)
+							stack.buffer[bottomIndex] = stack.buffer[++bottomIndex];
+						stack.buffer[stack.count++] = new Value(topCount + bottomCount);
+						stack.buffer[stack.count] = default;
+						break;
+					}
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
 					break;

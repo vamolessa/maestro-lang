@@ -2,8 +2,8 @@ namespace Flow
 {
 	internal sealed class ParseRules
 	{
-		public delegate byte PrefixFunction(CompilerController controller);
-		public delegate byte InfixFunction(CompilerController controller, ExpressionResult result);
+		public delegate void PrefixFunction(CompilerController controller);
+		public delegate void InfixFunction(CompilerController controller, Slice slice);
 
 		private const int RuleCount = (int)TokenKind.COUNT;
 		private readonly Precedence[] precedences = new Precedence[RuleCount];

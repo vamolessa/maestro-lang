@@ -34,7 +34,7 @@ namespace Flow
 		public static int EndScope(this Compiler self, Scope scope)
 		{
 			var localCount = self.EndScopeKeepingLocalValues(scope);
-			self.EmitPop(localCount);
+			self.EmitPop(localCount <= byte.MaxValue ? (byte)localCount : byte.MaxValue);
 			return localCount;
 		}
 	}

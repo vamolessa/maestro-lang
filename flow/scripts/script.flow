@@ -3,10 +3,3 @@ external command print 0 0;
 
 "sera" | $message;
 $message, false, "another message" | print;
-
-command doit $param -> $ret {
-	$param | print;
-	3 | $ret;
-}
-
-43, false, "one more string" | doit "asdsa" | print;

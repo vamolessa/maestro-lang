@@ -127,6 +127,12 @@ namespace Flow.CompileErrors
 			public string Format() => "Expected '{' before command body";
 		}
 
+		internal struct ExpectedOneValueAsCommandArgument : IFormattedMessage
+		{
+			public int got;
+			public string Format() => $"Expected one value as command argument. Got {got}";
+		}
+
 		internal struct WrongNumberOfCommandArguments : IFormattedMessage
 		{
 			public string commandName;
@@ -150,10 +156,10 @@ namespace Flow.CompileErrors
 
 	namespace If
 	{
-		internal struct ExprectedOneValueAsIfCondition : IFormattedMessage
+		internal struct ExpectedOneValueAsIfCondition : IFormattedMessage
 		{
-			public int got;
-			public string Format() => $"Expected one value as 'if' condition. Got {got}";
+			public Option<byte> got;
+			public string Format() => $"Expected one value as 'if' condition. Got {(got.isSome ? got.value.ToString() : "unknown")}";
 		}
 
 		internal struct ExpectedOpenCurlyBracesAfterIfCondition : IFormattedMessage
@@ -171,8 +177,8 @@ namespace Flow.CompileErrors
 	{
 		internal struct ExpectedOneValueAsIterateCondition : IFormattedMessage
 		{
-			public int got;
-			public string Format() => $"Expected one value as 'iterate' condition. Got {got}";
+			public Option<byte> got;
+			public string Format() => $"Expected one value as 'iterate' condition. Got {(got.isSome ? got.value.ToString() : "unknown")}";
 		}
 
 		internal struct ExpectedOpenCurlyBracesAfterIterateCondition : IFormattedMessage
@@ -241,6 +247,11 @@ namespace Flow.CompileErrors
 			public int expected;
 			public int got;
 			public string Format() => $"Wrong number of variables on assignment. Expected {expected}. Got {got}";
+		}
+
+		internal struct TooManyVariablesOnAssignment : IFormattedMessage
+		{
+			public string Format() => $"Too many variables on assignment. Max is {byte.MaxValue}";
 		}
 
 		internal struct TooManyVariables : IFormattedMessage
