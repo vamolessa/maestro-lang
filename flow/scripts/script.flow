@@ -1,9 +1,8 @@
 external elements 0 1;
 external print 0 0;
 
-45 | $myVar;
-$myVar | print;
-
-command my_command $input0 $input1 -> $output0 $output1 {
+command my_command $param0 $param1 -> $ret0 $ret1 {
 	"hello from my command" | print;
 }
+
+my_command 0 0;

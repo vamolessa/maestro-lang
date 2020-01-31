@@ -15,6 +15,12 @@ namespace Flow
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
 		internal Buffer<CommandInstance> commandInstances = new Buffer<CommandInstance>(8);
 
+		internal ByteCodeChunk()
+		{
+			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0, 0));
+			commandInstances.PushBackUnchecked(new CommandInstance(0, 0));
+		}
+
 		internal void WriteByte(byte value, Slice slice)
 		{
 			bytes.PushBack(value);

@@ -111,7 +111,7 @@ namespace Flow
 				));
 			}
 
-			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, -1));
+			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, 0));
 			var executeError = VirtualMachineInstructions.Execute(vm);
 
 			return new ExecuteResult(executeError.isSome ?

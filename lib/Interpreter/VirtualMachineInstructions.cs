@@ -19,11 +19,14 @@ namespace Flow
 			while (true)
 			{
 #if DEBUG_TRACE
-				debugSb.Clear();
-				vm.stack = stack;
-				VirtualMachineHelper.TraceStack(vm, debugSb);
-				vm.chunk.DisassembleInstruction(codeIndex, debugSb);
-				System.Console.WriteLine(debugSb);
+				if ((Instruction)bytes[codeIndex] != Instruction.DebugHook)
+				{
+					debugSb.Clear();
+					vm.stack = stack;
+					VirtualMachineHelper.TraceStack(vm, debugSb);
+					vm.chunk.DisassembleInstruction(codeIndex, debugSb);
+					System.Console.WriteLine(debugSb);
+				}
 #endif
 
 				var nextInstruction = (Instruction)bytes[codeIndex++];

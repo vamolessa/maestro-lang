@@ -104,10 +104,13 @@ namespace Flow
 
 		internal static int DisassembleInstruction(this ByteCodeChunk self, int index, StringBuilder sb)
 		{
-			sb.AppendFormat("{0:0000} ", index);
-
 			var instructionCode = self.bytes.buffer[index];
 			var instruction = (Instruction)instructionCode;
+
+			if (instruction == Instruction.DebugHook)
+				return DisassembleInstruction(self, index + 1, sb);
+
+			sb.AppendFormat("{0:0000} ", index);
 
 			switch (instruction)
 			{
@@ -216,8 +219,8 @@ namespace Flow
 				chunk.bytes.buffer[++index]
 			);
 
-			var instance = chunk.externalCommandInstances.buffer[instanceIndex];
-			var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+			var instance = chunk.commandInstances.buffer[instanceIndex];
+			var definition = chunk.commandDefinitions.buffer[instance.definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
