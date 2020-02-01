@@ -17,7 +17,7 @@ namespace Flow
 
 		internal ByteCodeChunk()
 		{
-			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0, 0));
+			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0));
 			commandInstances.PushBackUnchecked(new CommandInstance(0));
 		}
 

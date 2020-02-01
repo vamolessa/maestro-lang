@@ -15,10 +15,8 @@ namespace Flow.RuntimeErrors
 	{
 		public string name;
 		public int expectedParameters;
-		public int expectedReturns;
 		public int gotParameters;
-		public int gotReturns;
 
-		public string Format() => $"Incompatible external command '{name}' found. Expected {expectedParameters} parameters and {expectedReturns} return values. Got {gotParameters} parameters and {gotReturns} return values";
+		public string Format() => $"Incompatible external command '{name}' found. Expected {expectedParameters} parameters. Got {gotParameters}";
 	}
 }

@@ -17,6 +17,28 @@ namespace Flow
 			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
 			var expressionSizes = new Buffer<byte>(8);
 
+			void PopExpression()
+			{
+				var count = expressionSizes.buffer[--expressionSizes.count];
+				while (count-- > 0)
+					stack.buffer[--stack.count] = default;
+			}
+
+			void Keep(byte keepCount)
+			{
+				var diff = keepCount - expressionSizes.buffer[expressionSizes.count - 1];
+				expressionSizes.buffer[expressionSizes.count - 1] = keepCount;
+
+				if (diff > 0)
+				{
+					stack.GrowUnchecked(diff);
+					return;
+				}
+
+				while (diff++ < 0)
+					stack.buffer[--stack.count] = default;
+			}
+
 			while (true)
 			{
 #if DEBUG_TRACE
@@ -56,17 +78,17 @@ namespace Flow
 						stack.count -= definition.parameterCount;
 						var inputCount = stack.buffer[--stack.count].asNumber.asInt;
 						stack.count -= inputCount;
+						expressionSizes.count -= definition.parameterCount + 1;
 
-						var inputs = new Inputs(inputCount, stack.count, stack.buffer);
-						stack.GrowUnchecked(definition.returnCount);
+						var context = new Context(inputCount, stack.count, stack.buffer);
 
-						var error = command.Invoke(inputs);
+						command.Invoke(ref context);
 
 						while (previousStackCount > stack.count)
 							stack.buffer[--previousStackCount] = default;
 
-						if (error is IFormattedMessage errorMessage)
-							return vm.NewError(errorMessage);
+						if (context.errorMessage != null)
+							return vm.NewError(context.errorMessage);
 						break;
 					}
 				case Instruction.ExecuteCommand:
@@ -80,13 +102,14 @@ namespace Flow
 						codeIndex = definition.codeIndex;
 
 						baseStackIndex = stack.count - 1 - definition.parameterCount;
-						stack.GrowUnchecked(definition.returnCount);
 
 						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, baseStackIndex, index));
 						break;
 					}
 				case Instruction.Return:
 					{
+						var count = bytes[codeIndex++];
+
 						var frame = vm.stackFrames.buffer[--vm.stackFrames.count];
 						var instance = vm.chunk.commandInstances.buffer[frame.commandInstanceIndex];
 						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
@@ -95,7 +118,7 @@ namespace Flow
 						stack.count = frame.baseStackIndex - inputCount;
 						var returnStartIndex = frame.baseStackIndex + 1 + definition.parameterCount;
 
-						for (var i = 0; i < definition.returnCount; i++)
+						for (var i = 0; i < count; i++)
 							stack.buffer[stack.count++] = stack.buffer[returnStartIndex++];
 
 						while (returnStartIndex > stack.count)
@@ -106,93 +129,48 @@ namespace Flow
 						baseStackIndex = frame.baseStackIndex;
 						break;
 					}
-				case Instruction.PopOne:
-					stack.buffer[--stack.count] = default;
+				case Instruction.PushEmptyExpression:
+					expressionSizes.PushBackUnchecked(0);
 					break;
-				case Instruction.PushExpressionSize:
-					expressionSizes.PushBackUnchecked(bytes[codeIndex++]);
+				case Instruction.PopOneExpression:
+					PopExpression();
 					break;
-				case Instruction.PopMultiple:
+				case Instruction.PopMultipleExpressions:
 					{
 						var count = bytes[codeIndex++];
 						while (count-- > 0)
-							stack.buffer[--stack.count] = default;
+							PopExpression();
 						break;
 					}
-				case Instruction.PopUnknown:
-					{
-						var count = stack.buffer[--stack.count].asNumber.asInt;
-						stack.buffer[stack.count] = default;
-
-						while (count-- > 0)
-							stack.buffer[--stack.count] = default;
-						break;
-					}
-				case Instruction.KeepOne:
-					{
-						var count = stack.buffer[--stack.count].asNumber.asInt;
-						stack.buffer[stack.count] = default;
-
-						while (--count > 0)
-							stack.buffer[--stack.count] = default;
-						break;
-					}
-				case Instruction.KeepMultiple:
-					{
-						var count = bytes[codeIndex++] - stack.buffer[--stack.count].asNumber.asInt;
-						stack.buffer[stack.count] = default;
-
-						if (count < 0)
-						{
-							while (count++ < 0)
-								stack.buffer[--stack.count] = default;
-						}
-						else
-						{
-							stack.GrowUnchecked(count);
-						}
-						break;
-					}
-				case Instruction.AppendBottomUnknown:
-					{
-						var topCount = bytes[codeIndex++];
-						var bottomIndex = --stack.count - topCount;
-						var bottomCount = stack.buffer[bottomIndex].asNumber.asInt;
-
-						while (bottomIndex < stack.count)
-							stack.buffer[bottomIndex] = stack.buffer[++bottomIndex];
-						stack.buffer[stack.count++] = new Value(topCount + bottomCount);
-						break;
-					}
-				case Instruction.AppendTopUnknown:
-					{
-						var bottomCount = bytes[codeIndex++];
-						var topCount = stack.buffer[stack.count - 1].asNumber.asInt;
-						stack.buffer[stack.count - 1] = new Value(topCount + bottomCount);
-						break;
-					}
-				case Instruction.AppendBothUnkown:
-					{
-						var topCount = stack.buffer[--stack.count].asNumber.asInt;
-						var bottomIndex = --stack.count - topCount;
-						var bottomCount = stack.buffer[bottomIndex].asNumber.asInt;
-
-						while (bottomIndex < stack.count)
-							stack.buffer[bottomIndex] = stack.buffer[++bottomIndex];
-						stack.buffer[stack.count++] = new Value(topCount + bottomCount);
-						stack.buffer[stack.count] = default;
-						break;
-					}
+				case Instruction.PopExpressionKeepOne:
+					Keep(1);
+					break;
+				case Instruction.PopExpressionKeepMultiple:
+					Keep(bytes[codeIndex++]);
+					break;
+				case Instruction.AppendExpression:
+					expressionSizes.buffer[expressionSizes.count - 2] = expressionSizes.buffer[--expressionSizes.count];
+					break;
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
+					expressionSizes.PushBackUnchecked(1);
 					break;
 				case Instruction.LoadTrue:
 					stack.PushBackUnchecked(new Value(ValueKind.TrueKind));
+					expressionSizes.PushBackUnchecked(1);
 					break;
 				case Instruction.LoadLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
+						expressionSizes.PushBackUnchecked(1);
+						break;
+					}
+				case Instruction.CreateLocals:
+					{
+						var diff = bytes[codeIndex++] - expressionSizes.buffer[--expressionSizes.count];
+						while (diff-- > 0)
+							expressionSizes.PushBackUnchecked(1);
 						break;
 					}
 				case Instruction.AssignLocal:
@@ -206,6 +184,7 @@ namespace Flow
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
 						stack.PushBackUnchecked(stack.buffer[index]);
+						expressionSizes.PushBackUnchecked(1);
 						break;
 					}
 				case Instruction.JumpBackward:
@@ -220,19 +199,28 @@ namespace Flow
 						codeIndex += offset;
 						break;
 					}
-				case Instruction.PopAndJumpForwardIfFalse:
+				case Instruction.PopExpressionAndJumpForwardIfFalse:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						if (!stack.buffer[--stack.count].IsTruthy())
-							codeIndex += offset;
-						stack.buffer[stack.count] = default;
+
+						for (var i = stack.count - expressionSizes.buffer[expressionSizes.count - 1]; i < stack.count; i++)
+						{
+							if (!stack.buffer[i].IsTruthy())
+							{
+								codeIndex += offset;
+								break;
+							}
+						}
+
+						PopExpression();
 						break;
 					}
-				case Instruction.JumpForwardIfNull:
+				case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						if (stack.buffer[stack.count - 1].asObject is null)
+						if (expressionSizes.buffer[expressionSizes.count - 1] == 0)
 							codeIndex += offset;
+						Keep(1);
 						break;
 					}
 				case Instruction.DebugHook:

@@ -4,39 +4,37 @@ namespace Flow
 {
 	public static class Program
 	{
-		public sealed class PrintCommand : ICommand<Tuple0, Tuple0>
+		public sealed class PrintCommand : ICommand<Tuple0>
 		{
-			public Result<Tuple0> Execute(Inputs inputs, Tuple0 args)
+			public void Execute(ref Context inputs, Tuple0 args)
 			{
 				for (var i = 0; i < inputs.count; i++)
 					System.Console.WriteLine(inputs[i].ToString());
-
-				return default;
 			}
 		}
 
-		public sealed class BypassCommand : ICommand<Tuple0, Tuple1>
+		public sealed class BypassCommand : ICommand<Tuple0>
 		{
-			public Result<Tuple1> Execute(Inputs inputs, Tuple0 args)
+			public void Execute(ref Context inputs, Tuple0 args)
 			{
-				return inputs.count > 0 ? inputs[0] : new Value(null);
+				// return inputs.count > 0 ? inputs[0] : new Value(null);
 			}
 		}
 
-		public sealed class ElementsCommand : ICommand<Tuple0, Tuple1>
+		public sealed class ElementsCommand : ICommand<Tuple0>
 		{
 			public int currentIndex = 0;
 
-			public Result<Tuple1> Execute(Inputs inputs, Tuple0 args)
+			public void Execute(ref Context inputs, Tuple0 args)
 			{
 				if (currentIndex < inputs.count)
 				{
-					return inputs[currentIndex++];
+					// return inputs[currentIndex++];
 				}
 				else
 				{
 					currentIndex = 0;
-					return default;
+					// return default;
 				}
 			}
 		}

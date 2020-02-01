@@ -2,18 +2,6 @@ using System.Globalization;
 
 namespace Flow
 {
-	internal readonly struct ExpressionResult
-	{
-		public readonly Slice slice;
-		public readonly Option<byte> valueCount;
-
-		public ExpressionResult(Slice slice, Option<byte> count)
-		{
-			this.slice = slice;
-			this.valueCount = count;
-		}
-	}
-
 	internal enum LocalVariableFlag
 	{
 		NotRead,

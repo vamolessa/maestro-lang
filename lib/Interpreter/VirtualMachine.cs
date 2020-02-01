@@ -72,9 +72,7 @@ namespace Flow
 					{
 						name = definition.name,
 						expectedParameters = definition.parameterCount,
-						expectedReturns = definition.returnCount,
 						gotParameters = binding.value.definition.parameterCount,
-						gotReturns = binding.value.definition.returnCount
 					});
 				}
 

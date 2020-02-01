@@ -44,28 +44,20 @@ namespace Flow
 		internal readonly VirtualMachine vm = new VirtualMachine();
 		internal readonly ExternalCommandBindingRegistry externalCommandRegistry = new ExternalCommandBindingRegistry();
 
-		public void RegisterCommand<A, R>(string name, System.Func<ICommand<A, R>> commandFactory)
-			where A : struct, ITuple
-			where R : struct, ITuple
+		public void RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
 			externalCommandRegistry.Register(new ExternalCommandBinding(
 				new ExternalCommandDefinition(
 					name,
-					default(A).Size,
-					default(R).Size
+					default(T).Size
 				),
 				() =>
 				{
 					var command = commandFactory();
-					return (inputs) =>
+					return (ref Context context) =>
 					{
-						var args = default(A);
-						args.Read(inputs.buffer, inputs.startIndex + inputs.count);
-
-						var result = command.Execute(inputs, args);
-						result.ok.Write(inputs.buffer, inputs.startIndex);
-
-						return result.error;
+						var args = default(T);
+						command.Execute(ref context, args);
 					};
 				}
 			));

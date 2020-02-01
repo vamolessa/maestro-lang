@@ -21,36 +21,16 @@ namespace Flow
 			self.EmitByte((byte)instruction);
 		}
 
-		public static void EmitPop(this Compiler self, Option<byte> count)
-		{
-			if (count.isSome)
-			{
-				if (count.value > 1)
-				{
-					self.EmitInstruction(Instruction.PopMultiple);
-					self.EmitByte(count.value);
-				}
-				else if (count.value > 0)
-				{
-					self.EmitInstruction(Instruction.PopOne);
-				}
-			}
-			else
-			{
-				self.EmitInstruction(Instruction.PopUnknown);
-			}
-		}
-
 		public static void EmitKeep(this Compiler self, byte count)
 		{
 			if (count > 1)
 			{
-				self.EmitInstruction(Instruction.KeepMultiple);
+				self.EmitInstruction(Instruction.PopExpressionKeepMultiple);
 				self.EmitByte(count);
 			}
 			else if (count > 0)
 			{
-				self.EmitInstruction(Instruction.KeepOne);
+				self.EmitInstruction(Instruction.PopExpressionKeepOne);
 			}
 		}
 

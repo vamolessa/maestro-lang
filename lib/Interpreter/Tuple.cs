@@ -18,11 +18,6 @@ namespace Flow
 
 		public void Read(Value[] buffer, int index) { }
 		public void Write(Value[] buffer, int index) { }
-
-		public static implicit operator Result<Tuple0>(Tuple0 self)
-		{
-			return new Result<Tuple0>(self);
-		}
 	}
 
 	public struct Tuple1 : ITuple
@@ -44,11 +39,6 @@ namespace Flow
 		public static implicit operator Value(Tuple1 self)
 		{
 			return self.value0;
-		}
-
-		public static implicit operator Result<Tuple1>(Tuple1 self)
-		{
-			return new Result<Tuple1>(self);
 		}
 
 		public void Read(Value[] buffer, int index)
@@ -78,11 +68,6 @@ namespace Flow
 		public static implicit operator Tuple2((Value, Value) tuple)
 		{
 			return new Tuple2(tuple.Item1, tuple.Item2);
-		}
-
-		public static implicit operator Result<Tuple2>(Tuple2 self)
-		{
-			return new Result<Tuple2>(self);
 		}
 
 		public void Deconstruct(out Value value0, out Value value1)
@@ -122,11 +107,6 @@ namespace Flow
 		public static implicit operator Tuple3((Value, Value, Value) tuple)
 		{
 			return new Tuple3(tuple.Item1, tuple.Item2, tuple.Item3);
-		}
-
-		public static implicit operator Result<Tuple3>(Tuple3 self)
-		{
-			return new Result<Tuple3>(self);
 		}
 
 		public void Deconstruct(out Value value0, out Value value1, out Value value2)
@@ -171,11 +151,6 @@ namespace Flow
 		public static implicit operator Tuple4((Value, Value, Value, Value) tuple)
 		{
 			return new Tuple4(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
-		}
-
-		public static implicit operator Result<Tuple4>(Tuple4 self)
-		{
-			return new Result<Tuple4>(self);
 		}
 
 		public void Deconstruct(out Value value0, out Value value1, out Value value2, out Value value3)
@@ -234,11 +209,6 @@ namespace Flow
 		public static implicit operator Tuple4And<T>((Value, Value, Value, Value, T) tuple)
 		{
 			return new Tuple4And<T>(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5);
-		}
-
-		public static implicit operator Result<Tuple4And<T>>(Tuple4And<T> self)
-		{
-			return new Result<Tuple4And<T>>(self);
 		}
 
 		public void Deconstruct(out Value value0, out Value value1, out Value value2, out Value value3, out T value4)

@@ -115,20 +115,18 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
-			case Instruction.Return:
-			case Instruction.PopOne:
-			case Instruction.PopUnknown:
-			case Instruction.KeepOne:
-			case Instruction.AppendBothUnkown:
+			case Instruction.PushEmptyExpression:
+			case Instruction.PopOneExpression:
+			case Instruction.AppendExpression:
+			case Instruction.PopExpressionKeepOne:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
-			case Instruction.PushExpressionSize:
-			case Instruction.PopMultiple:
-			case Instruction.KeepMultiple:
-			case Instruction.AppendBottomUnknown:
-			case Instruction.AppendTopUnknown:
+			case Instruction.Return:
+			case Instruction.PopMultipleExpressions:
+			case Instruction.PopExpressionKeepMultiple:
+			case Instruction.CreateLocals:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 			case Instruction.DebugPopLocalInfos:
@@ -144,8 +142,8 @@ namespace Flow
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
-			case Instruction.PopAndJumpForwardIfFalse:
-			case Instruction.JumpForwardIfNull:
+			case Instruction.PopExpressionAndJumpForwardIfFalse:
+			case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
 				return JumpInstruction(self, instruction, 1, index, sb);
 			default:
 				sb.Append("Unknown instruction ");

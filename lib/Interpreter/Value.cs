@@ -69,11 +69,6 @@ namespace Flow
 			this.AppendTo(sb);
 			return sb.ToString();
 		}
-
-		public static implicit operator Result<Tuple1>(Value self)
-		{
-			return new Result<Tuple1>(new Tuple1(self));
-		}
 	}
 
 	internal static class ValueExtensions

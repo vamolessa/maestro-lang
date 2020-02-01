@@ -1,33 +1,34 @@
 namespace Flow
 {
-	public readonly struct Inputs
+	public struct Context
 	{
-		public readonly int count;
+		public int count;
 
-		internal readonly int startIndex;
-		internal readonly Value[] buffer;
+		internal int startIndex;
+		internal Value[] buffer;
+		internal IFormattedMessage errorMessage;
 
 		public Value this[int index]
 		{
 			get { return buffer[startIndex + index]; }
 		}
 
-		internal Inputs(int count, int startIndex, Value[] buffer)
+		internal Context(int count, int startIndex, Value[] buffer)
 		{
 			this.count = count;
 			this.startIndex = startIndex;
 			this.buffer = buffer;
+			this.errorMessage = null;
 		}
 	}
 
-	public interface ICommand<A, R>
-		where A : struct, ITuple
-		where R : struct, ITuple
+	public interface ICommand<T>
+		where T : struct, ITuple
 	{
-		Result<R> Execute(Inputs inputs, A args);
+		void Execute(ref Context context, T args);
 	}
 
-	internal delegate IFormattedMessage CommandCallback(Inputs inputs);
+	internal delegate void CommandCallback(ref Context context);
 
 	internal readonly struct ExternalCommandBinding
 	{
@@ -55,21 +56,16 @@ namespace Flow
 	{
 		public readonly string name;
 		public readonly byte parameterCount;
-		public readonly byte returnCount;
 
-		public ExternalCommandDefinition(string name, byte parameterCount, byte returnCount)
+		public ExternalCommandDefinition(string name, byte parameterCount)
 		{
 			this.name = name;
 			this.parameterCount = parameterCount;
-			this.returnCount = returnCount;
 		}
 
 		public bool IsEqualTo(ExternalCommandDefinition other)
 		{
-			return
-				name == other.name &&
-				parameterCount == other.parameterCount &&
-				returnCount == other.returnCount;
+			return name == other.name && parameterCount == other.parameterCount;
 		}
 	}
 
@@ -78,22 +74,17 @@ namespace Flow
 		public readonly string name;
 		public readonly int codeIndex;
 		public readonly byte parameterCount;
-		public readonly byte returnCount;
 
-		public CommandDefinition(string name, int codeIndex, byte parameterCount, byte returnCount)
+		public CommandDefinition(string name, int codeIndex, byte parameterCount)
 		{
 			this.name = name;
 			this.codeIndex = codeIndex;
 			this.parameterCount = parameterCount;
-			this.returnCount = returnCount;
 		}
 
 		public bool IsEqualTo(ExternalCommandDefinition other)
 		{
-			return
-				name == other.name &&
-				parameterCount == other.parameterCount &&
-				returnCount == other.returnCount;
+			return name == other.name && parameterCount == other.parameterCount;
 		}
 	}
 }

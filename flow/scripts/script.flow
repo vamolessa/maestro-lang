@@ -1,5 +1,5 @@
-external command elements 0 1;
-external command print 0 0;
+external command elements 0;
+external command print 0;
 
 "sera" | $message;
 $message, false, "another message" | print;
