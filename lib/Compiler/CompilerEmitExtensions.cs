@@ -23,7 +23,7 @@ namespace Flow
 
 		public static void EmitKeep(this Compiler self, byte count)
 		{
-			self.EmitInstruction(Instruction.PopTuple);
+			self.EmitInstruction(Instruction.PopTupleKeeping);
 			self.EmitByte(count);
 		}
 

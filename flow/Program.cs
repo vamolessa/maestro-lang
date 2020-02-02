@@ -44,8 +44,11 @@ namespace Flow
 		{
 			public void Execute(ref Context context, Tuple2 args)
 			{
+				// for (var i = 0; i < context.inputCount; i++)
+				// 	context.PushValue(context.GetInput(0));
+
 				(var arg0, var arg1) = args;
-				System.Console.WriteLine("TEST COMMAND WITH ARGS {0}, {1}", arg0, arg1);
+				System.Console.WriteLine("TEST COMMAND WITH {0} INPUTS AND ARGS {1}, {2}", context.inputCount, arg0, arg1);
 				context.PushValue(arg0);
 				context.PushValue(arg1);
 			}

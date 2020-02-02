@@ -7,7 +7,7 @@ namespace Flow
 		ExecuteCommand,
 		Return,
 		PushEmptyTuple,
-		PopTuple,
+		PopTupleKeeping,
 		MergeTuple,
 		Pop,
 		LoadFalse,

@@ -133,7 +133,7 @@ namespace Flow
 				case Instruction.PushEmptyTuple:
 					tupleSizes.PushBackUnchecked(0);
 					break;
-				case Instruction.PopTuple:
+				case Instruction.PopTupleKeeping:
 					Keep(bytes[codeIndex++]);
 					break;
 				case Instruction.MergeTuple:

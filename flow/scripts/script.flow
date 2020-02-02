@@ -2,6 +2,6 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
-test-command "olaaa" 34 | print;
+1, 2, 3 | test-command "olaaa" 34 | print;
 
 #$message, false, "another message" | print;

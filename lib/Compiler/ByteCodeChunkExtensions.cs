@@ -122,7 +122,7 @@ namespace Flow
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
-			case Instruction.PopTuple:
+			case Instruction.PopTupleKeeping:
 			case Instruction.Pop:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
