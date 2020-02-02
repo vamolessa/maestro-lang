@@ -40,6 +40,17 @@ namespace Flow
 			}
 		}
 
+		public sealed class TestCommand : ICommand<Tuple2>
+		{
+			public void Execute(ref Context context, Tuple2 args)
+			{
+				(var arg0, var arg1) = args;
+				System.Console.WriteLine("TEST COMMAND WITH ARGS {0}, {1}", arg0, arg1);
+				context.PushValue(arg0);
+				context.PushValue(arg1);
+			}
+		}
+
 		public static void Main(string[] args)
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.flow");
@@ -49,6 +60,7 @@ namespace Flow
 			engine.RegisterCommand("print", () => new PrintCommand());
 			engine.RegisterCommand("bypass", () => new BypassCommand());
 			engine.RegisterCommand("elements", () => new ElementsCommand());
+			engine.RegisterCommand("test-command", () => new TestCommand());
 
 			var sb = new StringBuilder();
 

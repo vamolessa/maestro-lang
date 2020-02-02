@@ -7,7 +7,7 @@ namespace Flow
 			return new Scope(self.localVariables.count);
 		}
 
-		public static int EndScopeKeepingLocalValues(this Compiler self, Scope scope)
+		public static void EndScope(this Compiler self, Scope scope)
 		{
 			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
 			{
@@ -28,15 +28,7 @@ namespace Flow
 			self.localVariables.count -= localCount;
 			self.EmitPopLocalsInfo(localCount);
 
-			return localCount;
-		}
-
-		public static int EndScope(this Compiler self, Scope scope)
-		{
-			var localCount = self.EndScopeKeepingLocalValues(scope);
-			self.EmitInstruction(Instruction.PopMultiple);
-			self.EmitByte(localCount <= byte.MaxValue ? (byte)localCount : byte.MaxValue);
-			return localCount;
+			self.EmitPop(localCount <= byte.MaxValue ? (byte)localCount : byte.MaxValue);
 		}
 	}
 }

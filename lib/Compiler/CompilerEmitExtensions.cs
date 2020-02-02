@@ -23,8 +23,17 @@ namespace Flow
 
 		public static void EmitKeep(this Compiler self, byte count)
 		{
-			self.EmitInstruction(Instruction.PopExpressionKeeping);
+			self.EmitInstruction(Instruction.PopTuple);
 			self.EmitByte(count);
+		}
+
+		public static void EmitPop(this Compiler self, byte count)
+		{
+			if (count > 0)
+			{
+				self.EmitInstruction(Instruction.Pop);
+				self.EmitByte(count);
+			}
 		}
 
 		public static void EmitLoadLiteral(this Compiler self, Value value)

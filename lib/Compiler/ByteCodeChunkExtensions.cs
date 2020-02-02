@@ -115,15 +115,15 @@ namespace Flow
 			switch (instruction)
 			{
 			case Instruction.Halt:
-			case Instruction.PushEmptyExpression:
-			case Instruction.MergeTopExpression:
+			case Instruction.Return:
+			case Instruction.PushEmptyTuple:
+			case Instruction.MergeTuple:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
-			case Instruction.Return:
-			case Instruction.PopExpressionKeeping:
-			case Instruction.PopMultiple:
+			case Instruction.PopTuple:
+			case Instruction.Pop:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 			case Instruction.DebugPopLocalInfos:

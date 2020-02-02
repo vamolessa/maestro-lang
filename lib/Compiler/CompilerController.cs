@@ -163,11 +163,10 @@ namespace Flow
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			compiler.EndScopeKeepingLocalValues(scope);
+			compiler.EndScope(scope);
 			compiler.variablesBaseIndex = 0;
 
 			compiler.EmitInstruction(Instruction.Return);
-			compiler.EmitByte(0);
 			compiler.EndEmitForwardJump(skipJump);
 
 			var success = compiler.chunk.AddCommand(new CommandDefinition(name, commandCodeIndex, (byte)parameterCount));
@@ -344,12 +343,12 @@ namespace Flow
 		internal static void Comma(CompilerController self, Slice previous)
 		{
 			var expressionSlice = self.ParseWithPrecedence(Precedence.Comma + 1);
-			self.compiler.EmitInstruction(Instruction.MergeTopExpression);
+			self.compiler.EmitInstruction(Instruction.MergeTuple);
 		}
 
 		internal static void Command(CompilerController self)
 		{
-			self.compiler.EmitInstruction(Instruction.PushEmptyExpression);
+			self.compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			self.PipedCommand();
 		}
 

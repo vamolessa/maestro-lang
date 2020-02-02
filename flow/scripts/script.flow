@@ -1,10 +1,7 @@
 external command elements 0;
 external command print 0;
+external command test-command 2;
 
-1, 2 | $x, $y;
-$x, $y | print;
-
-7, 8 | $x, $y;
-$x, $y | print;
+test-command "olaaa" 34 | print;
 
 #$message, false, "another message" | print;
