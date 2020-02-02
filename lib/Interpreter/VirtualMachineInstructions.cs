@@ -15,7 +15,7 @@ namespace Flow
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
-			var expressionSizes = new Buffer<byte>(8);
+			var expressionSizes = new Buffer<int>(8);
 
 			void PopExpression()
 			{
@@ -74,17 +74,27 @@ namespace Flow
 						var definition = vm.chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
 						var command = vm.externalCommandInstances.buffer[index];
 
-						var inputCount = expressionSizes.PopLast();
+						var context = default(Context);
+						context.stack = stack;
+						context.inputCount = expressionSizes.PopLast();
 
 						var previousStackCount = stack.count;
-						stack.count -= definition.parameterCount + inputCount;
-
-						var context = new Context(inputCount, stack.count, stack.buffer);
+						context.startIndex = stack.count - definition.parameterCount - context.inputCount;
 
 						command.Invoke(ref context);
+						stack = context.stack;
 
-						while (previousStackCount > stack.count)
-							stack.buffer[--previousStackCount] = default;
+						var returnCount = stack.count - previousStackCount;
+						expressionSizes.PushBackUnchecked(returnCount);
+
+						while (returnCount-- > 0)
+							stack.buffer[context.startIndex++] = stack.buffer[previousStackCount + returnCount];
+
+						previousStackCount = stack.count;
+						stack.count = context.startIndex;
+
+						while (context.startIndex < previousStackCount)
+							stack.buffer[context.startIndex++] = default;
 
 						if (context.errorMessage != null)
 							return vm.NewError(context.errorMessage);

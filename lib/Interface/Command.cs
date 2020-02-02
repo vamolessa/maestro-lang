@@ -2,23 +2,20 @@ namespace Flow
 {
 	public struct Context
 	{
-		public int count;
+		public int inputCount;
 
 		internal int startIndex;
-		internal Value[] buffer;
+		internal Buffer<Value> stack;
 		internal IFormattedMessage errorMessage;
 
-		public Value this[int index]
+		public Value GetInput(int index)
 		{
-			get { return buffer[startIndex + index]; }
+			return stack.buffer[startIndex + index];
 		}
 
-		internal Context(int count, int startIndex, Value[] buffer)
+		public void PushValue(Value value)
 		{
-			this.count = count;
-			this.startIndex = startIndex;
-			this.buffer = buffer;
-			this.errorMessage = null;
+			stack.PushBack(value);
 		}
 	}
 

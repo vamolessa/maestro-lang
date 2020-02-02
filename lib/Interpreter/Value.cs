@@ -71,7 +71,7 @@ namespace Flow
 		}
 	}
 
-	internal static class ValueExtensions
+	public static class ValueExtensions
 	{
 		public static bool IsTruthy(this Value self)
 		{

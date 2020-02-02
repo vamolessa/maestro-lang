@@ -6,18 +6,25 @@ namespace Flow
 	{
 		public sealed class PrintCommand : ICommand<Tuple0>
 		{
-			public void Execute(ref Context inputs, Tuple0 args)
+			public void Execute(ref Context context, Tuple0 args)
 			{
-				for (var i = 0; i < inputs.count; i++)
-					System.Console.WriteLine(inputs[i].ToString());
+				var sb = new StringBuilder();
+				for (var i = 0; i < context.inputCount; i++)
+				{
+					sb.Clear();
+					context.GetInput(i).AppendTo(sb);
+					sb.Append(' ');
+					System.Console.Write(sb);
+				}
 			}
 		}
 
 		public sealed class BypassCommand : ICommand<Tuple0>
 		{
-			public void Execute(ref Context inputs, Tuple0 args)
+			public void Execute(ref Context context, Tuple0 args)
 			{
-				// return inputs.count > 0 ? inputs[0] : new Value(null);
+				for (var i = 0; i < context.inputCount; i++)
+					context.PushValue(context.GetInput(i));
 			}
 		}
 
@@ -25,17 +32,12 @@ namespace Flow
 		{
 			public int currentIndex = 0;
 
-			public void Execute(ref Context inputs, Tuple0 args)
+			public void Execute(ref Context context, Tuple0 args)
 			{
-				if (currentIndex < inputs.count)
-				{
-					// return inputs[currentIndex++];
-				}
+				if (currentIndex < context.inputCount)
+					context.PushValue(context.GetInput(currentIndex));
 				else
-				{
 					currentIndex = 0;
-					// return default;
-				}
 			}
 		}
 

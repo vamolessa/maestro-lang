@@ -57,6 +57,7 @@ namespace Flow
 					return (ref Context context) =>
 					{
 						var args = default(T);
+						//args.Read(context.buffer)
 						command.Execute(ref context, args);
 					};
 				}
