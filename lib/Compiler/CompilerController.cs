@@ -220,7 +220,7 @@ namespace Flow
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
 
-			compiler.EmitInstruction(Instruction.PopOneExpression);
+			compiler.EmitInstruction(Instruction.PopExpression);
 		}
 
 		private void ExpressionStatement()
@@ -231,7 +231,7 @@ namespace Flow
 			if (compiler.parser.previousToken.kind != TokenKind.SemiColon)
 				compiler.AddHardError(slice, new CompileErrors.General.ExpectedSemiColonAfterStatement());
 
-			compiler.EmitInstruction(Instruction.PopOneExpression);
+			compiler.EmitInstruction(Instruction.PopExpression);
 		}
 
 		private bool TryParseWithPrecedence(Precedence precedence, out Slice slice)
@@ -452,7 +452,7 @@ namespace Flow
 					compiler.localVariables.buffer[localIndex].PerformedWrite();
 				}
 
-				compiler.EmitInstruction(Instruction.PopOneExpression);
+				compiler.EmitInstruction(Instruction.PopExpression);
 			}
 			else
 			{

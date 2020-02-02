@@ -116,7 +116,7 @@ namespace Flow
 			{
 			case Instruction.Halt:
 			case Instruction.PushEmptyExpression:
-			case Instruction.PopOneExpression:
+			case Instruction.PopExpression:
 			case Instruction.AppendExpression:
 			case Instruction.PopExpressionKeepOne:
 			case Instruction.LoadFalse:
@@ -124,8 +124,8 @@ namespace Flow
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.Return:
-			case Instruction.PopMultipleExpressions:
 			case Instruction.PopExpressionKeepMultiple:
+			case Instruction.PopMultiple:
 			case Instruction.CreateLocals:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:

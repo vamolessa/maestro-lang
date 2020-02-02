@@ -74,11 +74,10 @@ namespace Flow
 						var definition = vm.chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
 						var command = vm.externalCommandInstances.buffer[index];
 
+						var inputCount = expressionSizes.PopLast();
+
 						var previousStackCount = stack.count;
-						stack.count -= definition.parameterCount;
-						var inputCount = stack.buffer[--stack.count].asNumber.asInt;
-						stack.count -= inputCount;
-						expressionSizes.count -= definition.parameterCount + 1;
+						stack.count -= definition.parameterCount + inputCount;
 
 						var context = new Context(inputCount, stack.count, stack.buffer);
 
@@ -132,22 +131,22 @@ namespace Flow
 				case Instruction.PushEmptyExpression:
 					expressionSizes.PushBackUnchecked(0);
 					break;
-				case Instruction.PopOneExpression:
+				case Instruction.PopExpression:
 					PopExpression();
 					break;
-				case Instruction.PopMultipleExpressions:
-					{
-						var count = bytes[codeIndex++];
-						while (count-- > 0)
-							PopExpression();
-						break;
-					}
 				case Instruction.PopExpressionKeepOne:
 					Keep(1);
 					break;
 				case Instruction.PopExpressionKeepMultiple:
 					Keep(bytes[codeIndex++]);
 					break;
+				case Instruction.PopMultiple:
+					{
+						var count = bytes[codeIndex++];
+						while (count-- > 0)
+							stack.buffer[--stack.count] = default;
+						break;
+					}
 				case Instruction.AppendExpression:
 					expressionSizes.buffer[expressionSizes.count - 2] = expressionSizes.buffer[--expressionSizes.count];
 					break;
@@ -167,12 +166,9 @@ namespace Flow
 						break;
 					}
 				case Instruction.CreateLocals:
-					{
-						var diff = bytes[codeIndex++] - expressionSizes.buffer[--expressionSizes.count];
-						while (diff-- > 0)
-							expressionSizes.PushBackUnchecked(1);
-						break;
-					}
+					Keep(bytes[codeIndex++]);
+					expressionSizes.buffer[expressionSizes.count - 1] = 0;
+					break;
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];

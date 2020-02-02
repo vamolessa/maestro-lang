@@ -2,4 +2,6 @@ external command elements 0;
 external command print 0;
 
 "sera" | $message;
-$message, false, "another message" | print;
+$message | print;
+
+#$message, false, "another message" | print;
