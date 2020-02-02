@@ -116,13 +116,13 @@ namespace Flow
 			{
 			case Instruction.Halt:
 			case Instruction.PushEmptyExpression:
-			case Instruction.AppendExpression:
+			case Instruction.MergeTopExpression:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.Return:
-			case Instruction.PopExpressionKeepingValues:
+			case Instruction.PopExpressionKeeping:
 			case Instruction.PopMultiple:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:

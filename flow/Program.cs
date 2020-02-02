@@ -11,11 +11,10 @@ namespace Flow
 				var sb = new StringBuilder();
 				for (var i = 0; i < context.inputCount; i++)
 				{
-					sb.Clear();
 					context.GetInput(i).AppendTo(sb);
 					sb.Append(' ');
-					System.Console.Write(sb.ToString());
 				}
+				System.Console.WriteLine(sb);
 			}
 		}
 

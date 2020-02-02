@@ -224,13 +224,14 @@ namespace Flow
 
 		private void ExpressionStatement()
 		{
-			var slice = Expression(true);
+			(var slice, var assignedToVariable) = Expression(true);
 
 			compiler.parser.Next();
 			if (compiler.parser.previousToken.kind != TokenKind.SemiColon)
 				compiler.AddHardError(slice, new CompileErrors.General.ExpectedSemiColonAfterStatement());
 
-			compiler.EmitKeep(0);
+			if (!assignedToVariable)
+				compiler.EmitKeep(0);
 		}
 
 		private bool TryParseWithPrecedence(Precedence precedence, out Slice slice)
@@ -275,17 +276,18 @@ namespace Flow
 			return slice;
 		}
 
-		private Slice Expression(bool canAssignToVariable)
+		private (Slice, bool) Expression(bool canAssignToVariable)
 		{
 			var slice = ParseWithPrecedence(Precedence.Expression);
 
+			var assignedToVariable = false;
 			if (compiler.parser.Match(TokenKind.Pipe))
 			{
-				Pipe(canAssignToVariable);
+				assignedToVariable = Pipe(canAssignToVariable);
 				slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
 			}
 
-			return slice;
+			return (slice, assignedToVariable);
 		}
 
 		private bool TryValue(out Slice slice)
@@ -314,7 +316,7 @@ namespace Flow
 			self.compiler.parser.Consume(TokenKind.CloseParenthesis, new CompileErrors.Group.ExpectedCloseParenthesisAfterExpression());
 		}
 
-		private void Pipe(bool canAssignToVariable)
+		private bool Pipe(bool canAssignToVariable)
 		{
 			while (!compiler.parser.Check(TokenKind.End))
 			{
@@ -323,24 +325,26 @@ namespace Flow
 				{
 				case TokenKind.Variable:
 					AssignLocals(canAssignToVariable);
-					return;
+					return true;
 				case TokenKind.Identifier:
 					PipedCommand();
 					break;
 				default:
 					compiler.AddHardError(compiler.parser.previousToken.slice, new CompileErrors.Pipe.InvalidTokenAfterPipe());
-					return;
+					return true;
 				}
 
 				if (!compiler.parser.Match(TokenKind.Pipe))
 					break;
 			}
+
+			return false;
 		}
 
 		internal static void Comma(CompilerController self, Slice previous)
 		{
 			var expressionSlice = self.ParseWithPrecedence(Precedence.Comma + 1);
-			self.compiler.EmitInstruction(Instruction.AppendExpression);
+			self.compiler.EmitInstruction(Instruction.MergeTopExpression);
 		}
 
 		internal static void Command(CompilerController self)
@@ -463,8 +467,6 @@ namespace Flow
 					compiler.AddLocalVariable(varSlice, LocalVariableFlag.NotRead);
 				}
 			}
-
-			compiler.EmitInstruction(Instruction.PushEmptyExpression);
 		}
 
 		internal static void LoadLocal(CompilerController self)

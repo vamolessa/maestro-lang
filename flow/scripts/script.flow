@@ -1,7 +1,10 @@
 external command elements 0;
 external command print 0;
 
-"sera" | $message;
-$message | print;
+1, 2 | $x, $y;
+$x, $y | print;
+
+7, 8 | $x, $y;
+$x, $y | print;
 
 #$message, false, "another message" | print;

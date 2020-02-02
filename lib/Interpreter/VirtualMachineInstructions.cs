@@ -135,14 +135,14 @@ namespace Flow
 				case Instruction.PushEmptyExpression:
 					expressionSizes.PushBackUnchecked(0);
 					break;
-				case Instruction.PopExpressionKeepingValues:
+				case Instruction.PopExpressionKeeping:
 					Keep(bytes[codeIndex++]);
 					break;
 				case Instruction.PopMultiple:
 					Pop(bytes[codeIndex++]);
 					break;
-				case Instruction.AppendExpression:
-					expressionSizes.buffer[expressionSizes.count - 2] = expressionSizes.buffer[--expressionSizes.count];
+				case Instruction.MergeTopExpression:
+					expressionSizes.buffer[expressionSizes.count - 2] += expressionSizes.buffer[--expressionSizes.count];
 					break;
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
