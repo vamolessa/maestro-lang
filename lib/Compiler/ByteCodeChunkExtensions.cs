@@ -116,17 +116,14 @@ namespace Flow
 			{
 			case Instruction.Halt:
 			case Instruction.PushEmptyExpression:
-			case Instruction.PopExpression:
 			case Instruction.AppendExpression:
-			case Instruction.PopExpressionKeepOne:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
 			case Instruction.DebugHook:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.Return:
-			case Instruction.PopExpressionKeepMultiple:
+			case Instruction.PopExpressionKeepingValues:
 			case Instruction.PopMultiple:
-			case Instruction.CreateLocals:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
 			case Instruction.DebugPopLocalInfos:
@@ -142,7 +139,7 @@ namespace Flow
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
-			case Instruction.PopExpressionAndJumpForwardIfFalse:
+			case Instruction.PopExpressionAndJumpForwardIfAnyFalse:
 			case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
 				return JumpInstruction(self, instruction, 1, index, sb);
 			default:

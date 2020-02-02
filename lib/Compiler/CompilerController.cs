@@ -178,7 +178,7 @@ namespace Flow
 		private void IfStatement()
 		{
 			Expression(false);
-			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopExpressionAndJumpForwardIfFalse);
+			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopExpressionAndJumpForwardIfAnyFalse);
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.If.ExpectedOpenCurlyBracesAfterIfCondition());
 			Block();
@@ -219,8 +219,7 @@ namespace Flow
 			compiler.EndScope(scope);
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
-
-			compiler.EmitInstruction(Instruction.PopExpression);
+			compiler.EmitKeep(0);
 		}
 
 		private void ExpressionStatement()
@@ -231,7 +230,7 @@ namespace Flow
 			if (compiler.parser.previousToken.kind != TokenKind.SemiColon)
 				compiler.AddHardError(slice, new CompileErrors.General.ExpectedSemiColonAfterStatement());
 
-			compiler.EmitInstruction(Instruction.PopExpression);
+			compiler.EmitKeep(0);
 		}
 
 		private bool TryParseWithPrecedence(Precedence precedence, out Slice slice)
@@ -451,13 +450,10 @@ namespace Flow
 
 					compiler.localVariables.buffer[localIndex].PerformedWrite();
 				}
-
-				compiler.EmitInstruction(Instruction.PopExpression);
 			}
 			else
 			{
-				compiler.EmitInstruction(Instruction.CreateLocals);
-				compiler.EmitByte((byte)slicesCache.count);
+				compiler.EmitKeep((byte)slicesCache.count);
 
 				for (var i = 0; i < slicesCache.count; i++)
 				{
@@ -467,6 +463,8 @@ namespace Flow
 					compiler.AddLocalVariable(varSlice, LocalVariableFlag.NotRead);
 				}
 			}
+
+			compiler.EmitInstruction(Instruction.PushEmptyExpression);
 		}
 
 		internal static void LoadLocal(CompilerController self)

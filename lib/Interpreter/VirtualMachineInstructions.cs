@@ -17,26 +17,20 @@ namespace Flow
 			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
 			var expressionSizes = new Buffer<int>(8);
 
-			void PopExpression()
+			void Pop(int count)
 			{
-				var count = expressionSizes.buffer[--expressionSizes.count];
 				while (count-- > 0)
 					stack.buffer[--stack.count] = default;
 			}
 
-			void Keep(byte keepCount)
+			void Keep(int count)
 			{
-				var diff = keepCount - expressionSizes.buffer[expressionSizes.count - 1];
-				expressionSizes.buffer[expressionSizes.count - 1] = keepCount;
+				count -= expressionSizes.buffer[--expressionSizes.count];
 
-				if (diff > 0)
-				{
-					stack.GrowUnchecked(diff);
-					return;
-				}
-
-				while (diff++ < 0)
-					stack.buffer[--stack.count] = default;
+				if (count > 0)
+					stack.GrowUnchecked(count);
+				else
+					Pop(-count);
 			}
 
 			while (true)
@@ -141,22 +135,12 @@ namespace Flow
 				case Instruction.PushEmptyExpression:
 					expressionSizes.PushBackUnchecked(0);
 					break;
-				case Instruction.PopExpression:
-					PopExpression();
-					break;
-				case Instruction.PopExpressionKeepOne:
-					Keep(1);
-					break;
-				case Instruction.PopExpressionKeepMultiple:
+				case Instruction.PopExpressionKeepingValues:
 					Keep(bytes[codeIndex++]);
 					break;
 				case Instruction.PopMultiple:
-					{
-						var count = bytes[codeIndex++];
-						while (count-- > 0)
-							stack.buffer[--stack.count] = default;
-						break;
-					}
+					Pop(bytes[codeIndex++]);
+					break;
 				case Instruction.AppendExpression:
 					expressionSizes.buffer[expressionSizes.count - 2] = expressionSizes.buffer[--expressionSizes.count];
 					break;
@@ -175,10 +159,6 @@ namespace Flow
 						expressionSizes.PushBackUnchecked(1);
 						break;
 					}
-				case Instruction.CreateLocals:
-					Keep(bytes[codeIndex++]);
-					expressionSizes.buffer[expressionSizes.count - 1] = 0;
-					break;
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
@@ -205,11 +185,12 @@ namespace Flow
 						codeIndex += offset;
 						break;
 					}
-				case Instruction.PopExpressionAndJumpForwardIfFalse:
+				case Instruction.PopExpressionAndJumpForwardIfAnyFalse:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						for (var i = stack.count - expressionSizes.buffer[expressionSizes.count - 1]; i < stack.count; i++)
+						var expressionCount = expressionSizes.buffer[--expressionSizes.count];
+						for (var i = stack.count - expressionCount; i < stack.count; i++)
 						{
 							if (!stack.buffer[i].IsTruthy())
 							{
@@ -218,7 +199,7 @@ namespace Flow
 							}
 						}
 
-						PopExpression();
+						Pop(expressionCount);
 						break;
 					}
 				case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:

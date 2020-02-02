@@ -14,7 +14,7 @@ namespace Flow
 					sb.Clear();
 					context.GetInput(i).AppendTo(sb);
 					sb.Append(' ');
-					System.Console.Write(sb);
+					System.Console.Write(sb.ToString());
 				}
 			}
 		}
