@@ -23,7 +23,7 @@ namespace Flow
 				for (var i = 0; i < buffer.Length; i++)
 					buffer[i] = default;
 			}
-			
+
 			count = 0;
 		}
 
@@ -76,7 +76,7 @@ namespace Flow
 
 		public void SwapRemove(int index)
 		{
-			buffer[--count] = buffer[index];
+			buffer[index] = buffer[--count];
 		}
 
 		public T[] ToArray()

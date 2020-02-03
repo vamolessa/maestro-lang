@@ -139,7 +139,7 @@ namespace Flow
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
-			case Instruction.PopExpressionAndJumpForwardIfAnyFalse:
+			case Instruction.PopExpressionAndJumpForwardIfFalse:
 			case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
 				return JumpInstruction(self, instruction, 1, index, sb);
 			default:

@@ -137,8 +137,6 @@ namespace Flow
 			compiler.variablesBaseIndex = compiler.localVariables.count;
 			var scope = compiler.BeginScope();
 
-			compiler.AddLocalVariable(new Slice(), LocalVariableFlag.Fulfilled);
-
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
 			while (
@@ -166,6 +164,7 @@ namespace Flow
 			compiler.EndScope(scope);
 			compiler.variablesBaseIndex = 0;
 
+			compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
 
@@ -177,7 +176,7 @@ namespace Flow
 		private void IfStatement()
 		{
 			Expression(false);
-			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopExpressionAndJumpForwardIfAnyFalse);
+			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopExpressionAndJumpForwardIfFalse);
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.If.ExpectedOpenCurlyBracesAfterIfCondition());
 			Block();

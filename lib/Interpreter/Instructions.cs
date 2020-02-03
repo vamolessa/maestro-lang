@@ -17,7 +17,7 @@ namespace Flow
 		LoadLocal,
 		JumpBackward,
 		JumpForward,
-		PopExpressionAndJumpForwardIfAnyFalse,
+		PopExpressionAndJumpForwardIfFalse,
 		JumpForwardIfExpressionIsEmptyKeepingOne,
 
 		DebugHook,

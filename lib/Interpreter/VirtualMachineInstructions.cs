@@ -25,12 +25,19 @@ namespace Flow
 
 			void Keep(int count)
 			{
-				count -= tupleSizes.buffer[--tupleSizes.count];
+				count -= tupleSizes.PopLast();
 
 				if (count > 0)
 					stack.GrowUnchecked(count);
 				else
 					Pop(-count);
+			}
+
+			void CopyTail(int toIndex, int count)
+			{
+				var fromIndex = stack.count - count;
+				while (count-- > 0)
+					stack.buffer[toIndex++] = stack.buffer[fromIndex++];
 			}
 
 			while (true)
@@ -72,21 +79,16 @@ namespace Flow
 						context.stack = stack;
 						context.inputCount = tupleSizes.PopLast();
 
-						var previousStackCount = stack.count;
-						context.startIndex = stack.count - definition.parameterCount - context.inputCount;
+						context.startIndex = stack.count - (context.inputCount + definition.parameterCount);
 
 						command.Invoke(ref context);
 						stack = context.stack;
 
-						tupleSizes.PushBackUnchecked(stack.count - previousStackCount);
+						var returnCount = stack.count - (context.startIndex + context.inputCount + definition.parameterCount);
+						tupleSizes.PushBackUnchecked(returnCount);
 
-						while (previousStackCount < stack.count)
-							stack.buffer[context.startIndex++] = stack.buffer[previousStackCount++];
-
-						stack.count = context.startIndex;
-
-						while (context.startIndex < previousStackCount)
-							stack.buffer[context.startIndex++] = default;
+						CopyTail(context.startIndex, returnCount);
+						Pop(stack.count - context.startIndex - returnCount);
 
 						if (context.errorMessage != null)
 							return vm.NewError(context.errorMessage);
@@ -102,7 +104,7 @@ namespace Flow
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
 
-						baseStackIndex = stack.count - 1 - definition.parameterCount;
+						baseStackIndex = stack.count - definition.parameterCount;
 
 						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, baseStackIndex, index));
 						break;
@@ -110,20 +112,11 @@ namespace Flow
 				case Instruction.Return:
 					{
 						var frame = vm.stackFrames.buffer[--vm.stackFrames.count];
-						var instance = vm.chunk.commandInstances.buffer[frame.commandInstanceIndex];
-						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
+						tupleSizes.SwapRemove(tupleSizes.count - 2);
+						var returnCount = tupleSizes.buffer[tupleSizes.count - 1];
 
-						var count = tupleSizes.buffer[--tupleSizes.count];
-
-						var inputCount = stack.buffer[frame.baseStackIndex].asNumber.asInt;
-						stack.count = frame.baseStackIndex - inputCount;
-						var returnStartIndex = frame.baseStackIndex + 1 + definition.parameterCount;
-
-						for (var i = 0; i < count; i++)
-							stack.buffer[stack.count++] = stack.buffer[returnStartIndex++];
-
-						while (returnStartIndex > stack.count)
-							stack.buffer[--returnStartIndex] = default;
+						CopyTail(frame.baseStackIndex, returnCount);
+						Pop(stack.count - baseStackIndex);
 
 						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 						codeIndex = frame.codeIndex;
@@ -137,7 +130,7 @@ namespace Flow
 					Keep(bytes[codeIndex++]);
 					break;
 				case Instruction.MergeTuple:
-					tupleSizes.buffer[tupleSizes.count - 2] += tupleSizes.buffer[--tupleSizes.count];
+					tupleSizes.buffer[tupleSizes.count - 2] += tupleSizes.PopLast();
 					break;
 				case Instruction.Pop:
 					Pop(bytes[codeIndex++]);
@@ -160,7 +153,7 @@ namespace Flow
 				case Instruction.AssignLocal:
 					{
 						var index = baseStackIndex + bytes[codeIndex++];
-						stack.buffer[index] = stack.buffer[--stack.count];
+						stack.buffer[index] = stack.PopLast();
 						stack.buffer[stack.count] = default;
 						break;
 					}
@@ -183,21 +176,14 @@ namespace Flow
 						codeIndex += offset;
 						break;
 					}
-				case Instruction.PopExpressionAndJumpForwardIfAnyFalse:
+				case Instruction.PopExpressionAndJumpForwardIfFalse:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						var expressionCount = tupleSizes.buffer[--tupleSizes.count];
-						for (var i = stack.count - expressionCount; i < stack.count; i++)
-						{
-							if (!stack.buffer[i].IsTruthy())
-							{
-								codeIndex += offset;
-								break;
-							}
-						}
-
-						Pop(expressionCount);
+						Keep(1);
+						if (!stack.buffer[--stack.count].IsTruthy())
+							codeIndex += offset;
+						stack.buffer[stack.count] = default;
 						break;
 					}
 				case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
