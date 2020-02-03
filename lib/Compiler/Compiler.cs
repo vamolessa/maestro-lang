@@ -36,11 +36,6 @@ namespace Maestro
 
 		private Buffer<State> stateStack = new Buffer<State>();
 
-		public Scope TopScope
-		{
-			get { return scopes.buffer[scopes.count - 1]; }
-		}
-
 		public Compiler()
 		{
 			void AddTokenizerError(Slice slice, IFormattedMessage error)

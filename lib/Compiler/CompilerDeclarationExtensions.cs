@@ -23,9 +23,10 @@ namespace Maestro
 		{
 			Option<byte> CheckAndReturnIndex(int localIndex)
 			{
-				if (localIndex < self.variablesBaseIndex)
+				var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
+				if (localIndex < commandVariablesBaseIndex)
 				{
-					self.AddSoftError(slice, new CompileErrors.Variables.CanNotAccessVariableOutsideOfScope
+					self.AddSoftError(slice, new CompileErrors.Variables.CanNotAccessVariableOutsideOfCommandScope
 					{
 						name = CompilerHelper.GetSlice(self, slice)
 					});

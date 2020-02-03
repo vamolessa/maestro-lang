@@ -13,28 +13,28 @@ namespace Maestro
 	{
 	}
 
-	public readonly struct Option<T>
+	public readonly struct Option<A>
 	{
-		public readonly T value;
+		public readonly A value;
 		public readonly bool isSome;
 
-		public Option(T value)
+		public Option(A value)
 		{
 			this.value = value;
 			this.isSome = true;
 		}
 
-		public static implicit operator Option<T>(None none)
+		public static implicit operator Option<A>(None none)
 		{
-			return new Option<T>();
+			return new Option<A>();
 		}
 
-		public static implicit operator Option<T>(T value)
+		public static implicit operator Option<A>(A value)
 		{
-			return new Option<T>(value);
+			return new Option<A>(value);
 		}
 
-		public bool TryGet(out T value)
+		public bool TryGet(out A value)
 		{
 			if (isSome)
 			{
@@ -46,9 +46,16 @@ namespace Maestro
 			return false;
 		}
 
-		public T GetOr(T defaultValue)
+		public A GetOr(A defaultValue)
 		{
 			return isSome ? value : defaultValue;
+		}
+
+		public Option<B> Select<B>(System.Func<A, B> function)
+		{
+			return isSome ?
+				new Option<B>(function(value)) :
+				default;
 		}
 	}
 }

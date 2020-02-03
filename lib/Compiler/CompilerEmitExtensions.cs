@@ -45,7 +45,9 @@ namespace Maestro
 
 		public static void EmitLocalInstruction(this Compiler self, Instruction instruction, byte localIndex)
 		{
-			var index = localIndex - self.variablesBaseIndex;
+			var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
+
+			var index = localIndex - commandVariablesBaseIndex;
 			if (index < 0)
 				return;
 

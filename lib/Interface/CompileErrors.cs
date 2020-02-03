@@ -180,10 +180,10 @@ namespace Maestro.CompileErrors
 
 	namespace Variables
 	{
-		internal struct CanNotAccessVariableOutsideOfScope : IFormattedMessage
+		internal struct CanNotAccessVariableOutsideOfCommandScope : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Can not access variable '{name}' outside of current scope";
+			public string Format() => $"Can not access variable '{name}' outside of command scope";
 		}
 
 		internal struct ExpectedVariableAsAssignmentTarget : IFormattedMessage

@@ -2,6 +2,18 @@ namespace Maestro
 {
 	internal static class CompilerFlowExtensions
 	{
+		public static Option<Scope> GetTopCommandScope(this Compiler self)
+		{
+			for (var i = self.scopes.count - 1; i >= 0; i--)
+			{
+				var scope = self.scopes.buffer[i];
+				if (scope.type == ScopeType.CommandBody)
+					return scope;
+			}
+
+			return Option.None;
+		}
+
 		public static void BeginScope(this Compiler self, ScopeType scopeType)
 		{
 			self.scopes.PushBackUnchecked(new Scope(scopeType, self.localVariables.count));
