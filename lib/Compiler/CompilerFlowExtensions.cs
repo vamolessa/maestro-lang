@@ -2,13 +2,15 @@ namespace Flow
 {
 	internal static class CompilerFlowExtensions
 	{
-		public static Scope BeginScope(this Compiler self)
+		public static void BeginScope(this Compiler self, ScopeType scopeType)
 		{
-			return new Scope(self.localVariables.count);
+			self.scopes.PushBackUnchecked(new Scope(scopeType, self.localVariables.count));
 		}
 
-		public static void EndScope(this Compiler self, Scope scope)
+		public static void EndScope(this Compiler self)
 		{
+			var scope = self.scopes.PopLast();
+
 			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
 			{
 				var local = self.localVariables.buffer[i];

@@ -4,6 +4,9 @@ external command test-command 2;
 
 command my-command $arg0 $arg1 {
 	1, 2, 3 | test-command $arg0 $arg1 | print;
+
+	42 | $ret;
+	return $ret;
 }
 
-my-command "first" "second";
+my-command "first" "second" | print;

@@ -64,9 +64,9 @@ namespace Flow
 			var slice = compiler.parser.previousToken.slice;
 			compiler.parser.Consume(TokenKind.StringLiteral, new CompileErrors.Imports.ExpectedImportPathString());
 			var modulePath = CompilerHelper.GetParsedString(compiler);
-			compiler.parser.Consume(TokenKind.SemiColon, new CompileErrors.Imports.ExpectedSemiColonAfterImport());
-
-			slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
+			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Imports.ExpectedSemiColonAfterImport());
+			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
 
 			if (!importResolver.isSome)
 			{
@@ -99,12 +99,16 @@ namespace Flow
 				IfStatement();
 			else if (compiler.parser.Match(TokenKind.Iterate))
 				IterateStatement();
+			else if (compiler.parser.Match(TokenKind.Return))
+				ReturnStatement();
 			else
 				ExpressionStatement();
 		}
 
 		private void ExternalCommandDeclaration()
 		{
+			var slice = compiler.parser.previousToken.slice;
+
 			compiler.parser.Consume(TokenKind.Command, new CompileErrors.ExternalCommands.ExpectedCommandKeyword());
 			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternalCommands.ExpectedExternalCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
@@ -118,7 +122,8 @@ namespace Flow
 				parameterCount = byte.MaxValue;
 			}
 
-			compiler.parser.Consume(TokenKind.SemiColon, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternCommand());
+			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternCommand());
 
 			var success = compiler.chunk.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
 			if (!success)
@@ -134,8 +139,7 @@ namespace Flow
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
-			compiler.variablesBaseIndex = compiler.localVariables.count;
-			var scope = compiler.BeginScope();
+			compiler.BeginScope(ScopeType.CommandBody);
 
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
@@ -146,7 +150,7 @@ namespace Flow
 			{
 				compiler.parser.Consume(TokenKind.Variable, new CompileErrors.Commands.ExpectedCommandParameterVariable());
 				var parameterSlice = compiler.parser.previousToken.slice;
-				parametersSlice = Slice.FromTo(parametersSlice, parameterSlice);
+				parametersSlice = parametersSlice.ExpandedTo(parameterSlice);
 				parameterCount += 1;
 
 				compiler.AddLocalVariable(parameterSlice, LocalVariableFlag.NotRead);
@@ -161,8 +165,7 @@ namespace Flow
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			compiler.EndScope(scope);
-			compiler.variablesBaseIndex = 0;
+			compiler.EndScope();
 
 			compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			compiler.EmitInstruction(Instruction.Return);
@@ -204,7 +207,7 @@ namespace Flow
 		{
 			var loopJump = compiler.BeginEmitBackwardJump();
 
-			var scope = compiler.BeginScope();
+			compiler.BeginScope(ScopeType.IterationBody);
 			Expression(false);
 
 			var breakJump = compiler.BeginEmitForwardJump(Instruction.JumpForwardIfExpressionIsEmptyKeepingOne);
@@ -214,19 +217,32 @@ namespace Flow
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Iterate.ExpectedOpenCurlyBracesAfterIterateCondition());
 			Block();
 
-			compiler.EndScope(scope);
+			compiler.EndScope();
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
 			compiler.EmitKeep(0);
+		}
+
+		private void ReturnStatement()
+		{
+			var slice = compiler.parser.previousToken.slice;
+
+			if (compiler.parser.Check(TokenKind.SemiColon))
+				compiler.EmitInstruction(Instruction.PushEmptyTuple);
+			else
+				Expression(false);
+
+			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Commands.ExpectedSemiColonAfterReturn());
+
+			compiler.EmitInstruction(Instruction.Return);
 		}
 
 		private void ExpressionStatement()
 		{
 			(var slice, var assignedToVariable) = Expression(true);
 
-			compiler.parser.Next();
-			if (compiler.parser.previousToken.kind != TokenKind.SemiColon)
-				compiler.AddHardError(slice, new CompileErrors.General.ExpectedSemiColonAfterStatement());
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.General.ExpectedSemiColonAfterExpression());
 
 			if (!assignedToVariable)
 				compiler.EmitKeep(0);
@@ -257,10 +273,10 @@ namespace Flow
 				parser.Next();
 				var infixRule = parseRules.GetInfixRule(parser.previousToken.kind);
 				infixRule(this, slice);
-				slice = Slice.FromTo(slice, parser.previousToken.slice);
+				slice = slice.ExpandedTo(parser.previousToken.slice);
 			}
 
-			slice = Slice.FromTo(slice, parser.previousToken.slice);
+			slice = slice.ExpandedTo(parser.previousToken.slice);
 			return true;
 		}
 
@@ -282,7 +298,7 @@ namespace Flow
 			if (compiler.parser.Match(TokenKind.Pipe))
 			{
 				assignedToVariable = Pipe(canAssignToVariable);
-				slice = Slice.FromTo(slice, compiler.parser.previousToken.slice);
+				slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
 			}
 
 			return (slice, assignedToVariable);
@@ -295,7 +311,7 @@ namespace Flow
 
 		private void Block()
 		{
-			var scope = compiler.BeginScope();
+			compiler.BeginScope(ScopeType.Normal);
 			while (
 				!compiler.parser.Check(TokenKind.End) &&
 				!compiler.parser.Check(TokenKind.CloseCurlyBrackets)
@@ -305,7 +321,7 @@ namespace Flow
 			}
 
 			compiler.parser.Consume(TokenKind.CloseCurlyBrackets, new CompileErrors.Block.ExpectedCloseCurlyBracketsAfterBlock());
-			compiler.EndScope(scope);
+			compiler.EndScope();
 		}
 
 		internal static void Group(CompilerController self)
@@ -359,7 +375,7 @@ namespace Flow
 			var argCount = 0;
 			while (TryValue(out var valueSlice))
 			{
-				slice = Slice.FromTo(slice, valueSlice);
+				slice = slice.ExpandedTo(valueSlice);
 				compiler.EmitKeep(1);
 				argCount += 1;
 			}
@@ -426,7 +442,7 @@ namespace Flow
 					hasMixedAssignmentType = true;
 			}
 
-			slice = Slice.FromTo(slicesCache.buffer[0], compiler.parser.previousToken.slice);
+			slice = slicesCache.buffer[0].ExpandedTo(compiler.parser.previousToken.slice);
 
 			if (!canAssign)
 			{

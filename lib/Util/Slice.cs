@@ -5,14 +5,6 @@ namespace Flow
 		public readonly ushort index;
 		public readonly ushort length;
 
-		public static Slice FromTo(Slice a, Slice b)
-		{
-			return new Slice(
-				a.index,
-				b.index + b.length - a.index
-			);
-		}
-
 		public Slice(ushort index, ushort length)
 		{
 			this.index = index;
@@ -23,6 +15,11 @@ namespace Flow
 		{
 			this.index = (ushort)index;
 			this.length = (ushort)length;
+		}
+
+		public Slice ExpandedTo(Slice other)
+		{
+			return new Slice(index, other.index + other.length - index);
 		}
 	}
 }

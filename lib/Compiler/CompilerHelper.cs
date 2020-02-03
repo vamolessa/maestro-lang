@@ -34,18 +34,34 @@ namespace Flow
 		}
 	}
 
+	internal enum ScopeType
+	{
+		Normal,
+		IterationBody,
+		CommandBody,
+	}
+
 	internal readonly struct Scope
 	{
+		public readonly ScopeType type;
 		public readonly int localVariablesStartIndex;
 
-		public Scope(int localVarStartIndex)
+		public Scope(ScopeType type, int localVarStartIndex)
 		{
+			this.type = type;
 			this.localVariablesStartIndex = localVarStartIndex;
 		}
 	}
 
 	internal static class CompilerHelper
 	{
+		public static void ConsumeSemicolon<T>(Compiler compiler, Slice slice, T error) where T : IFormattedMessage
+		{
+			compiler.parser.Next();
+			if (compiler.parser.previousToken.kind != TokenKind.SemiColon)
+				compiler.AddHardError(slice, error);
+		}
+
 		public static bool AreEqual(string source, Slice a, Slice b)
 		{
 			if (a.length != b.length)

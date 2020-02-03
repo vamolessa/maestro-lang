@@ -116,7 +116,7 @@ namespace Flow
 						var returnCount = tupleSizes.buffer[tupleSizes.count - 1];
 
 						CopyTail(frame.baseStackIndex, returnCount);
-						Pop(stack.count - baseStackIndex);
+						Pop(stack.count - (frame.baseStackIndex + returnCount));
 
 						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 						codeIndex = frame.codeIndex;

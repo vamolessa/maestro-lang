@@ -17,9 +17,9 @@ namespace Flow.CompileErrors
 			public string Format() => "Expected expression";
 		}
 
-		internal struct ExpectedSemiColonAfterStatement : IFormattedMessage
+		internal struct ExpectedSemiColonAfterExpression : IFormattedMessage
 		{
-			public string Format() => "Expected ';' after statement expression";
+			public string Format() => "Expected ';' after expression";
 		}
 	}
 
@@ -73,7 +73,7 @@ namespace Flow.CompileErrors
 
 		internal struct ExpectedSemiColonAfterExternCommand : IFormattedMessage
 		{
-			public string Format() => "Expected ';' after extern command";
+			public string Format() => "Expected ';' after extern command declaration";
 		}
 
 		internal struct WrongNumberOfExternalCommandArguments : IFormattedMessage
@@ -125,6 +125,11 @@ namespace Flow.CompileErrors
 		{
 			public string name;
 			public string Format() => $"Command name '{name}' already registered";
+		}
+
+		internal struct ExpectedSemiColonAfterReturn : IFormattedMessage
+		{
+			public string Format() => "Expected ';' after return";
 		}
 	}
 

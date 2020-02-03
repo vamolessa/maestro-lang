@@ -32,9 +32,14 @@ namespace Flow
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
 		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
-		public int variablesBaseIndex = 0;
+		public Buffer<Scope> scopes = new Buffer<Scope>(1);
 
 		private Buffer<State> stateStack = new Buffer<State>();
+
+		public Scope TopScope
+		{
+			get { return scopes.buffer[scopes.count - 1]; }
+		}
 
 		public Compiler()
 		{
@@ -62,7 +67,7 @@ namespace Flow
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
-			variablesBaseIndex = 0;
+			scopes.count = 0;
 		}
 
 		public void BeginSource(string source, int sourceIndex)
@@ -85,12 +90,13 @@ namespace Flow
 				new Token(TokenKind.End, new Slice()),
 				new Token(TokenKind.End, new Slice())
 			));
+			this.BeginScope(ScopeType.Normal);
 		}
 
 		public void EndSource()
 		{
 			var current = stateStack.PopLast();
-			this.EndScope(new Scope(0));
+			this.EndScope();
 			RestoreState(current);
 
 			if (stateStack.count == 0)
