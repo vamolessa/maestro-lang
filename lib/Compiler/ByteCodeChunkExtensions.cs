@@ -120,17 +120,19 @@ namespace Maestro
 			case Instruction.MergeTuple:
 			case Instruction.LoadFalse:
 			case Instruction.LoadTrue:
+			case Instruction.LoadInput:
 			case Instruction.DebugHook:
+			case Instruction.DebugPushDebugFrame:
+			case Instruction.DebugPopDebugFrame:
 				return OneByteInstruction(instruction, index, sb);
 			case Instruction.PopTupleKeeping:
 			case Instruction.Pop:
 			case Instruction.AssignLocal:
 			case Instruction.LoadLocal:
-			case Instruction.DebugPopLocalInfos:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.LoadLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);
-			case Instruction.DebugPushLocalInfo:
+			case Instruction.DebugPushVariableInfo:
 				return DebugPushLocalInfoInstruction(self, instruction, index, sb);
 			case Instruction.ExecuteNativeCommand:
 				return ExecuteExternalCommandInstruction(self, instruction, index, sb);
@@ -139,8 +141,8 @@ namespace Maestro
 			case Instruction.JumpBackward:
 				return JumpInstruction(self, instruction, -1, index, sb);
 			case Instruction.JumpForward:
-			case Instruction.PopExpressionAndJumpForwardIfFalse:
-			case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
+			case Instruction.IfConditionJump:
+			case Instruction.IterateConditionJump:
 				return JumpInstruction(self, instruction, 1, index, sb);
 			default:
 				sb.Append("Unknown instruction ");

@@ -43,16 +43,16 @@ namespace Maestro
 			self.EmitUShort((ushort)index);
 		}
 
-		public static void EmitLocalInstruction(this Compiler self, Instruction instruction, byte localIndex)
+		public static void EmitVariableInstruction(this Compiler self, Instruction instruction, int variableIndex)
 		{
-			var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
+			var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.variablesStartIndex).GetOr(0);
 
-			var index = localIndex - commandVariablesBaseIndex;
-			if (index < 0)
+			var localIndex = variableIndex - commandVariablesBaseIndex;
+			if (localIndex < 0)
 				return;
 
 			self.EmitInstruction(instruction);
-			self.EmitByte((byte)index);
+			self.EmitByte((byte)localIndex);
 		}
 
 		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex)
@@ -114,36 +114,30 @@ namespace Maestro
 			);
 		}
 
-		public static void EmitPushLocalInfo(this Compiler self, Slice slice, LocalVariableFlag flag)
+		public static void EmitDebugInstruction(this Compiler self, Instruction instruction)
+		{
+			if (self.mode == Mode.Debug)
+				self.EmitInstruction(instruction);
+		}
+
+		public static void EmitDebugPushVariableInfo(this Compiler self, Slice slice, VariableFlag flag)
 		{
 			if (self.mode != Mode.Debug)
 				return;
 
-			var name = flag != LocalVariableFlag.Input ?
+			var name = flag != VariableFlag.Input ?
 				CompilerHelper.GetSlice(self, slice) :
 				"$$";
 			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
 
-			var variablesStartIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
-			var stackIndex = self.localVariables.count - variablesStartIndex;
+			var variablesStartIndex = self.GetTopCommandScope().Select(s => s.variablesStartIndex).GetOr(0);
+			var stackIndex = self.variables.count - variablesStartIndex;
 			if (stackIndex > byte.MaxValue)
 				stackIndex = byte.MaxValue;
 
-			self.EmitInstruction(Instruction.DebugPushLocalInfo);
+			self.EmitInstruction(Instruction.DebugPushVariableInfo);
 			self.EmitUShort((ushort)nameLiteralIndex);
 			self.EmitByte((byte)stackIndex);
-		}
-
-		public static void EmitPopLocalsInfo(this Compiler self, int localCount)
-		{
-			if (self.mode != Mode.Debug || localCount <= 0)
-				return;
-
-			self.EmitInstruction(Instruction.DebugPopLocalInfos);
-			self.EmitByte(localCount <= byte.MaxValue ?
-				(byte)localCount :
-				byte.MaxValue
-			);
 		}
 	}
 }

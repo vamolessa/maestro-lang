@@ -15,13 +15,15 @@ namespace Maestro
 		LoadLiteral,
 		AssignLocal,
 		LoadLocal,
+		LoadInput,
 		JumpBackward,
 		JumpForward,
-		PopExpressionAndJumpForwardIfFalse,
-		JumpForwardIfExpressionIsEmptyKeepingOne,
+		IfConditionJump,
+		IterateConditionJump,
 
 		DebugHook,
-		DebugPushLocalInfo,
-		DebugPopLocalInfos,
+		DebugPushDebugFrame,
+		DebugPopDebugFrame,
+		DebugPushVariableInfo,
 	}
 }

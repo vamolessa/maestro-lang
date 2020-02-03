@@ -139,7 +139,7 @@ namespace Maestro
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
-			compiler.BeginScope(ScopeType.CommandBody);
+			compiler.PushScope(ScopeType.CommandBody);
 
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
@@ -153,7 +153,7 @@ namespace Maestro
 				parametersSlice = parametersSlice.ExpandedTo(parameterSlice);
 				parameterCount += 1;
 
-				compiler.AddLocalVariable(parameterSlice, LocalVariableFlag.NotRead);
+				compiler.AddVariable(parameterSlice, VariableFlag.NotRead);
 			}
 
 			if (parameterCount > byte.MaxValue)
@@ -165,7 +165,7 @@ namespace Maestro
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			compiler.EndScope();
+			compiler.PopScope();
 
 			compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			compiler.EmitInstruction(Instruction.Return);
@@ -179,7 +179,7 @@ namespace Maestro
 		private void IfStatement()
 		{
 			Expression(false);
-			var elseJump = compiler.BeginEmitForwardJump(Instruction.PopExpressionAndJumpForwardIfFalse);
+			var elseJump = compiler.BeginEmitForwardJump(Instruction.IfConditionJump);
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.If.ExpectedOpenCurlyBracesAfterIfCondition());
 			Block();
@@ -207,17 +207,17 @@ namespace Maestro
 		{
 			var loopJump = compiler.BeginEmitBackwardJump();
 
-			compiler.BeginScope(ScopeType.IterationBody);
+			compiler.PushScope(ScopeType.IterationBody);
 			Expression(false);
 
-			var breakJump = compiler.BeginEmitForwardJump(Instruction.JumpForwardIfExpressionIsEmptyKeepingOne);
+			var breakJump = compiler.BeginEmitForwardJump(Instruction.IterateConditionJump);
 
-			compiler.AddLocalVariable(default, LocalVariableFlag.Input);
+			compiler.AddVariable(default, VariableFlag.Input);
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Iterate.ExpectedOpenCurlyBracesAfterIterateCondition());
 			Block();
 
-			compiler.EndScope();
+			compiler.PopScope();
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
 			compiler.EmitKeep(0);
@@ -226,7 +226,6 @@ namespace Maestro
 		private void ReturnStatement()
 		{
 			var slice = compiler.parser.previousToken.slice;
-
 			if (compiler.parser.Check(TokenKind.SemiColon))
 				compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			else
@@ -240,6 +239,7 @@ namespace Maestro
 			if (!commandScope.isSome)
 				compiler.AddSoftError(slice, new CompileErrors.Return.CanNotReturnFromOutsideCommand());
 
+			compiler.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 			compiler.EmitInstruction(Instruction.Return);
 		}
 
@@ -316,7 +316,7 @@ namespace Maestro
 
 		private void Block()
 		{
-			compiler.BeginScope(ScopeType.Normal);
+			compiler.PushScope(ScopeType.Normal);
 			while (
 				!compiler.parser.Check(TokenKind.End) &&
 				!compiler.parser.Check(TokenKind.CloseCurlyBrackets)
@@ -326,7 +326,7 @@ namespace Maestro
 			}
 
 			compiler.parser.Consume(TokenKind.CloseCurlyBrackets, new CompileErrors.Block.ExpectedCloseCurlyBracketsAfterBlock());
-			compiler.EndScope();
+			compiler.PopScope();
 		}
 
 		internal static void Group(CompilerController self)
@@ -432,7 +432,7 @@ namespace Maestro
 			slicesCache.count = 0;
 			slicesCache.PushBackUnchecked(slice);
 
-			var isAssignment = compiler.ResolveToLocalVariableIndex(slice).isSome;
+			var isAssignment = compiler.ResolveToVariableIndex(slice).isSome;
 			var hasMixedAssignmentType = false;
 
 			while (compiler.parser.Match(TokenKind.Comma))
@@ -442,7 +442,7 @@ namespace Maestro
 				var varSlice = compiler.parser.previousToken.slice;
 				slicesCache.PushBackUnchecked(varSlice);
 
-				var isAnotherAssignment = compiler.ResolveToLocalVariableIndex(varSlice).isSome;
+				var isAnotherAssignment = compiler.ResolveToVariableIndex(varSlice).isSome;
 				if (isAssignment != isAnotherAssignment)
 					hasMixedAssignmentType = true;
 			}
@@ -468,10 +468,10 @@ namespace Maestro
 				for (var i = slicesCache.count - 1; i >= 0; i--)
 				{
 					var varSlice = slicesCache.buffer[i];
-					var localIndex = compiler.ResolveToLocalVariableIndex(varSlice).value;
-					compiler.EmitLocalInstruction(Instruction.AssignLocal, localIndex);
+					var variableIndex = compiler.ResolveToVariableIndex(varSlice).value;
+					compiler.EmitVariableInstruction(Instruction.AssignLocal, variableIndex);
 
-					compiler.localVariables.buffer[localIndex].PerformedWrite();
+					compiler.variables.buffer[variableIndex].PerformedWrite();
 				}
 			}
 			else
@@ -481,9 +481,9 @@ namespace Maestro
 				for (var i = 0; i < slicesCache.count; i++)
 				{
 					var varSlice = slicesCache.buffer[i];
-					if (compiler.localVariables.count >= byte.MaxValue)
+					if (compiler.variables.count >= byte.MaxValue)
 						compiler.AddSoftError(varSlice, new CompileErrors.Variables.TooManyVariables());
-					compiler.AddLocalVariable(varSlice, LocalVariableFlag.NotRead);
+					compiler.AddVariable(varSlice, VariableFlag.NotRead);
 				}
 			}
 		}
@@ -492,27 +492,39 @@ namespace Maestro
 		{
 			var slice = self.compiler.parser.previousToken.slice;
 
-			if (self.compiler.ResolveToLocalVariableIndex(slice).TryGet(out var localIndex))
+			if (self.compiler.ResolveToVariableIndex(slice).TryGet(out var variableIndex))
 			{
-				ref var variable = ref self.compiler.localVariables.buffer[localIndex];
+				ref var variable = ref self.compiler.variables.buffer[variableIndex];
 				variable.PerformedRead();
 
-				if (variable.flag == LocalVariableFlag.Unwritten)
+				if (variable.flag == VariableFlag.Unwritten)
 				{
-					self.compiler.AddSoftError(slice, new CompileErrors.Variables.LocalVariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
+					self.compiler.AddSoftError(slice, new CompileErrors.Variables.VariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
 				}
 
-				self.compiler.EmitLocalInstruction(Instruction.LoadLocal, localIndex);
+				self.compiler.EmitVariableInstruction(Instruction.LoadLocal, variableIndex);
 			}
 			else
 			{
-				self.compiler.AddSoftError(slice, new CompileErrors.Variables.LocalVariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
+				self.compiler.AddSoftError(slice, new CompileErrors.Variables.VariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
 			}
 		}
 
 		internal static void LoadInput(CompilerController self)
 		{
-			LoadLocal(self);
+			for (var i = self.compiler.scopes.count - 1; i >= 0; i--)
+			{
+				var scope = self.compiler.scopes.buffer[i];
+				switch (scope.type)
+				{
+				case ScopeType.CommandBody:
+				case ScopeType.IterationBody:
+					self.compiler.EmitInstruction(Instruction.LoadInput);
+					return;
+				}
+			}
+
+			self.compiler.AddSoftError(self.compiler.parser.previousToken.slice, new CompileErrors.Input.InvalidUseOfInputVariable());
 		}
 
 		internal static void Literal(CompilerController self)

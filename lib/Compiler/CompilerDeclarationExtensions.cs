@@ -2,29 +2,35 @@ namespace Maestro
 {
 	internal static class CompilerDeclarationExtensions
 	{
-		public static byte AddLocalVariable(this Compiler self, Slice slice, LocalVariableFlag flag)
+		public static byte AddVariable(this Compiler self, Slice slice, VariableFlag flag)
 		{
-			self.EmitPushLocalInfo(slice, flag);
+			self.EmitDebugPushVariableInfo(slice, flag);
 
 			if (
-				flag == LocalVariableFlag.NotRead &&
+				flag == VariableFlag.NotRead &&
 				self.parser.tokenizer.source[slice.index + 1] == '_'
 			)
 			{
-				flag = LocalVariableFlag.Fulfilled;
+				flag = VariableFlag.Fulfilled;
 			}
 
-			self.localVariables.PushBack(new LocalVariable(slice, flag));
+			self.variables.PushBack(new Variable(slice, flag));
 
-			return unchecked((byte)(self.localVariables.count - 1));
+			return unchecked((byte)(self.variables.count - 1));
 		}
 
-		public static Option<byte> ResolveToLocalVariableIndex(this Compiler self, Slice slice)
+		public static Option<int> ResolveToVariableIndex(this Compiler self, Slice slice)
 		{
-			Option<byte> CheckAndReturnIndex(int localIndex)
+			var source = self.parser.tokenizer.source;
+
+			for (var i = self.variables.count - 1; i >= 0; i--)
 			{
-				var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
-				if (localIndex < commandVariablesBaseIndex)
+				var variable = self.variables.buffer[i];
+				if (!CompilerHelper.AreEqual(source, slice, variable.slice))
+					continue;
+
+				var commandVariablesBaseIndex = self.GetTopCommandScope().Select(s => s.variablesStartIndex).GetOr(0);
+				if (i < commandVariablesBaseIndex)
 				{
 					self.AddSoftError(slice, new CompileErrors.Variables.CanNotAccessVariableOutsideOfCommandScope
 					{
@@ -33,31 +39,8 @@ namespace Maestro
 
 					return Option.None;
 				}
-				else
-				{
-					return localIndex < byte.MaxValue ?
-						(byte)localIndex :
-						byte.MaxValue;
-				}
-			}
 
-			var source = self.parser.tokenizer.source;
-
-			if (CompilerHelper.AreEqual(source, slice, "$$"))
-			{
-				for (var i = self.localVariables.count - 1; i >= 0; i--)
-				{
-					var local = self.localVariables.buffer[i];
-					if (local.flag == LocalVariableFlag.Input)
-						return CheckAndReturnIndex(i);
-				}
-			}
-
-			for (var i = self.localVariables.count - 1; i >= 0; i--)
-			{
-				var local = self.localVariables.buffer[i];
-				if (CompilerHelper.AreEqual(source, slice, local.slice))
-					return CheckAndReturnIndex(i);
+				return i;
 			}
 
 			return Option.None;

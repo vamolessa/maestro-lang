@@ -7,9 +7,17 @@ external command test-command 2;
 command my-command $arg0 $arg1 {
 	1, 2, 3 | test-command $arg0 $arg1 | print;
 
-	42 | $ret;
-	return $ret;
+	if true {
+		34 | $_test_var;
+		$_test_var | print;
+
+		return $$;
+	}
+
+	43 | $_another_test_var;
+	$_another_test_var | print;
+
+	return 4;
 }
 
-
-"skip me" | my-command "first" "second" | print;
+"skip me", "and mee too" | my-command "first" "second" | print;

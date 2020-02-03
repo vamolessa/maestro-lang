@@ -6,10 +6,10 @@ namespace Maestro
 	{
 		internal static Option<int> FindVariableIndex(VirtualMachine vm, int stackIndex)
 		{
-			for (var i = 0; i < vm.debugInfo.localVariables.count; i++)
+			for (var i = 0; i < vm.debugInfo.variableInfos.count; i++)
 			{
-				var localVariable = vm.debugInfo.localVariables.buffer[i];
-				if (localVariable.stackIndex == stackIndex)
+				var variableInfo = vm.debugInfo.variableInfos.buffer[i];
+				if (variableInfo.stackIndex == stackIndex)
 					return i;
 			}
 
@@ -26,8 +26,8 @@ namespace Maestro
 				var variableIndex = FindVariableIndex(vm, i);
 				if (variableIndex.isSome)
 				{
-					var localInfo = vm.debugInfo.localVariables.buffer[variableIndex.value];
-					sb.Append(localInfo.name);
+					var variableInfo = vm.debugInfo.variableInfos.buffer[variableIndex.value];
+					sb.Append(variableInfo.name);
 					sb.Append(": ");
 				}
 

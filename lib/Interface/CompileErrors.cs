@@ -219,13 +219,13 @@ namespace Maestro.CompileErrors
 			public string Format() => $"Too many variables. Max is {byte.MaxValue}";
 		}
 
-		internal struct LocalVariableUnassigned : IFormattedMessage
+		internal struct VariableUnassigned : IFormattedMessage
 		{
 			public string name;
 			public string Format() => $"Use of unassigned '{name}' variable";
 		}
 
-		internal struct NotReadLocalVariable : IFormattedMessage
+		internal struct NotReadVariable : IFormattedMessage
 		{
 			public string name;
 			public string Format() => $"Variable '{name}'s value is never read";
@@ -235,6 +235,14 @@ namespace Maestro.CompileErrors
 		{
 			public string name;
 			public string Format() => $"Output variable '{name}' is never written to";
+		}
+	}
+
+	namespace Input
+	{
+		internal struct InvalidUseOfInputVariable : IFormattedMessage
+		{
+			public string Format() => "Input variables can only be used inside command or 'iterate' bodies";
 		}
 	}
 

@@ -14,34 +14,34 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public static void BeginScope(this Compiler self, ScopeType scopeType)
+		public static void PushScope(this Compiler self, ScopeType scopeType)
 		{
-			self.scopes.PushBackUnchecked(new Scope(scopeType, self.localVariables.count));
+			self.scopes.PushBackUnchecked(new Scope(scopeType, self.variables.count));
+			self.EmitDebugInstruction(Instruction.DebugPushDebugFrame);
 		}
 
-		public static void EndScope(this Compiler self)
+		public static void PopScope(this Compiler self)
 		{
 			var scope = self.scopes.PopLast();
 
-			for (var i = scope.localVariablesStartIndex; i < self.localVariables.count; i++)
+			for (var i = scope.variablesStartIndex; i < self.variables.count; i++)
 			{
-				var local = self.localVariables.buffer[i];
-				switch (local.flag)
+				var variable = self.variables.buffer[i];
+				switch (variable.flag)
 				{
-				case LocalVariableFlag.NotRead:
-					self.AddSoftError(local.slice, new CompileErrors.Variables.NotReadLocalVariable { name = CompilerHelper.GetSlice(self, local.slice) });
+				case VariableFlag.NotRead:
+					self.AddSoftError(variable.slice, new CompileErrors.Variables.NotReadVariable { name = CompilerHelper.GetSlice(self, variable.slice) });
 					break;
-				case LocalVariableFlag.Unwritten:
-					self.AddSoftError(local.slice, new CompileErrors.Variables.UnwrittenOutputVariable { name = CompilerHelper.GetSlice(self, local.slice) });
+				case VariableFlag.Unwritten:
+					self.AddSoftError(variable.slice, new CompileErrors.Variables.UnwrittenOutputVariable { name = CompilerHelper.GetSlice(self, variable.slice) });
 					break;
 				}
 			}
 
-			var localCount = self.localVariables.count - scope.localVariablesStartIndex;
+			self.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 
-			self.localVariables.count -= localCount;
-			self.EmitPopLocalsInfo(localCount);
-
+			var localCount = self.variables.count - scope.variablesStartIndex;
+			self.variables.count -= localCount;
 			self.EmitPop(localCount <= byte.MaxValue ? (byte)localCount : byte.MaxValue);
 		}
 	}

@@ -15,7 +15,9 @@ namespace Maestro
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
-			var tupleSizes = new Buffer<int>(8);
+
+			var tupleSizes = new Buffer<int>(2);
+			var inputSlices = new Buffer<Slice>(2);
 
 			void Keep(int count)
 			{
@@ -41,8 +43,9 @@ namespace Maestro
 				switch ((Instruction)bytes[codeIndex])
 				{
 				case Instruction.DebugHook:
-				case Instruction.DebugPushLocalInfo:
-				case Instruction.DebugPopLocalInfos:
+				case Instruction.DebugPushDebugFrame:
+				case Instruction.DebugPopDebugFrame:
+				case Instruction.DebugPushVariableInfo:
 					break;
 				default:
 					debugSb.Clear();
@@ -100,16 +103,19 @@ namespace Maestro
 
 						frameStackIndex = stack.count - definition.parameterCount;
 
+						var inputCount = tupleSizes.PopLast();
+						inputSlices.PushBackUnchecked(new Slice(frameStackIndex - inputCount, inputCount));
+
 						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, frameStackIndex, index));
 						break;
 					}
 				case Instruction.Return:
 					{
 						var frame = vm.stackFrames.buffer[--vm.stackFrames.count];
-						tupleSizes.SwapRemove(tupleSizes.count - 2);
-						var returnCount = tupleSizes.buffer[tupleSizes.count - 1];
 
-						MoveTail(frame.stackIndex, returnCount);
+						var inputSlice = inputSlices.PopLast();
+						MoveTail(inputSlice.index, tupleSizes.buffer[tupleSizes.count - 1]);
+						;
 
 						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 						codeIndex = frame.codeIndex;
@@ -156,6 +162,14 @@ namespace Maestro
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
+				case Instruction.LoadInput:
+					{
+						var slice = inputSlices.buffer[inputSlices.count - 1];
+						for (var i = 0; i < slice.length; i++)
+							stack.PushBackUnchecked(stack.buffer[slice.index + i]);
+						tupleSizes.PushBackUnchecked(slice.length);
+						break;
+					}
 				case Instruction.JumpBackward:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
@@ -168,7 +182,7 @@ namespace Maestro
 						codeIndex += offset;
 						break;
 					}
-				case Instruction.PopExpressionAndJumpForwardIfFalse:
+				case Instruction.IfConditionJump:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
@@ -177,12 +191,20 @@ namespace Maestro
 							codeIndex += offset;
 						break;
 					}
-				case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
+				case Instruction.IterateConditionJump:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						if (tupleSizes.buffer[tupleSizes.count - 1] == 0)
+
+						var inputCount = tupleSizes.PopLast();
+						if (inputCount == 0)
+						{
+							--inputSlices.count;
 							codeIndex += offset;
-						Keep(1);
+						}
+						else
+						{
+							inputSlices.PushBackUnchecked(new Slice(stack.count - inputCount, inputCount));
+						}
 						break;
 					}
 				case Instruction.DebugHook:
@@ -193,17 +215,20 @@ namespace Maestro
 						vm.debugger.value.OnDebugHook();
 					}
 					break;
-				case Instruction.DebugPushLocalInfo:
+				case Instruction.DebugPushDebugFrame:
+					vm.debugInfo.PushFrame();
+					break;
+				case Instruction.DebugPopDebugFrame:
+					vm.debugInfo.PopFrame();
+					break;
+				case Instruction.DebugPushVariableInfo:
 					{
 						var nameIndex = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						var name = vm.chunk.literals.buffer[nameIndex].asObject as string;
 						var stackIndex = frameStackIndex + bytes[codeIndex++];
-						vm.debugInfo.localVariables.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
+						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
 					}
-				case Instruction.DebugPopLocalInfos:
-					vm.debugInfo.localVariables.count -= bytes[codeIndex++];
-					break;
 				default:
 					goto case Instruction.Halt;
 				}

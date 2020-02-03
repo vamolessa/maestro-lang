@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Maestro
 {
-	internal enum LocalVariableFlag
+	internal enum VariableFlag
 	{
 		NotRead,
 		Unwritten,
@@ -10,12 +10,12 @@ namespace Maestro
 		Input,
 	}
 
-	internal struct LocalVariable
+	internal struct Variable
 	{
 		public Slice slice;
-		public LocalVariableFlag flag;
+		public VariableFlag flag;
 
-		public LocalVariable(Slice slice, LocalVariableFlag flag)
+		public Variable(Slice slice, VariableFlag flag)
 		{
 			this.slice = slice;
 			this.flag = flag;
@@ -23,14 +23,14 @@ namespace Maestro
 
 		public void PerformedRead()
 		{
-			if (flag == LocalVariableFlag.NotRead)
-				flag = LocalVariableFlag.Fulfilled;
+			if (flag == VariableFlag.NotRead)
+				flag = VariableFlag.Fulfilled;
 		}
 
 		public void PerformedWrite()
 		{
-			if (flag == LocalVariableFlag.Unwritten)
-				flag = LocalVariableFlag.Fulfilled;
+			if (flag == VariableFlag.Unwritten)
+				flag = VariableFlag.Fulfilled;
 		}
 	}
 
@@ -44,12 +44,12 @@ namespace Maestro
 	internal readonly struct Scope
 	{
 		public readonly ScopeType type;
-		public readonly int localVariablesStartIndex;
+		public readonly int variablesStartIndex;
 
-		public Scope(ScopeType type, int localVarStartIndex)
+		public Scope(ScopeType type, int variablesStartIndex)
 		{
 			this.type = type;
-			this.localVariablesStartIndex = localVarStartIndex;
+			this.variablesStartIndex = variablesStartIndex;
 		}
 	}
 

@@ -31,7 +31,7 @@ namespace Maestro
 
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
 
-		public Buffer<LocalVariable> localVariables = new Buffer<LocalVariable>(256);
+		public Buffer<Variable> variables = new Buffer<Variable>(256);
 		public Buffer<Scope> scopes = new Buffer<Scope>(1);
 
 		private Buffer<State> stateStack = new Buffer<State>();
@@ -86,13 +86,13 @@ namespace Maestro
 				new Token(TokenKind.End, new Slice())
 			));
 
-			this.BeginScope(ScopeType.Normal);
+			this.PushScope(ScopeType.Normal);
 		}
 
 		public void EndSource()
 		{
 			var current = stateStack.PopLast();
-			this.EndScope();
+			this.PopScope();
 			RestoreState(current);
 
 			if (stateStack.count == 0)

@@ -16,6 +16,16 @@ namespace Maestro
 
 	public struct DebugInfo
 	{
+		public readonly struct DebugFrame
+		{
+			public readonly int variableInfosIndex;
+
+			public DebugFrame(int variableInfosIndex)
+			{
+				this.variableInfosIndex = variableInfosIndex;
+			}
+		}
+
 		public readonly struct VariableInfo
 		{
 			public readonly string name;
@@ -28,11 +38,25 @@ namespace Maestro
 			}
 		}
 
-		public Buffer<VariableInfo> localVariables;
+		public Buffer<DebugFrame> frames;
+		public Buffer<VariableInfo> variableInfos;
 
 		public void Clear()
 		{
-			localVariables.ZeroClear();
+			variableInfos.ZeroClear();
+		}
+
+		public void PushFrame()
+		{
+			frames.PushBack(new DebugFrame(
+				variableInfos.count
+			));
+		}
+
+		public void PopFrame()
+		{
+			var frame = frames.PopLast();
+			variableInfos.count = frame.variableInfosIndex;
 		}
 	}
 
