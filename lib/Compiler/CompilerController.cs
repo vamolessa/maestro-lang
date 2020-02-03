@@ -233,7 +233,12 @@ namespace Maestro
 				Expression(false);
 
 			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Commands.ExpectedSemiColonAfterReturn());
+
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Return.ExpectedSemiColonAfterReturn());
+
+			var commandScope = compiler.GetTopCommandScope();
+			if (!commandScope.isSome)
+				compiler.AddSoftError(slice, new CompileErrors.Return.CanNotReturnFromOutsideCommand());
 
 			compiler.EmitInstruction(Instruction.Return);
 		}

@@ -11,4 +11,5 @@ command my-command $arg0 $arg1 {
 	return $ret;
 }
 
+
 "skip me" | my-command "first" "second" | print;

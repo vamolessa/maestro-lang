@@ -126,11 +126,6 @@ namespace Maestro.CompileErrors
 			public string name;
 			public string Format() => $"Command name '{name}' already registered";
 		}
-
-		internal struct ExpectedSemiColonAfterReturn : IFormattedMessage
-		{
-			public string Format() => "Expected ';' after return";
-		}
 	}
 
 	namespace If
@@ -151,6 +146,19 @@ namespace Maestro.CompileErrors
 		internal struct ExpectedOpenCurlyBracesAfterIterateCondition : IFormattedMessage
 		{
 			public string Format() => "Expected '{' after 'iterate' condition";
+		}
+	}
+
+	namespace Return
+	{
+		internal struct ExpectedSemiColonAfterReturn : IFormattedMessage
+		{
+			public string Format() => "Expected ';' after return";
+		}
+
+		internal struct CanNotReturnFromOutsideCommand : IFormattedMessage
+		{
+			public string Format() => "Can not return from outside a command";
 		}
 	}
 
