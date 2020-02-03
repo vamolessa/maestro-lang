@@ -66,19 +66,9 @@ namespace Flow.CompileErrors
 			public string Format() => "Expected external command parameter count number";
 		}
 
-		internal struct ExpectedExternalCommandReturnCount : IFormattedMessage
-		{
-			public string Format() => "Expected external command return count number";
-		}
-
 		internal struct TooManyExternalCommandParameters : IFormattedMessage
 		{
 			public string Format() => $"Too many external command parameters. Max is {byte.MaxValue}";
-		}
-
-		internal struct TooManyExternalCommandReturnValues : IFormattedMessage
-		{
-			public string Format() => $"Too many external command return values. Max is {byte.MaxValue}";
 		}
 
 		internal struct ExpectedSemiColonAfterExternCommand : IFormattedMessage
@@ -107,30 +97,14 @@ namespace Flow.CompileErrors
 			public string Format() => "Expected command parameter variable";
 		}
 
-		internal struct ExpectedCommandReturnVariable : IFormattedMessage
-		{
-			public string Format() => "Expected command return variable";
-		}
-
 		internal struct TooManyExternalCommandParameterVariables : IFormattedMessage
 		{
 			public string Format() => $"Too many command parameter variables. Max is {byte.MaxValue}";
 		}
 
-		internal struct TooManyExternalCommandReturnVariables : IFormattedMessage
-		{
-			public string Format() => $"Too many command return variables. Max is {byte.MaxValue}";
-		}
-
 		internal struct ExpectedOpenCurlyBracesBeforeCommandBody : IFormattedMessage
 		{
 			public string Format() => "Expected '{' before command body";
-		}
-
-		internal struct ExpectedOneValueAsCommandArgument : IFormattedMessage
-		{
-			public int got;
-			public string Format() => $"Expected one value as command argument. Got {got}";
 		}
 
 		internal struct WrongNumberOfCommandArguments : IFormattedMessage
@@ -156,12 +130,6 @@ namespace Flow.CompileErrors
 
 	namespace If
 	{
-		internal struct ExpectedOneValueAsIfCondition : IFormattedMessage
-		{
-			public Option<byte> got;
-			public string Format() => $"Expected one value as 'if' condition. Got {(got.isSome ? got.value.ToString() : "unknown")}";
-		}
-
 		internal struct ExpectedOpenCurlyBracesAfterIfCondition : IFormattedMessage
 		{
 			public string Format() => "Expected '{' after 'if' condition";
@@ -175,12 +143,6 @@ namespace Flow.CompileErrors
 
 	namespace Iterate
 	{
-		internal struct ExpectedOneValueAsIterateCondition : IFormattedMessage
-		{
-			public Option<byte> got;
-			public string Format() => $"Expected one value as 'iterate' condition. Got {(got.isSome ? got.value.ToString() : "unknown")}";
-		}
-
 		internal struct ExpectedOpenCurlyBracesAfterIterateCondition : IFormattedMessage
 		{
 			public string Format() => "Expected '{' after 'iterate' condition";
@@ -211,14 +173,6 @@ namespace Flow.CompileErrors
 		}
 	}
 
-	namespace Comma
-	{
-		internal struct TooManyExpressionValues : IFormattedMessage
-		{
-			public string Format() => $"Too many expression values. Max is {byte.MaxValue}";
-		}
-	}
-
 	namespace Variables
 	{
 		internal struct CanNotAccessVariableOutsideOfScope : IFormattedMessage
@@ -240,13 +194,6 @@ namespace Flow.CompileErrors
 		internal struct MixedAssignmentType : IFormattedMessage
 		{
 			public string Format() => "Can not mix variable assignment and variable declaration";
-		}
-
-		internal struct WrongNumberOfVariablesOnAssignment : IFormattedMessage
-		{
-			public int expected;
-			public int got;
-			public string Format() => $"Wrong number of variables on assignment. Expected {expected}. Got {got}";
 		}
 
 		internal struct TooManyVariablesOnAssignment : IFormattedMessage
