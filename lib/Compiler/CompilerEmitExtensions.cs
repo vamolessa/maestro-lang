@@ -124,8 +124,14 @@ namespace Maestro
 				"$$";
 			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
 
+			var variablesStartIndex = self.GetTopCommandScope().Select(s => s.localVariablesStartIndex).GetOr(0);
+			var stackIndex = self.localVariables.count - variablesStartIndex;
+			if (stackIndex > byte.MaxValue)
+				stackIndex = byte.MaxValue;
+
 			self.EmitInstruction(Instruction.DebugPushLocalInfo);
 			self.EmitUShort((ushort)nameLiteralIndex);
+			self.EmitByte((byte)stackIndex);
 		}
 
 		public static void EmitPopLocalsInfo(this Compiler self, int localCount)

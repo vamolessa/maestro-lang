@@ -3,13 +3,13 @@ namespace Maestro
 	public struct StackFrame
 	{
 		public int codeIndex;
-		public int baseStackIndex;
+		public int stackIndex;
 		public int commandInstanceIndex;
 
 		public StackFrame(int codeIndex, int stackIndex, int commandInstanceIndex)
 		{
 			this.codeIndex = codeIndex;
-			this.baseStackIndex = stackIndex;
+			this.stackIndex = stackIndex;
 			this.commandInstanceIndex = commandInstanceIndex;
 		}
 	}
@@ -19,10 +19,12 @@ namespace Maestro
 		public readonly struct VariableInfo
 		{
 			public readonly string name;
+			public readonly int stackIndex;
 
-			public VariableInfo(string name)
+			public VariableInfo(string name, int stackIndex)
 			{
 				this.name = name;
+				this.stackIndex = stackIndex;
 			}
 		}
 
@@ -30,7 +32,7 @@ namespace Maestro
 
 		public void Clear()
 		{
-			localVariables.ZeroReset();
+			localVariables.ZeroClear();
 		}
 	}
 
@@ -47,10 +49,7 @@ namespace Maestro
 		{
 			this.chunk = chunk;
 
-			stackFrames.count = 0;
-			stack.ZeroReset();
-			externalCommandInstances.ZeroReset();
-			debugInfo.Clear();
+			externalCommandInstances.ZeroClear();
 
 			for (var i = 0; i < chunk.externalCommandInstances.count; i++)
 			{

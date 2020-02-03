@@ -16,7 +16,7 @@ namespace Maestro
 			count = 0;
 		}
 
-		public void ZeroReset()
+		public void ZeroClear()
 		{
 			if (buffer != null)
 			{

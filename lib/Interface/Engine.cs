@@ -104,8 +104,11 @@ namespace Maestro
 				));
 			}
 
+			vm.stackFrames.count = 0;
 			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, 0));
 			var executeError = VirtualMachineInstructions.Execute(vm);
+			vm.stack.ZeroClear();
+			vm.debugInfo.Clear();
 
 			return new ExecuteResult(executeError.isSome ?
 				new ExecuteResult.Data(

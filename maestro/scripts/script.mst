@@ -2,6 +2,8 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
+98 | $_my-global;
+
 command my-command $arg0 $arg1 {
 	1, 2, 3 | test-command $arg0 $arg1 | print;
 
@@ -9,4 +11,4 @@ command my-command $arg0 $arg1 {
 	return $ret;
 }
 
-my-command "first" "second" | print;
+"skip me" | my-command "first" "second" | print;

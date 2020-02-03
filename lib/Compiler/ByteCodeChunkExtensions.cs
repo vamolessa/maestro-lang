@@ -184,13 +184,15 @@ namespace Maestro
 				chunk.bytes.buffer[++index],
 				chunk.bytes.buffer[++index]
 			);
+			var stackIndex = chunk.bytes.buffer[++index];
 
 			var name = chunk.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
 			sb.Append(name.asObject);
-			sb.Append("'");
+			sb.Append("' at ");
+			sb.Append(stackIndex);
 
 			return ++index;
 		}

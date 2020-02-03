@@ -51,8 +51,8 @@ namespace Maestro
 			this.mode = mode;
 			this.chunk = chunk;
 
-			errors.ZeroReset();
-			stateStack.ZeroReset();
+			errors.ZeroClear();
+			stateStack.ZeroClear();
 		}
 
 		private void RestoreState(State state)
@@ -85,6 +85,7 @@ namespace Maestro
 				new Token(TokenKind.End, new Slice()),
 				new Token(TokenKind.End, new Slice())
 			));
+
 			this.BeginScope(ScopeType.Normal);
 		}
 

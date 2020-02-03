@@ -14,14 +14,8 @@ namespace Maestro
 			var bytes = vm.chunk.bytes.buffer;
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
-			var baseStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex;
+			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
 			var tupleSizes = new Buffer<int>(8);
-
-			void Pop(int count)
-			{
-				while (count-- > 0)
-					stack.buffer[--stack.count] = default;
-			}
 
 			void Keep(int count)
 			{
@@ -30,14 +24,15 @@ namespace Maestro
 				if (count > 0)
 					stack.GrowUnchecked(count);
 				else
-					Pop(-count);
+					stack.count += count;
 			}
 
-			void CopyTail(int toIndex, int count)
+			void MoveTail(int toIndex, int count)
 			{
 				var fromIndex = stack.count - count;
 				while (count-- > 0)
 					stack.buffer[toIndex++] = stack.buffer[fromIndex++];
+				stack.count = toIndex;
 			}
 
 			while (true)
@@ -52,7 +47,7 @@ namespace Maestro
 				default:
 					debugSb.Clear();
 					vm.stack = stack;
-					vm.stackFrames.buffer[vm.stackFrames.count - 1].baseStackIndex = baseStackIndex;
+					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frameStackIndex;
 					VirtualMachineHelper.TraceStack(vm, debugSb);
 					vm.chunk.DisassembleInstruction(codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
@@ -87,8 +82,7 @@ namespace Maestro
 						var returnCount = stack.count - (context.startIndex + context.inputCount + definition.parameterCount);
 						tupleSizes.PushBackUnchecked(returnCount);
 
-						CopyTail(context.startIndex, returnCount);
-						Pop(stack.count - context.startIndex - returnCount);
+						MoveTail(context.startIndex, returnCount);
 
 						if (context.errorMessage != null)
 							return vm.NewError(context.errorMessage);
@@ -104,9 +98,9 @@ namespace Maestro
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
 
-						baseStackIndex = stack.count - definition.parameterCount;
+						frameStackIndex = stack.count - definition.parameterCount;
 
-						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, baseStackIndex, index));
+						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, frameStackIndex, index));
 						break;
 					}
 				case Instruction.Return:
@@ -115,12 +109,11 @@ namespace Maestro
 						tupleSizes.SwapRemove(tupleSizes.count - 2);
 						var returnCount = tupleSizes.buffer[tupleSizes.count - 1];
 
-						CopyTail(frame.baseStackIndex, returnCount);
-						Pop(stack.count - (frame.baseStackIndex + returnCount));
+						MoveTail(frame.stackIndex, returnCount);
 
 						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 						codeIndex = frame.codeIndex;
-						baseStackIndex = frame.baseStackIndex;
+						frameStackIndex = frame.stackIndex;
 						break;
 					}
 				case Instruction.PushEmptyTuple:
@@ -133,7 +126,7 @@ namespace Maestro
 					tupleSizes.buffer[tupleSizes.count - 2] += tupleSizes.PopLast();
 					break;
 				case Instruction.Pop:
-					Pop(bytes[codeIndex++]);
+					stack.count -= bytes[codeIndex++];
 					break;
 				case Instruction.LoadFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
@@ -152,14 +145,13 @@ namespace Maestro
 					}
 				case Instruction.AssignLocal:
 					{
-						var index = baseStackIndex + bytes[codeIndex++];
+						var index = frameStackIndex + bytes[codeIndex++];
 						stack.buffer[index] = stack.PopLast();
-						stack.buffer[stack.count] = default;
 						break;
 					}
 				case Instruction.LoadLocal:
 					{
-						var index = baseStackIndex + bytes[codeIndex++];
+						var index = frameStackIndex + bytes[codeIndex++];
 						stack.PushBackUnchecked(stack.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
@@ -183,7 +175,6 @@ namespace Maestro
 						Keep(1);
 						if (!stack.buffer[--stack.count].IsTruthy())
 							codeIndex += offset;
-						stack.buffer[stack.count] = default;
 						break;
 					}
 				case Instruction.JumpForwardIfExpressionIsEmptyKeepingOne:
@@ -204,9 +195,10 @@ namespace Maestro
 					break;
 				case Instruction.DebugPushLocalInfo:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var name = vm.chunk.literals.buffer[index].asObject as string;
-						vm.debugInfo.localVariables.PushBack(new DebugInfo.VariableInfo(name));
+						var nameIndex = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var name = vm.chunk.literals.buffer[nameIndex].asObject as string;
+						var stackIndex = frameStackIndex + bytes[codeIndex++];
+						vm.debugInfo.localVariables.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
 					}
 				case Instruction.DebugPopLocalInfos:

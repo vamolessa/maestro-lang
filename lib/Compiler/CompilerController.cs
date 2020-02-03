@@ -12,7 +12,7 @@ namespace Maestro
 		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Option<IImportResolver> importResolver, Mode mode, Source source)
 		{
 			this.importResolver = importResolver;
-			compiledSources.ZeroReset();
+			compiledSources.ZeroClear();
 
 			compiler.Reset(mode, chunk);
 			Compile(source);
