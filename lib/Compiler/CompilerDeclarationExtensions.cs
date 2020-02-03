@@ -2,7 +2,7 @@ namespace Maestro
 {
 	internal static class CompilerDeclarationExtensions
 	{
-		public static byte AddVariable(this Compiler self, Slice slice, VariableFlag flag)
+		public static int AddVariable(this Compiler self, Slice slice, VariableFlag flag)
 		{
 			self.EmitDebugPushVariableInfo(slice, flag);
 
@@ -15,8 +15,7 @@ namespace Maestro
 			}
 
 			self.variables.PushBack(new Variable(slice, flag));
-
-			return unchecked((byte)(self.variables.count - 1));
+			return self.variables.count - 1;
 		}
 
 		public static Option<int> ResolveToVariableIndex(this Compiler self, Slice slice)

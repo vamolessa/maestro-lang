@@ -36,10 +36,10 @@ namespace Maestro
 			}
 		}
 
-		public static void EmitLoadLiteral(this Compiler self, Value value)
+		public static void EmitPushLiteral(this Compiler self, Value value)
 		{
 			var index = self.chunk.AddLiteral(value);
-			self.EmitInstruction(Instruction.LoadLiteral);
+			self.EmitInstruction(Instruction.PushLiteral);
 			self.EmitUShort((ushort)index);
 		}
 
@@ -125,9 +125,7 @@ namespace Maestro
 			if (self.mode != Mode.Debug)
 				return;
 
-			var name = flag != VariableFlag.Input ?
-				CompilerHelper.GetSlice(self, slice) :
-				"$$";
+			var name = CompilerHelper.GetSlice(self, slice);
 			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
 
 			var variablesStartIndex = self.GetTopCommandScope().Select(s => s.variablesStartIndex).GetOr(0);

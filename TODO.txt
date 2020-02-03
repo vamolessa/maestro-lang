@@ -1,7 +1,2 @@
-make iterate work on values and not on evaluation
-
-pipe input with $$
-
-
 tests!!
 serialize bytecodechunk ??

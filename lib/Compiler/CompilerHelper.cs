@@ -7,7 +7,6 @@ namespace Maestro
 		NotRead,
 		Unwritten,
 		Fulfilled,
-		Input,
 	}
 
 	internal struct Variable

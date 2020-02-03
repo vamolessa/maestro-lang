@@ -141,11 +141,21 @@ namespace Maestro.CompileErrors
 		}
 	}
 
-	namespace Iterate
+	namespace ForEach
 	{
-		internal struct ExpectedOpenCurlyBracesAfterIterateCondition : IFormattedMessage
+		internal struct ExpectedForEachVariable : IFormattedMessage
 		{
-			public string Format() => "Expected '{' after 'iterate' condition";
+			public string Format() => "Expected 'foreach' iteration variable";
+		}
+
+		internal struct ExpectedInAfterForEachVariable : IFormattedMessage
+		{
+			public string Format() => "Expected 'in' after 'foreach' iteration variable";
+		}
+
+		internal struct ExpectedOpenCurlyBracesAfterForEachExpression : IFormattedMessage
+		{
+			public string Format() => "Expected '{' after 'foreach' expression";
 		}
 	}
 
@@ -242,7 +252,7 @@ namespace Maestro.CompileErrors
 	{
 		internal struct InvalidUseOfInputVariable : IFormattedMessage
 		{
-			public string Format() => "Input variables can only be used inside command or 'iterate' bodies";
+			public string Format() => "Input variables can only be used inside of commands";
 		}
 	}
 

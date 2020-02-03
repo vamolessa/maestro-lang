@@ -19,16 +19,6 @@ namespace Maestro
 			var tupleSizes = new Buffer<int>(2);
 			var inputSlices = new Buffer<Slice>(2);
 
-			void Keep(int count)
-			{
-				count -= tupleSizes.PopLast();
-
-				if (count > 0)
-					stack.GrowUnchecked(count);
-				else
-					stack.count += count;
-			}
-
 			void MoveTail(int toIndex, int count)
 			{
 				var fromIndex = stack.count - count;
@@ -126,43 +116,49 @@ namespace Maestro
 					tupleSizes.PushBackUnchecked(0);
 					break;
 				case Instruction.PopTupleKeeping:
-					Keep(bytes[codeIndex++]);
-					break;
+					{
+						var count = bytes[codeIndex++] - tupleSizes.PopLast();
+						if (count > 0)
+							stack.GrowUnchecked(count);
+						else
+							stack.count += count;
+						break;
+					}
 				case Instruction.MergeTuple:
 					tupleSizes.buffer[tupleSizes.count - 2] += tupleSizes.PopLast();
 					break;
 				case Instruction.Pop:
 					stack.count -= bytes[codeIndex++];
 					break;
-				case Instruction.LoadFalse:
+				case Instruction.PushFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
 					tupleSizes.PushBackUnchecked(1);
 					break;
-				case Instruction.LoadTrue:
+				case Instruction.PushTrue:
 					stack.PushBackUnchecked(new Value(ValueKind.TrueKind));
 					tupleSizes.PushBackUnchecked(1);
 					break;
-				case Instruction.LoadLiteral:
+				case Instruction.PushLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
-				case Instruction.AssignLocal:
+				case Instruction.SetLocal:
 					{
 						var index = frameStackIndex + bytes[codeIndex++];
 						stack.buffer[index] = stack.PopLast();
 						break;
 					}
-				case Instruction.LoadLocal:
+				case Instruction.PushLocal:
 					{
 						var index = frameStackIndex + bytes[codeIndex++];
 						stack.PushBackUnchecked(stack.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
-				case Instruction.LoadInput:
+				case Instruction.PushInput:
 					{
 						var slice = inputSlices.buffer[inputSlices.count - 1];
 						for (var i = 0; i < slice.length; i++)
@@ -186,24 +182,37 @@ namespace Maestro
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						Keep(1);
-						if (!stack.buffer[--stack.count].IsTruthy())
-							codeIndex += offset;
+						var count = tupleSizes.PopLast();
+						while (count-- > 0)
+						{
+							if (!stack.buffer[--stack.count].IsTruthy())
+							{
+								codeIndex += offset;
+								while (count-- > 0)
+									--stack.count;
+								break;
+							}
+						}
 						break;
 					}
-				case Instruction.IterateConditionJump:
+				case Instruction.ForEachConditionJump:
 					{
 						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						var inputCount = tupleSizes.PopLast();
-						if (inputCount == 0)
+						var elementCount = tupleSizes.buffer[tupleSizes.count - 1];
+						var baseIndex = stack.count - (elementCount + 2);
+						var currentIndex = stack.buffer[baseIndex].asNumber.asInt + 1;
+
+						if (currentIndex < elementCount)
 						{
-							--inputSlices.count;
-							codeIndex += offset;
+							stack.buffer[baseIndex + 1] = stack.buffer[baseIndex + 2 + currentIndex];
+							stack.buffer[baseIndex] = new Value(currentIndex);
 						}
 						else
 						{
-							inputSlices.PushBackUnchecked(new Slice(stack.count - inputCount, inputCount));
+							codeIndex += offset;
+							stack.count -= elementCount;
+							--tupleSizes.count;
 						}
 						break;
 					}

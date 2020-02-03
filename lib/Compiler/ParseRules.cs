@@ -30,7 +30,8 @@ namespace Maestro
 			Set(TokenKind.Import, null, null, Precedence.None);
 			Set(TokenKind.If, null, null, Precedence.None);
 			Set(TokenKind.Else, null, null, Precedence.None);
-			Set(TokenKind.Iterate, null, null, Precedence.None);
+			Set(TokenKind.ForEach, null, null, Precedence.None);
+			Set(TokenKind.In, null, null, Precedence.None);
 			Set(TokenKind.Command, null, null, Precedence.None);
 			Set(TokenKind.External, null, null, Precedence.None);
 			Set(TokenKind.Return, null, null, Precedence.None);

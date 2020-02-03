@@ -10,7 +10,7 @@ namespace Maestro
 		IntLiteral, FloatLiteral, StringLiteral, True, False,
 		Identifier, Variable, InputVariable,
 
-		Import, If, Else, Iterate, Command, External, Return,
+		Import, If, Else, ForEach, In, Command, External, Return,
 
 		COUNT,
 		End,

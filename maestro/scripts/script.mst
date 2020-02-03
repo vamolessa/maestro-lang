@@ -2,22 +2,19 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
-98 | $_my-global;
+#foreach $e in 1, 2, 3 {
+#	"element:", $e | print;
+#}
 
-command my-command $arg0 $arg1 {
-	1, 2, 3 | test-command $arg0 $arg1 | print;
-
-	if true {
-		34 | $_test_var;
-		$_test_var | print;
-
-		return $$;
-	}
-
-	43 | $_another_test_var;
-	$_another_test_var | print;
-
-	return 4;
+if true, false {
+	"ASDSAD" | print;
+} else {
+	"dsadsa NOPE!!!" | print;
 }
 
-"skip me", "and mee too" | my-command "first" "second" | print;
+
+##
+
+#instantiate MyPrefab
+#trigger "asdasd" under MyPrefab
+#delay instance

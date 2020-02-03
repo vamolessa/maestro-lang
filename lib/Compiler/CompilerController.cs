@@ -97,8 +97,8 @@ namespace Maestro
 		{
 			if (compiler.parser.Match(TokenKind.If))
 				IfStatement();
-			else if (compiler.parser.Match(TokenKind.Iterate))
-				IterateStatement();
+			else if (compiler.parser.Match(TokenKind.ForEach))
+				ForEachStatement();
 			else if (compiler.parser.Match(TokenKind.Return))
 				ReturnStatement();
 			else
@@ -203,24 +203,33 @@ namespace Maestro
 			compiler.EndEmitForwardJump(thenJump);
 		}
 
-		private void IterateStatement()
+		private void ForEachStatement()
 		{
-			var loopJump = compiler.BeginEmitBackwardJump();
+			compiler.parser.Consume(TokenKind.Variable, new CompileErrors.ForEach.ExpectedForEachVariable());
+			var elementVariableSlice = compiler.parser.previousToken.slice;
 
-			compiler.PushScope(ScopeType.IterationBody);
+			compiler.parser.Consume(TokenKind.In, new CompileErrors.ForEach.ExpectedInAfterForEachVariable());
+
+			compiler.EmitPushLiteral(new Value(-1));
+			compiler.EmitPushLiteral(default);
+			compiler.EmitKeep(1);
+			compiler.EmitKeep(1);
+
 			Expression(false);
 
-			var breakJump = compiler.BeginEmitForwardJump(Instruction.IterateConditionJump);
+			compiler.PushScope(ScopeType.IterationBody);
+			compiler.AddVariable(new Slice(), VariableFlag.Fulfilled);
+			compiler.AddVariable(elementVariableSlice, VariableFlag.NotRead);
 
-			compiler.AddVariable(default, VariableFlag.Input);
+			var loopJump = compiler.BeginEmitBackwardJump();
+			var breakJump = compiler.BeginEmitForwardJump(Instruction.ForEachConditionJump);
 
-			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Iterate.ExpectedOpenCurlyBracesAfterIterateCondition());
+			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.ForEach.ExpectedOpenCurlyBracesAfterForEachExpression());
 			Block();
 
-			compiler.PopScope();
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
-			compiler.EmitKeep(0);
+			compiler.PopScope();
 		}
 
 		private void ReturnStatement()
@@ -469,7 +478,7 @@ namespace Maestro
 				{
 					var varSlice = slicesCache.buffer[i];
 					var variableIndex = compiler.ResolveToVariableIndex(varSlice).value;
-					compiler.EmitVariableInstruction(Instruction.AssignLocal, variableIndex);
+					compiler.EmitVariableInstruction(Instruction.SetLocal, variableIndex);
 
 					compiler.variables.buffer[variableIndex].PerformedWrite();
 				}
@@ -502,7 +511,7 @@ namespace Maestro
 					self.compiler.AddSoftError(slice, new CompileErrors.Variables.VariableUnassigned { name = CompilerHelper.GetSlice(self.compiler, slice) });
 				}
 
-				self.compiler.EmitVariableInstruction(Instruction.LoadLocal, variableIndex);
+				self.compiler.EmitVariableInstruction(Instruction.PushLocal, variableIndex);
 			}
 			else
 			{
@@ -512,19 +521,11 @@ namespace Maestro
 
 		internal static void LoadInput(CompilerController self)
 		{
-			for (var i = self.compiler.scopes.count - 1; i >= 0; i--)
-			{
-				var scope = self.compiler.scopes.buffer[i];
-				switch (scope.type)
-				{
-				case ScopeType.CommandBody:
-				case ScopeType.IterationBody:
-					self.compiler.EmitInstruction(Instruction.LoadInput);
-					return;
-				}
-			}
-
-			self.compiler.AddSoftError(self.compiler.parser.previousToken.slice, new CompileErrors.Input.InvalidUseOfInputVariable());
+			var commandScope = self.compiler.GetTopCommandScope();
+			if (commandScope.isSome)
+				self.compiler.EmitInstruction(Instruction.PushInput);
+			else
+				self.compiler.AddSoftError(self.compiler.parser.previousToken.slice, new CompileErrors.Input.InvalidUseOfInputVariable());
 		}
 
 		internal static void Literal(CompilerController self)
@@ -532,19 +533,19 @@ namespace Maestro
 			switch (self.compiler.parser.previousToken.kind)
 			{
 			case TokenKind.False:
-				self.compiler.EmitInstruction(Instruction.LoadFalse);
+				self.compiler.EmitInstruction(Instruction.PushFalse);
 				break;
 			case TokenKind.True:
-				self.compiler.EmitInstruction(Instruction.LoadTrue);
+				self.compiler.EmitInstruction(Instruction.PushTrue);
 				break;
 			case TokenKind.IntLiteral:
-				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedInt(self.compiler)));
+				self.compiler.EmitPushLiteral(new Value(CompilerHelper.GetParsedInt(self.compiler)));
 				break;
 			case TokenKind.FloatLiteral:
-				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedFloat(self.compiler)));
+				self.compiler.EmitPushLiteral(new Value(CompilerHelper.GetParsedFloat(self.compiler)));
 				break;
 			case TokenKind.StringLiteral:
-				self.compiler.EmitLoadLiteral(new Value(CompilerHelper.GetParsedString(self.compiler)));
+				self.compiler.EmitPushLiteral(new Value(CompilerHelper.GetParsedString(self.compiler)));
 				break;
 			default:
 				self.compiler.AddHardError(self.compiler.parser.previousToken.slice, new CompileErrors.Literals.ExpectedLiteral { got = self.compiler.parser.previousToken.kind });

@@ -27,19 +27,6 @@ namespace Maestro
 			}
 		}
 
-		public sealed class ElementsCommand : ICommand<Tuple0>
-		{
-			public int currentIndex = 0;
-
-			public void Execute(ref Context context, Tuple0 args)
-			{
-				if (currentIndex < context.inputCount)
-					context.PushValue(context.GetInput(currentIndex));
-				else
-					currentIndex = 0;
-			}
-		}
-
 		public sealed class TestCommand : ICommand<Tuple2>
 		{
 			public void Execute(ref Context context, Tuple2 args)
@@ -62,7 +49,6 @@ namespace Maestro
 			var engine = new Engine();
 			engine.RegisterCommand("print", () => new PrintCommand());
 			engine.RegisterCommand("bypass", () => new BypassCommand());
-			engine.RegisterCommand("elements", () => new ElementsCommand());
 			engine.RegisterCommand("test-command", () => new TestCommand());
 
 			var sb = new StringBuilder();
