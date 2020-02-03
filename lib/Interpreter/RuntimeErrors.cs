@@ -1,4 +1,4 @@
-namespace Flow.RuntimeErrors
+namespace Maestro.RuntimeErrors
 {
 	internal struct HasCompileErrors : IFormattedMessage
 	{

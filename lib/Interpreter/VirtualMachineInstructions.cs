@@ -1,7 +1,7 @@
 #define DEBUG_TRACE
 using System.Text;
 
-namespace Flow
+namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{

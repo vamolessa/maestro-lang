@@ -1,2 +1,2 @@
-# Flow
-Flow scripting language
+# Maestro
+Maestro compositing scripting language

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "flow", "flow\flow.csproj", "{8A4580B0-D693-4FE7-8220-5D6CFEBF11C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "maestro", "maestro\maestro.csproj", "{8A4580B0-D693-4FE7-8220-5D6CFEBF11C9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib", "lib\lib.csproj", "{CF7E6D12-702B-4136-A4C5-B20EDC299E7E}"
 EndProject

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Flow
+namespace Maestro
 {
 	internal sealed class ByteCodeChunkDebugView
 	{

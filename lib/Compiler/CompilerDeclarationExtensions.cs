@@ -1,4 +1,4 @@
-namespace Flow
+namespace Maestro
 {
 	internal static class CompilerDeclarationExtensions
 	{

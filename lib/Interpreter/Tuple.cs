@@ -1,4 +1,4 @@
-namespace Flow
+namespace Maestro
 {
 	public sealed class TupleSizeIsTooBigException : System.Exception
 	{

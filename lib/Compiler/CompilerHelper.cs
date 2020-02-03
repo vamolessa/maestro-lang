@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Flow
+namespace Maestro
 {
 	internal enum LocalVariableFlag
 	{

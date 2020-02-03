@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Flow
+namespace Maestro
 {
 	public static class ValueKind
 	{

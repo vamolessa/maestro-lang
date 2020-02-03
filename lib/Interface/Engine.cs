@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("test")]
 
-namespace Flow
+namespace Maestro
 {
 	public enum Mode
 	{

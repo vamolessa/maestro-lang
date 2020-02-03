@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Flow
+namespace Maestro
 {
 	[DebuggerTypeProxy(typeof(BufferDebugView<>))]
 	public struct Buffer<T>

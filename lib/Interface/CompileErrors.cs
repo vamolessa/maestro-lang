@@ -1,4 +1,4 @@
-namespace Flow.CompileErrors
+namespace Maestro.CompileErrors
 {
 	namespace General
 	{

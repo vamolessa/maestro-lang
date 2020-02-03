@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Flow
+namespace Maestro
 {
 	public static class Program
 	{
@@ -56,8 +56,8 @@ namespace Flow
 
 		public static void Main(string[] args)
 		{
-			var content = System.IO.File.ReadAllText("scripts/script.flow");
-			var source = new Source(new Uri("script.flow"), content);
+			var content = System.IO.File.ReadAllText("scripts/script.mst");
+			var source = new Source(new Uri("script.mst"), content);
 
 			var engine = new Engine();
 			engine.RegisterCommand("print", () => new PrintCommand());
