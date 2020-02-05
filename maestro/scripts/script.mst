@@ -11,10 +11,3 @@ if true, false {
 } else {
 	"dsadsa NOPE!!!" | print;
 }
-
-
-##
-
-#instantiate MyPrefab
-#trigger "asdasd" under MyPrefab
-#delay instance

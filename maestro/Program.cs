@@ -64,8 +64,8 @@ namespace Maestro
 				if (executeResult.error.isSome)
 				{
 					sb.Clear();
-					executeResult.FormatError(sb);
-					executeResult.FormatCallStackTrace(sb);
+					executeResult.FormatError(executable, sb);
+					executeResult.FormatCallStackTrace(executable, sb);
 					System.Console.WriteLine(sb);
 				}
 

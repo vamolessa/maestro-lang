@@ -77,12 +77,7 @@ namespace Maestro
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 
-			return new ExecuteResult(
-				executable.chunk,
-				executable.sources,
-				vm.stackFrames,
-				maybeExecuteError
-			);
+			return new ExecuteResult(vm.stackFrames, maybeExecuteError);
 		}
 	}
 }
