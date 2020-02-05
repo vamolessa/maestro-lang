@@ -45,12 +45,24 @@ namespace Maestro
 					return false;
 			}
 
+			for (var i = 0; i < commandDefinitions.count; i++)
+			{
+				if (definition.name == commandDefinitions.buffer[i].name)
+					return false;
+			}
+
 			externalCommandDefinitions.PushBack(definition);
 			return true;
 		}
 
 		internal bool AddCommand(CommandDefinition definition)
 		{
+			for (var i = 0; i < externalCommandDefinitions.count; i++)
+			{
+				if (definition.name == externalCommandDefinitions.buffer[i].name)
+					return false;
+			}
+
 			for (var i = 0; i < commandDefinitions.count; i++)
 			{
 				if (definition.name == commandDefinitions.buffer[i].name)

@@ -2,12 +2,18 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
+command my-command {
+	"hello from command" | print;
+}
+
+my-command;
+
 #foreach $e in 1, 2, 3 {
 #	"element:", $e | print;
 #}
 
-if true, false {
-	"ASDSAD" | print;
-} else {
-	"dsadsa NOPE!!!" | print;
-}
+#if true, false {
+#	"ASDSAD" | print;
+#} else {
+#	"dsadsa NOPE!!!" | print;
+#}

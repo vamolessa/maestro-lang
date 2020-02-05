@@ -54,19 +54,36 @@ namespace Maestro
 			var sb = new StringBuilder();
 
 			var compileResult = engine.CompileSource(source, Mode.Debug, null);
-			if (compileResult.executable.TryGet(out var executable))
+			if (compileResult.TryGetExecutable(out var executable))
 			{
 				sb.Clear();
 				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
-				var executeResult = engine.Execute(executable);
-				if (executeResult.error.isSome)
+				var testCommand = engine.InstantiateCommand<Tuple0>(compileResult, "my-command");
+				if (testCommand.isSome)
 				{
-					sb.Clear();
-					executeResult.FormatError(sb);
-					executeResult.FormatCallStackTrace(sb);
-					System.Console.WriteLine(sb);
+					System.Console.WriteLine("RUN MY COMMAND\n");
+					var executeResult = engine.Execute(testCommand.value, default);
+					if (executeResult.error.isSome)
+					{
+						sb.Clear();
+						executeResult.FormatError(executable, sb);
+						executeResult.FormatCallStackTrace(executable, sb);
+						System.Console.WriteLine(sb);
+					}
+				}
+				else
+				{
+					System.Console.WriteLine("RUN ENTIRE BINARY\n");
+					var executeResult = engine.Execute(executable, default);
+					if (executeResult.error.isSome)
+					{
+						sb.Clear();
+						executeResult.FormatError(executable, sb);
+						executeResult.FormatCallStackTrace(executable, sb);
+						System.Console.WriteLine(sb);
+					}
 				}
 
 				System.Console.WriteLine("FINISH");

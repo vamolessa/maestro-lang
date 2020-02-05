@@ -136,10 +136,10 @@ namespace Maestro.CompileErrors
 			public string Format() => $"Command '{name}' not registered";
 		}
 
-		internal struct CommandNameAlreadyRegistered : IFormattedMessage
+		internal struct CommandNameDuplicated : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Command name '{name}' already registered";
+			public string Format() => $"There is alreay a command named '{name}'";
 		}
 	}
 

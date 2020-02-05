@@ -5,19 +5,32 @@ namespace Maestro
 	public readonly struct CompileResult
 	{
 		public readonly Buffer<CompileError> errors;
-		public readonly Option<Executable> executable;
+		internal readonly Executable<Tuple0> executable;
 
-		internal CompileResult(Buffer<CompileError> errors, Option<Executable> executable)
+		internal CompileResult(Buffer<CompileError> errors, Executable<Tuple0> executable)
 		{
 			this.executable = executable;
 			this.errors = errors;
 		}
 
+		public bool TryGetExecutable(out Executable<Tuple0> executable)
+		{
+			if (errors.count == 0)
+			{
+				executable = this.executable;
+				return true;
+			}
+			else
+			{
+				executable = default;
+				return false;
+			}
+		}
+
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
-			if (executable.isSome)
-				executable.value.chunk.Disassemble(executable.value
-				.sources, sb);
+			if (errors.count == 0)
+				executable.chunk.Disassemble(executable.sources, sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
@@ -29,7 +42,7 @@ namespace Maestro
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
-					var source = executable.value.sources[error.sourceIndex];
+					var source = executable.sources[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
 						source.uri.value,
 						source.content,
@@ -41,20 +54,18 @@ namespace Maestro
 		}
 	}
 
-	public readonly struct ExecuteResult
+	public readonly struct ExecuteResult<T> where T : struct, ITuple
 	{
-		internal readonly Executable executable;
-		internal readonly Buffer<StackFrame> stackFrames;
 		public readonly Option<RuntimeError> error;
+		internal readonly Buffer<StackFrame> stackFrames;
 
-		internal ExecuteResult(Executable executable, Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
+		internal ExecuteResult(Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
 		{
-			this.executable = executable;
 			this.stackFrames = stackFrames;
 			this.error = error;
 		}
 
-		public void FormatError(StringBuilder sb)
+		public void FormatError(in Executable<T> executable, StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
@@ -68,7 +79,7 @@ namespace Maestro
 			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, error.value.slice, sb);
 		}
 
-		public void FormatCallStackTrace(StringBuilder sb)
+		public void FormatCallStackTrace(in Executable<T> executable, StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
@@ -88,9 +99,9 @@ namespace Maestro
 				sb.Append(pos.lineIndex + 1);
 				sb.Append("] ");
 
-				if (frame.commandInstanceIndex >= 0)
+				if (frame.commandIndex >= 0)
 				{
-					var commandName = executable.chunk.externalCommandDefinitions.buffer[frame.commandInstanceIndex].name;
+					var commandName = executable.chunk.commandDefinitions.buffer[frame.commandIndex].name;
 					sb.Append(commandName);
 					sb.Append(": ");
 				}

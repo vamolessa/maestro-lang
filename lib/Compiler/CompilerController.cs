@@ -127,7 +127,7 @@ namespace Maestro
 
 			var success = compiler.chunk.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
 			if (!success)
-				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameAlreadyRegistered { name = name });
+				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
 
 		private void CommandDeclaration()
@@ -173,7 +173,7 @@ namespace Maestro
 
 			var success = compiler.chunk.AddCommand(new CommandDefinition(name, commandCodeIndex, (byte)parameterCount));
 			if (!success)
-				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameAlreadyRegistered { name = name });
+				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
 
 		private void IfStatement()

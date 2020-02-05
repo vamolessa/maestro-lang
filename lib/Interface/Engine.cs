@@ -35,30 +35,32 @@ namespace Maestro
 
 			var instances = EngineHelper.InstantiateExternalCommands(bindingRegistry, chunk, ref errors);
 
-			var maybeExecutable = errors.count == 0 ?
-				Option.Some(new Executable(chunk, instances, controller.compiledSources.buffer)) :
-				default;
-			return new CompileResult(errors, maybeExecutable);
+			return new CompileResult(errors, new Executable<Tuple0>(chunk, instances, controller.compiledSources.buffer, 0));
 		}
 
-		public Option<bool> InstantiateCommand<T>(CompileResult result, string name) where T : struct, ITuple
+		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
 		{
-			if (!result.executable.isSome)
+			if (result.errors.count > 0)
 				return Option.None;
 
 			var parameterCount = default(T).Size;
 
-			var chunk = result.executable.value.chunk;
+			var chunk = result.executable.chunk;
 			for (var i = 0; i < chunk.commandDefinitions.count; i++)
 			{
 				var definition = chunk.commandDefinitions.buffer[i];
-				if (
-					definition.name == name &&
-					definition.parameterCount == parameterCount
-				)
-				{
-					return true;
-				}
+				if (definition.name != name)
+					continue;
+
+				if (definition.parameterCount != parameterCount)
+					return Option.None;
+
+				return new Executable<T>(
+					result.executable.chunk,
+					result.executable.externalCommandInstances,
+					result.executable.sources,
+					i
+				);
 			}
 
 			return Option.None;
@@ -69,15 +71,27 @@ namespace Maestro
 			vm.debugger = debugger;
 		}
 
-		public ExecuteResult Execute(Executable executable)
+		public ExecuteResult<T> Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
 		{
+			var instructionIndex = executable.chunk.commandDefinitions.buffer[executable.commandIndex].codeIndex;
+
 			vm.stackFrames.count = 0;
-			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, 0));
-			var maybeExecuteError = vm.Execute(executable);
+			vm.stackFrames.PushBackUnchecked(new StackFrame(
+				executable.chunk.bytes.count - 1,
+				0,
+				0
+			));
+			vm.stackFrames.PushBackUnchecked(new StackFrame(
+				instructionIndex,
+				vm.stack.count,
+				executable.commandIndex
+			));
+
+			var maybeExecuteError = vm.Execute(executable.chunk, executable.externalCommandInstances);
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 
-			return new ExecuteResult(executable, vm.stackFrames, maybeExecuteError);
+			return new ExecuteResult<T>(vm.stackFrames, maybeExecuteError);
 		}
 	}
 }

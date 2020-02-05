@@ -5,19 +5,22 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, Executable executable)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
 #endif
 
-			var bytes = executable.chunk.bytes.buffer;
+			var bytes = chunk.bytes.buffer;
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
 
-			var tupleSizes = new Buffer<int>(2);
-			var inputSlices = new Buffer<Slice>(2);
+			var tupleSizes = vm.tupleSizes;
+			tupleSizes.PushBackUnchecked(0);
+
+			var inputSlices = vm.inputSlices;
+			inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
 
 			void MoveTail(int toIndex, int count)
 			{
@@ -41,8 +44,8 @@ namespace Maestro
 					debugSb.Clear();
 					vm.stack = stack;
 					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frameStackIndex;
-					VirtualMachineHelper.TraceStack(vm, debugSb);
-					executable.chunk.DisassembleInstruction(codeIndex, debugSb);
+					vm.TraceStack(debugSb);
+					chunk.DisassembleInstruction(codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
 					break;
 				}
@@ -54,13 +57,15 @@ namespace Maestro
 				case Instruction.Halt:
 					--vm.stackFrames.count;
 					vm.stack = stack;
+					vm.tupleSizes = tupleSizes;
+					vm.inputSlices = inputSlices;
 					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						var definitionIndex = executable.chunk.externalCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = executable.chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var definitionIndex = chunk.externalCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -68,7 +73,7 @@ namespace Maestro
 
 						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						executable.externalCommandInstances[index].Invoke(ref context);
+						externalCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
 						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);
@@ -77,13 +82,13 @@ namespace Maestro
 						MoveTail(context.startIndex, returnCount);
 
 						if (context.errorMessage != null)
-							return vm.NewError(executable.chunk, context.errorMessage);
+							return vm.NewError(chunk, context.errorMessage);
 						break;
 					}
 				case Instruction.ExecuteCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var definition = executable.chunk.commandDefinitions.buffer[index];
+						var definition = chunk.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
@@ -138,7 +143,7 @@ namespace Maestro
 				case Instruction.PushLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						stack.PushBackUnchecked(executable.chunk.literals.buffer[index]);
+						stack.PushBackUnchecked(chunk.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
@@ -230,7 +235,7 @@ namespace Maestro
 				case Instruction.DebugPushVariableInfo:
 					{
 						var nameIndex = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var name = executable.chunk.literals.buffer[nameIndex].asObject as string;
+						var name = chunk.literals.buffer[nameIndex].asObject as string;
 						var stackIndex = frameStackIndex + bytes[codeIndex++];
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
