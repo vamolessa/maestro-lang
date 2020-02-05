@@ -61,7 +61,7 @@ namespace Maestro
 				System.Console.WriteLine(sb);
 
 				var executeResult = engine.Execute(executable);
-				if (executeResult.HasError)
+				if (executeResult.error.isSome)
 				{
 					sb.Clear();
 					executeResult.FormatError(sb);

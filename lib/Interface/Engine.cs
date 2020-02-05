@@ -73,18 +73,15 @@ namespace Maestro
 		{
 			vm.stackFrames.count = 0;
 			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, 0));
-			var executeError = vm.Execute(executable);
+			var maybeExecuteError = vm.Execute(executable);
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 
-			return new ExecuteResult(executeError.isSome ?
-				new ExecuteResult.Data(
-					executeError.value,
-					executable.chunk,
-					executable.sources,
-					vm.stackFrames
-				) :
-				null
+			return new ExecuteResult(
+				executable.chunk,
+				executable.sources,
+				vm.stackFrames,
+				maybeExecuteError
 			);
 		}
 	}

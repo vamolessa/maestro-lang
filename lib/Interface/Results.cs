@@ -43,59 +43,44 @@ namespace Maestro
 
 	public readonly struct ExecuteResult
 	{
-		internal sealed class Data
+		internal readonly ByteCodeChunk chunk;
+		internal readonly Source[] sources;
+		internal readonly Buffer<StackFrame> stackFrames;
+		public readonly Option<RuntimeError> error;
+
+		internal ExecuteResult(ByteCodeChunk chunk, Source[] sources, Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
 		{
-			public readonly RuntimeError error;
-			internal readonly ByteCodeChunk chunk;
-			internal readonly Source[] sources;
-			internal readonly Buffer<StackFrame> stackFrames;
-
-			internal Data(RuntimeError error, ByteCodeChunk chunk, Source[] sources, Buffer<StackFrame> stackFrames)
-			{
-				this.error = error;
-				this.chunk = chunk;
-				this.sources = sources;
-				this.stackFrames = stackFrames;
-			}
-		}
-
-		internal readonly Data data;
-
-		public bool HasError
-		{
-			get { return data != null; }
-		}
-
-		internal ExecuteResult(Data data)
-		{
-			this.data = data;
+			this.chunk = chunk;
+			this.sources = sources;
+			this.stackFrames = stackFrames;
+			this.error = error;
 		}
 
 		public void FormatError(StringBuilder sb)
 		{
-			if (data == null)
+			if (!error.isSome)
 				return;
 
-			sb.Append(data.error.message.Format());
+			sb.Append(error.value.message.Format());
 
-			if (data.error.instructionIndex < 0)
+			if (error.value.instructionIndex < 0)
 				return;
 
-			var source = data.sources[data.chunk.FindSourceIndex(data.error.instructionIndex)];
-			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, data.error.slice, sb);
+			var source = sources[chunk.FindSourceIndex(error.value.instructionIndex)];
+			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, error.value.slice, sb);
 		}
 
 		public void FormatCallStackTrace(StringBuilder sb)
 		{
-			if (data == null)
+			if (!error.isSome)
 				return;
 
-			for (var i = data.stackFrames.count - 1; i >= 0; i--)
+			for (var i = stackFrames.count - 1; i >= 0; i--)
 			{
-				var frame = data.stackFrames.buffer[i];
+				var frame = stackFrames.buffer[i];
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
-				var sourceIndex = data.chunk.sourceSlices.buffer[codeIndex].index;
-				var source = data.sources[data.chunk.FindSourceIndex(codeIndex)];
+				var sourceIndex = chunk.sourceSlices.buffer[codeIndex].index;
+				var source = sources[chunk.FindSourceIndex(codeIndex)];
 
 				var pos = FormattingHelper.GetLineAndColumn(
 					source.content,
@@ -107,7 +92,7 @@ namespace Maestro
 
 				if (frame.commandInstanceIndex >= 0)
 				{
-					var commandName = data.chunk.externalCommandDefinitions.buffer[frame.commandInstanceIndex].name;
+					var commandName = chunk.externalCommandDefinitions.buffer[frame.commandInstanceIndex].name;
 					sb.Append(commandName);
 					sb.Append(": ");
 				}
