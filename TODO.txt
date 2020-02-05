@@ -1,2 +1,4 @@
+permitir carregar outras instancias de external commands
+
 tests!!
 serialize bytecodechunk ??
