@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Maestro
 {
-	public readonly ref struct CompileResult
+	public readonly struct CompileResult
 	{
 		public readonly Buffer<CompileError> errors;
 		public readonly Option<Executable> executable;
@@ -41,18 +41,20 @@ namespace Maestro
 		}
 	}
 
-	public readonly ref struct ExecuteResult
+	public readonly struct ExecuteResult
 	{
+		internal readonly Executable executable;
 		internal readonly Buffer<StackFrame> stackFrames;
 		public readonly Option<RuntimeError> error;
 
-		internal ExecuteResult(Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
+		internal ExecuteResult(Executable executable, Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
 		{
+			this.executable = executable;
 			this.stackFrames = stackFrames;
 			this.error = error;
 		}
 
-		public void FormatError(Executable executable, StringBuilder sb)
+		public void FormatError(StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
@@ -66,7 +68,7 @@ namespace Maestro
 			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, error.value.slice, sb);
 		}
 
-		public void FormatCallStackTrace(Executable executable, StringBuilder sb)
+		public void FormatCallStackTrace(StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
