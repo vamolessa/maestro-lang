@@ -55,20 +55,18 @@ namespace Maestro
 			self.EmitByte((byte)localIndex);
 		}
 
-		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex)
+		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex, Slice slice)
 		{
 			var instanceIndex = self.chunk.externalCommandInstances.count;
-			self.chunk.externalCommandInstances.PushBack(new CommandInstance(commandIndex));
+			self.chunk.externalCommandInstances.PushBack(new ExternalCommandInstance(commandIndex, self.sourceIndex, slice));
 			self.EmitInstruction(Instruction.ExecuteNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
 
 		public static void EmitExecuteCommand(this Compiler self, int commandIndex)
 		{
-			var instanceIndex = self.chunk.commandInstances.count;
-			self.chunk.commandInstances.PushBack(new CommandInstance(commandIndex));
 			self.EmitInstruction(Instruction.ExecuteCommand);
-			self.EmitUShort((ushort)instanceIndex);
+			self.EmitUShort((ushort)commandIndex);
 		}
 
 		public static int BeginEmitBackwardJump(this Compiler self)

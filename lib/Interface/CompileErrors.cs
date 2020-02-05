@@ -83,6 +83,21 @@ namespace Maestro.CompileErrors
 			public int got;
 			public string Format() => $"Wrong number of arguments for external command '{commandName}'. Expected {expected}. Got {got}";
 		}
+
+		internal struct ExternalCommandHasNoBinding : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"Could not find a binding for external command '{name}'";
+		}
+
+		internal struct IncompatibleExternalCommand : IFormattedMessage
+		{
+			public string name;
+			public int expectedParameterCount;
+			public int gotParameterCount;
+
+			public string Format() => $"Incompatible binding for external command '{name}'. Expected {expectedParameterCount} parameters. Got {gotParameterCount}";
+		}
 	}
 
 	namespace Commands

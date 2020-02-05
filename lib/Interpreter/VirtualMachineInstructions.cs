@@ -5,13 +5,13 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(VirtualMachine vm)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, Executable executable)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
 #endif
 
-			var bytes = vm.chunk.bytes.buffer;
+			var bytes = executable.chunk.bytes.buffer;
 			var stack = vm.stack;
 			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
 			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
@@ -42,7 +42,7 @@ namespace Maestro
 					vm.stack = stack;
 					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frameStackIndex;
 					VirtualMachineHelper.TraceStack(vm, debugSb);
-					vm.chunk.DisassembleInstruction(codeIndex, debugSb);
+					executable.chunk.DisassembleInstruction(codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
 					break;
 				}
@@ -59,34 +59,31 @@ namespace Maestro
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
 
-						var instance = vm.chunk.externalCommandInstances.buffer[index];
-						var definition = vm.chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
-						var command = vm.externalCommandInstances.buffer[index];
+						var definitionIndex = executable.chunk.externalCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = executable.chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
 						context.inputCount = tupleSizes.PopLast();
 
-						context.startIndex = stack.count - (context.inputCount + definition.parameterCount);
+						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						command.Invoke(ref context);
+						executable.externalCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
-						var returnCount = stack.count - (context.startIndex + context.inputCount + definition.parameterCount);
+						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);
 						tupleSizes.PushBackUnchecked(returnCount);
 
 						MoveTail(context.startIndex, returnCount);
 
 						if (context.errorMessage != null)
-							return vm.NewError(context.errorMessage);
+							return vm.NewError(executable.chunk, context.errorMessage);
 						break;
 					}
 				case Instruction.ExecuteCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-
-						var instance = vm.chunk.commandInstances.buffer[index];
-						var definition = vm.chunk.commandDefinitions.buffer[instance.definitionIndex];
+						var definition = executable.chunk.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
 						codeIndex = definition.codeIndex;
@@ -141,7 +138,7 @@ namespace Maestro
 				case Instruction.PushLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						stack.PushBackUnchecked(vm.chunk.literals.buffer[index]);
+						stack.PushBackUnchecked(executable.chunk.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
@@ -233,7 +230,7 @@ namespace Maestro
 				case Instruction.DebugPushVariableInfo:
 					{
 						var nameIndex = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						var name = vm.chunk.literals.buffer[nameIndex].asObject as string;
+						var name = executable.chunk.literals.buffer[nameIndex].asObject as string;
 						var stackIndex = frameStackIndex + bytes[codeIndex++];
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;

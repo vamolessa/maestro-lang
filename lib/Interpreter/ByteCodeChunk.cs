@@ -11,14 +11,12 @@ namespace Maestro
 
 		public Buffer<Value> literals = new Buffer<Value>(32);
 		public Buffer<ExternalCommandDefinition> externalCommandDefinitions = new Buffer<ExternalCommandDefinition>(16);
-		internal Buffer<CommandInstance> externalCommandInstances = new Buffer<CommandInstance>(32);
+		internal Buffer<ExternalCommandInstance> externalCommandInstances = new Buffer<ExternalCommandInstance>(32);
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
-		internal Buffer<CommandInstance> commandInstances = new Buffer<CommandInstance>(8);
 
 		internal ByteCodeChunk()
 		{
 			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0));
-			commandInstances.PushBackUnchecked(new CommandInstance(0));
 		}
 
 		internal void WriteByte(byte value, Slice slice)

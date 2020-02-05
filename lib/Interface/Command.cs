@@ -25,27 +25,31 @@ namespace Maestro
 		void Execute(ref Context context, T args);
 	}
 
-	internal delegate void CommandCallback(ref Context context);
+	internal delegate void ExternalCommandCallback(ref Context context);
 
 	internal readonly struct ExternalCommandBinding
 	{
 		public readonly ExternalCommandDefinition definition;
-		public readonly System.Func<CommandCallback> factory;
+		public readonly System.Func<ExternalCommandCallback> factory;
 
-		public ExternalCommandBinding(ExternalCommandDefinition definition, System.Func<CommandCallback> factory)
+		public ExternalCommandBinding(ExternalCommandDefinition definition, System.Func<ExternalCommandCallback> factory)
 		{
 			this.definition = definition;
 			this.factory = factory;
 		}
 	}
 
-	internal readonly struct CommandInstance
+	internal readonly struct ExternalCommandInstance
 	{
 		public readonly int definitionIndex;
+		public readonly int sourceIndex;
+		public readonly Slice slice;
 
-		public CommandInstance(int definitionIndex)
+		public ExternalCommandInstance(int definitionIndex, int sourceIndex, Slice slice)
 		{
 			this.definitionIndex = definitionIndex;
+			this.sourceIndex = sourceIndex;
+			this.slice = slice;
 		}
 	}
 
@@ -58,11 +62,6 @@ namespace Maestro
 		{
 			this.name = name;
 			this.parameterCount = parameterCount;
-		}
-
-		public bool IsEqualTo(ExternalCommandDefinition other)
-		{
-			return name == other.name && parameterCount == other.parameterCount;
 		}
 	}
 

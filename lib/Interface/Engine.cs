@@ -1,52 +1,16 @@
-using System.Collections.Generic;
-
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("test")]
 
 namespace Maestro
 {
-	public enum Mode
-	{
-		Release,
-		Debug
-	}
-
-	public interface IImportResolver
-	{
-		Option<string> ResolveSource(Uri requestingSourceUri, Uri importUri);
-	}
-
-	public interface IDebugger
-	{
-		void Reset(Buffer<Source> sources);
-		void OnDebugHook();
-	}
-
-	internal sealed class ExternalCommandBindingRegistry
-	{
-		internal Dictionary<string, ExternalCommandBinding> bindings = new Dictionary<string, ExternalCommandBinding>();
-
-		internal void Register(ExternalCommandBinding binding)
-		{
-			bindings.Add(binding.definition.name, binding);
-		}
-
-		internal Option<ExternalCommandBinding> Find(string name)
-		{
-			return bindings.TryGetValue(name, out var binding) ?
-				Option.Some(binding) :
-				Option.None;
-		}
-	}
-
 	public sealed class Engine
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly ExternalCommandBindingRegistry externalCommandRegistry = new ExternalCommandBindingRegistry();
+		internal readonly ExternalCommandBindingRegistry bindingRegistry = new ExternalCommandBindingRegistry();
 
 		public void RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
-			externalCommandRegistry.Register(new ExternalCommandBinding(
+			bindingRegistry.Register(new ExternalCommandBinding(
 				new ExternalCommandDefinition(
 					name,
 					default(T).Size
@@ -69,11 +33,35 @@ namespace Maestro
 			var chunk = new ByteCodeChunk();
 			var errors = controller.CompileSource(chunk, importResolver, mode, source);
 
-			return new CompileResult(
-				chunk,
-				controller.compiledSources,
-				errors
-			);
+			var instances = EngineHelper.InstantiateExternalCommands(bindingRegistry, chunk, ref errors);
+
+			var maybeExecutable = errors.count == 0 ?
+				Option.Some(new Executable(chunk, instances, controller.compiledSources.buffer)) :
+				default;
+			return new CompileResult(errors, maybeExecutable);
+		}
+
+		public Option<bool> InstantiateCommand<T>(CompileResult result, string name) where T : struct, ITuple
+		{
+			if (!result.executable.isSome)
+				return Option.None;
+
+			var parameterCount = default(T).Size;
+
+			var chunk = result.executable.value.chunk;
+			for (var i = 0; i < chunk.commandDefinitions.count; i++)
+			{
+				var definition = chunk.commandDefinitions.buffer[i];
+				if (
+					definition.name == name &&
+					definition.parameterCount == parameterCount
+				)
+				{
+					return true;
+				}
+			}
+
+			return Option.None;
 		}
 
 		public void SetDebugger(Option<IDebugger> debugger)
@@ -81,40 +69,19 @@ namespace Maestro
 			vm.debugger = debugger;
 		}
 
-		public ExecuteResult Execute(CompileResult result)
+		public ExecuteResult Execute(Executable executable)
 		{
-			if (result.HasErrors)
-			{
-				return new ExecuteResult(new ExecuteResult.Data(
-					vm.NewError(new RuntimeErrors.HasCompileErrors()),
-					result.chunk,
-					result.sources,
-					default
-				));
-			}
-
-			var loadError = vm.Load(result.chunk, externalCommandRegistry);
-			if (loadError.isSome)
-			{
-				return new ExecuteResult(new ExecuteResult.Data(
-					loadError.value,
-					result.chunk,
-					result.sources,
-					default
-				));
-			}
-
 			vm.stackFrames.count = 0;
 			vm.stackFrames.PushBackUnchecked(new StackFrame(0, 0, 0));
-			var executeError = VirtualMachineInstructions.Execute(vm);
+			var executeError = vm.Execute(executable);
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 
 			return new ExecuteResult(executeError.isSome ?
 				new ExecuteResult.Data(
 					executeError.value,
-					result.chunk,
-					result.sources,
+					executable.chunk,
+					executable.sources,
 					vm.stackFrames
 				) :
 				null

@@ -408,7 +408,7 @@ namespace Maestro
 				}
 				else
 				{
-					compiler.EmitExecuteNativeCommand(externalCommandIndex);
+					compiler.EmitExecuteNativeCommand(externalCommandIndex, slice);
 				}
 			}
 			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))

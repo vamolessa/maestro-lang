@@ -219,13 +219,12 @@ namespace Maestro
 
 		private static int ExecuteCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
-			var instanceIndex = BytesHelper.BytesToUShort(
+			var definitionIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[++index],
 				chunk.bytes.buffer[++index]
 			);
 
-			var instance = chunk.commandInstances.buffer[instanceIndex];
-			var definition = chunk.commandDefinitions.buffer[instance.definitionIndex];
+			var definition = chunk.commandDefinitions.buffer[definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");

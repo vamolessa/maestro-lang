@@ -54,28 +54,28 @@ namespace Maestro
 			var sb = new StringBuilder();
 
 			var compileResult = engine.CompileSource(source, Mode.Debug, null);
-			if (compileResult.HasErrors)
-			{
-				sb.Clear();
-				compileResult.FormatErrors(sb);
-				System.Console.WriteLine(sb);
-			}
-			else
+			if (compileResult.executable.TryGet(out var executable))
 			{
 				sb.Clear();
 				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
-				var executeResult = engine.Execute(compileResult);
+				var executeResult = engine.Execute(executable);
 				if (executeResult.HasError)
 				{
 					sb.Clear();
 					executeResult.FormatError(sb);
-					executeResult.FomratCallStackTrace(sb);
+					executeResult.FormatCallStackTrace(sb);
 					System.Console.WriteLine(sb);
 				}
 
 				System.Console.WriteLine("FINISH");
+			}
+			else
+			{
+				sb.Clear();
+				compileResult.FormatErrors(sb);
+				System.Console.WriteLine(sb);
 			}
 		}
 	}
