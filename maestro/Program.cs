@@ -6,8 +6,18 @@ namespace Maestro
 	{
 		public sealed class PrintCommand : ICommand<Tuple0>
 		{
+			private static int instanceCount = 0;
+			private int instanceNumber;
+
+			public PrintCommand()
+			{
+				instanceNumber = instanceCount++;
+			}
+
 			public void Execute(ref Context context, Tuple0 args)
 			{
+				System.Console.WriteLine("PRINT INSTANCE NUMBER {0}", instanceNumber);
+
 				var sb = new StringBuilder();
 				for (var i = 0; i < context.inputCount; i++)
 				{

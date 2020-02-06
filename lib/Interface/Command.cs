@@ -69,14 +69,14 @@ namespace Maestro
 	{
 		public readonly string name;
 		public readonly int codeIndex;
-		public readonly int externalCommandInstancesBaseIndex;
+		public readonly Slice externalCommandSlice;
 		public readonly byte parameterCount;
 
-		public CommandDefinition(string name, int codeIndex, int externalCommandInstancesBaseIndex, byte parameterCount)
+		public CommandDefinition(string name, int codeIndex, Slice externalCommandSlice, byte parameterCount)
 		{
 			this.name = name;
 			this.codeIndex = codeIndex;
-			this.externalCommandInstancesBaseIndex = externalCommandInstancesBaseIndex;
+			this.externalCommandSlice = externalCommandSlice;
 			this.parameterCount = parameterCount;
 		}
 

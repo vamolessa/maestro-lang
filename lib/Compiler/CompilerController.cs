@@ -159,7 +159,7 @@ namespace Maestro
 				parameterCount = byte.MaxValue;
 			}
 
-			var externalCommandInstancesIndexOffset = compiler.chunk.externalCommandInstances.count;
+			var externalCommandInstancesBaseIndex = compiler.chunk.externalCommandInstances.count;
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
@@ -173,7 +173,10 @@ namespace Maestro
 			var success = compiler.chunk.AddCommand(new CommandDefinition(
 				name,
 				commandCodeIndex,
-				externalCommandInstancesIndexOffset,
+				new Slice(
+					externalCommandInstancesBaseIndex,
+					compiler.chunk.externalCommandInstances.count - externalCommandInstancesBaseIndex
+				),
 				(byte)parameterCount
 			));
 

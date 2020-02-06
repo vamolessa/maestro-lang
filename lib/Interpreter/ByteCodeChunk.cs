@@ -17,7 +17,7 @@ namespace Maestro
 
 		internal ByteCodeChunk()
 		{
-			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, 0, 0));
+			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, new Slice(), 0));
 		}
 
 		internal void WriteByte(byte value, Slice slice)

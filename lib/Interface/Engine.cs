@@ -33,7 +33,12 @@ namespace Maestro
 			var chunk = new ByteCodeChunk();
 			var errors = controller.CompileSource(chunk, importResolver, mode, source);
 
-			var instances = EngineHelper.InstantiateExternalCommands(bindingRegistry, chunk, ref errors);
+			var instances = EngineHelper.InstantiateExternalCommands(
+				bindingRegistry,
+				chunk,
+				new Slice(0, chunk.externalCommandInstances.count),
+				ref errors
+			);
 
 			return new CompileResult(errors, new Executable<Tuple0>(chunk, instances, 0));
 		}
@@ -55,11 +60,18 @@ namespace Maestro
 				if (definition.parameterCount != parameterCount)
 					return Option.None;
 
-				return new Executable<T>(
-					result.executable.chunk,
-					result.executable.externalCommandInstances,
-					i
+				var errors = new Buffer<CompileError>();
+				var instances = EngineHelper.InstantiateExternalCommands(
+					bindingRegistry,
+					chunk,
+					definition.externalCommandSlice,
+					ref errors
 				);
+
+				if (errors.count > 0)
+					return Option.None;
+
+				return new Executable<T>(result.executable.chunk, instances, i);
 			}
 
 			return Option.None;
@@ -99,7 +111,7 @@ namespace Maestro
 			var maybeExecuteError = vm.Execute(
 				executable.chunk,
 				executable.externalCommandInstances,
-				-command.externalCommandInstancesBaseIndex
+				-command.externalCommandSlice.index
 			);
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();

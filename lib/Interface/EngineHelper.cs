@@ -43,13 +43,13 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static ExternalCommandCallback[] InstantiateExternalCommands(ExternalCommandBindingRegistry bindingRegistry, ByteCodeChunk chunk, ref Buffer<CompileError> errors)
+		internal static ExternalCommandCallback[] InstantiateExternalCommands(ExternalCommandBindingRegistry bindingRegistry, ByteCodeChunk chunk, Slice instancesSlice, ref Buffer<CompileError> errors)
 		{
-			var externalCommandInstances = new ExternalCommandCallback[chunk.externalCommandInstances.count];
+			var instances = new ExternalCommandCallback[instancesSlice.length];
 
-			for (var i = 0; i < chunk.externalCommandInstances.count; i++)
+			for (var i = 0; i < instancesSlice.length; i++)
 			{
-				var instance = chunk.externalCommandInstances.buffer[i];
+				var instance = chunk.externalCommandInstances.buffer[i + instancesSlice.index];
 				var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
 
 				var binding = bindingRegistry.Find(definition.name);
@@ -81,10 +81,10 @@ namespace Maestro
 					continue;
 				}
 
-				externalCommandInstances[i] = binding.value.factory();
+				instances[i] = binding.value.factory();
 			}
 
-			return externalCommandInstances;
+			return instances;
 		}
 	}
 }
