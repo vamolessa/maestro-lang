@@ -35,7 +35,7 @@ namespace Maestro
 
 			var instances = EngineHelper.InstantiateExternalCommands(bindingRegistry, chunk, ref errors);
 
-			return new CompileResult(errors, new Executable<Tuple0>(chunk, instances, controller.compiledSources.buffer, 0));
+			return new CompileResult(errors, new Executable<Tuple0>(chunk, instances, 0));
 		}
 
 		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
@@ -58,7 +58,6 @@ namespace Maestro
 				return new Executable<T>(
 					result.executable.chunk,
 					result.executable.externalCommandInstances,
-					result.executable.sources,
 					i
 				);
 			}
@@ -71,7 +70,7 @@ namespace Maestro
 			vm.debugger = debugger;
 		}
 
-		public ExecuteResult<T> Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
+		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
 		{
 			var instructionIndex = executable.chunk.commandDefinitions.buffer[executable.commandIndex].codeIndex;
 
@@ -91,7 +90,7 @@ namespace Maestro
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 
-			return new ExecuteResult<T>(vm.stackFrames, maybeExecuteError);
+			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
 		}
 	}
 }

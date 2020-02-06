@@ -263,14 +263,6 @@ namespace Maestro.CompileErrors
 		}
 	}
 
-	namespace Input
-	{
-		internal struct InvalidUseOfInputVariable : IFormattedMessage
-		{
-			public string Format() => "Input variables can only be used inside of commands";
-		}
-	}
-
 	namespace Literals
 	{
 		internal struct ExpectedLiteral : IFormattedMessage

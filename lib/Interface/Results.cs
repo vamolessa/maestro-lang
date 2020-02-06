@@ -9,8 +9,8 @@ namespace Maestro
 
 		internal CompileResult(Buffer<CompileError> errors, Executable<Tuple0> executable)
 		{
-			this.executable = executable;
 			this.errors = errors;
+			this.executable = executable;
 		}
 
 		public bool TryGetExecutable(out Executable<Tuple0> executable)
@@ -30,7 +30,7 @@ namespace Maestro
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
 			if (errors.count == 0)
-				executable.chunk.Disassemble(executable.sources, sb);
+				executable.chunk.Disassemble(sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
@@ -40,9 +40,12 @@ namespace Maestro
 				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
+				if (executable.chunk.sources.count == 0)
+					continue;
+
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
-					var source = executable.sources[error.sourceIndex];
+					var source = executable.chunk.sources.buffer[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
 						source.uri.value,
 						source.content,
@@ -54,32 +57,34 @@ namespace Maestro
 		}
 	}
 
-	public readonly struct ExecuteResult<T> where T : struct, ITuple
+	public readonly struct ExecuteResult
 	{
 		public readonly Option<RuntimeError> error;
+		internal readonly ByteCodeChunk chunk;
 		internal readonly Buffer<StackFrame> stackFrames;
 
-		internal ExecuteResult(Buffer<StackFrame> stackFrames, Option<RuntimeError> error)
+		internal ExecuteResult(Option<RuntimeError> error, ByteCodeChunk chunk, Buffer<StackFrame> stackFrames)
 		{
-			this.stackFrames = stackFrames;
 			this.error = error;
+			this.chunk = chunk;
+			this.stackFrames = stackFrames;
 		}
 
-		public void FormatError(in Executable<T> executable, StringBuilder sb)
+		public void FormatError(StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
 
 			sb.Append(error.value.message.Format());
 
-			if (error.value.instructionIndex < 0)
+			if (error.value.instructionIndex < 0 || chunk.sources.count == 0)
 				return;
 
-			var source = executable.sources[executable.chunk.FindSourceIndex(error.value.instructionIndex)];
+			var source = chunk.sources.buffer[chunk.FindSourceIndex(error.value.instructionIndex)];
 			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, error.value.slice, sb);
 		}
 
-		public void FormatCallStackTrace(in Executable<T> executable, StringBuilder sb)
+		public void FormatCallStackTrace(StringBuilder sb)
 		{
 			if (!error.isSome)
 				return;
@@ -88,8 +93,19 @@ namespace Maestro
 			{
 				var frame = stackFrames.buffer[i];
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
-				var sourceIndex = executable.chunk.sourceSlices.buffer[codeIndex].index;
-				var source = executable.sources[executable.chunk.FindSourceIndex(codeIndex)];
+				var sourceIndex = chunk.sourceSlices.buffer[codeIndex].index;
+
+				var commandName = string.Empty;
+				if (frame.commandIndex >= 0)
+					commandName = chunk.commandDefinitions.buffer[frame.commandIndex].name;
+
+				if (chunk.sources.count == 0)
+				{
+					sb.AppendLine(commandName);
+					continue;
+				}
+
+				var source = chunk.sources.buffer[chunk.FindSourceIndex(codeIndex)];
 
 				var pos = FormattingHelper.GetLineAndColumn(
 					source.content,
@@ -98,13 +114,8 @@ namespace Maestro
 				sb.Append("[line ");
 				sb.Append(pos.lineIndex + 1);
 				sb.Append("] ");
-
-				if (frame.commandIndex >= 0)
-				{
-					var commandName = executable.chunk.commandDefinitions.buffer[frame.commandIndex].name;
-					sb.Append(commandName);
-					sb.Append(": ");
-				}
+				sb.Append(commandName);
+				sb.Append(": ");
 
 				var slice = FormattingHelper.GetLineSlice(source.content, pos.lineIndex);
 				slice = FormattingHelper.Trim(source.content, slice);

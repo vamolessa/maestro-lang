@@ -5,6 +5,7 @@ namespace Maestro
 	[DebuggerTypeProxy(typeof(ByteCodeChunkDebugView))]
 	public sealed class ByteCodeChunk
 	{
+		public Buffer<Source> sources = new Buffer<Source>(0);
 		public Buffer<byte> bytes = new Buffer<byte>(256);
 		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
 		public Buffer<int> sourceStartIndexes = new Buffer<int>();

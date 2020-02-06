@@ -3,7 +3,6 @@ namespace Maestro
 	internal sealed class CompilerController
 	{
 		public readonly Compiler compiler = new Compiler();
-		public Buffer<Source> compiledSources = new Buffer<Source>(1);
 
 		private readonly ParseRules parseRules = new ParseRules();
 		private Option<IImportResolver> importResolver = Option.None;
@@ -12,7 +11,6 @@ namespace Maestro
 		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, Option<IImportResolver> importResolver, Mode mode, Source source)
 		{
 			this.importResolver = importResolver;
-			compiledSources.ZeroClear();
 
 			compiler.Reset(mode, chunk);
 			Compile(source);
@@ -22,8 +20,7 @@ namespace Maestro
 
 		private void Compile(Source source)
 		{
-			compiler.BeginSource(source.content, compiledSources.count);
-			compiledSources.PushBack(source);
+			compiler.BeginSource(source);
 
 			compiler.parser.Next();
 			while (!compiler.parser.Match(TokenKind.End))
@@ -74,12 +71,12 @@ namespace Maestro
 				return;
 			}
 
-			var currentSource = compiledSources.buffer[compiledSources.count - 1];
+			var currentSource = compiler.chunk.sources.buffer[compiler.chunk.sources.count - 1];
 			var moduleUri = Uri.Resolve(currentSource.uri, modulePath);
 
-			for (var i = 0; i < compiledSources.count; i++)
+			for (var i = 0; i < compiler.chunk.sources.count; i++)
 			{
-				if (compiledSources.buffer[i].uri.value == moduleUri.value)
+				if (compiler.chunk.sources.buffer[i].uri.value == moduleUri.value)
 					return;
 			}
 
@@ -521,11 +518,7 @@ namespace Maestro
 
 		internal static void LoadInput(CompilerController self)
 		{
-			var commandScope = self.compiler.GetTopCommandScope();
-			if (commandScope.isSome)
-				self.compiler.EmitInstruction(Instruction.PushInput);
-			else
-				self.compiler.AddSoftError(self.compiler.parser.previousToken.slice, new CompileErrors.Input.InvalidUseOfInputVariable());
+			self.compiler.EmitInstruction(Instruction.PushInput);
 		}
 
 		internal static void Literal(CompilerController self)

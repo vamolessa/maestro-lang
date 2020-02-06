@@ -60,7 +60,7 @@ namespace Maestro
 				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
-				var testCommand = engine.InstantiateCommand<Tuple0>(compileResult, "my-command");
+				var testCommand = engine.InstantiateCommand<Tuple0>(compileResult, "no my-command");
 				if (testCommand.isSome)
 				{
 					System.Console.WriteLine("RUN MY COMMAND\n");
@@ -68,8 +68,8 @@ namespace Maestro
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();
-						executeResult.FormatError(executable, sb);
-						executeResult.FormatCallStackTrace(executable, sb);
+						executeResult.FormatError(sb);
+						executeResult.FormatCallStackTrace(sb);
 						System.Console.WriteLine(sb);
 					}
 				}
@@ -80,8 +80,8 @@ namespace Maestro
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();
-						executeResult.FormatError(executable, sb);
-						executeResult.FormatCallStackTrace(executable, sb);
+						executeResult.FormatError(sb);
+						executeResult.FormatCallStackTrace(sb);
 						System.Console.WriteLine(sb);
 					}
 				}

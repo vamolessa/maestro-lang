@@ -32,38 +32,26 @@ namespace Maestro
 			sb.Append("== ");
 			sb.Append(self.bytes.count);
 			sb.AppendLine(" bytes ==");
-			sb.AppendLine("byte instruction");
-
-			for (var index = 0; index < self.bytes.count;)
-			{
-				PrintCommandName(self, index, sb);
-				index = DisassembleInstruction(self, index, sb);
-				sb.AppendLine();
-			}
-			sb.AppendLine("== end ==");
-		}
-
-		internal static void Disassemble(this ByteCodeChunk self, Source[] sources, StringBuilder sb)
-		{
-			var currentSourceIndex = -1;
-
-			sb.Append("== ");
-			sb.Append(self.bytes.count);
-			sb.AppendLine(" bytes ==");
 			sb.AppendLine("line byte instruction");
 
+			var currentSourceIndex = -1;
 			for (var index = 0; index < self.bytes.count;)
 			{
-				var sourceIndex = self.FindSourceIndex(index);
-				var source = sources[sourceIndex];
-				if (sourceIndex != currentSourceIndex)
+				PrintCommandName(self, index, sb);
+
+				if (self.sources.count > 0)
 				{
-					sb.AppendLine(source.uri.value);
-					currentSourceIndex = sourceIndex;
+					var sourceIndex = self.FindSourceIndex(index);
+					var source = self.sources.buffer[sourceIndex];
+					if (sourceIndex != currentSourceIndex)
+					{
+						sb.AppendLine(source.uri.value);
+						currentSourceIndex = sourceIndex;
+					}
+
+					PrintLineNumber(self, source.content, index, sb);
 				}
 
-				PrintCommandName(self, index, sb);
-				PrintLineNumber(self, source.content, index, sb);
 				index = DisassembleInstruction(self, index, sb);
 				sb.AppendLine();
 			}

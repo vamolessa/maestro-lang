@@ -4,18 +4,14 @@ namespace Maestro
 	{
 		private readonly struct State
 		{
-			public readonly string sourceContent;
 			public readonly int sourceIndex;
-
 			public readonly int tokenizerIndex;
 			public readonly Token previousToken;
 			public readonly Token currentToken;
 
-			public State(string sourceContent, int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
+			public State(int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
 			{
-				this.sourceContent = sourceContent;
 				this.sourceIndex = sourceIndex;
-
 				this.tokenizerIndex = tokenizerIndex;
 				this.previousToken = previousToken;
 				this.currentToken = currentToken;
@@ -57,7 +53,8 @@ namespace Maestro
 
 		private void RestoreState(State state)
 		{
-			parser.tokenizer.Reset(state.sourceContent, state.tokenizerIndex);
+			var sourceContent = chunk.sources.buffer[state.sourceIndex].content;
+			parser.tokenizer.Reset(sourceContent, state.tokenizerIndex);
 			parser.Reset(state.previousToken, state.currentToken);
 			sourceIndex = state.sourceIndex;
 
@@ -65,21 +62,21 @@ namespace Maestro
 			scopes.count = 0;
 		}
 
-		public void BeginSource(string source, int sourceIndex)
+		public void BeginSource(Source source)
 		{
+			var sourceIndex = chunk.sources.count;
+			chunk.sources.PushBack(source);
+
 			chunk.sourceStartIndexes.PushBack(chunk.bytes.count);
 
 			stateStack.PushBack(new State(
-				parser.tokenizer.source,
 				this.sourceIndex,
-
 				parser.tokenizer.nextIndex,
 				parser.previousToken,
 				parser.currentToken
 			));
 
 			RestoreState(new State(
-				source,
 				sourceIndex,
 				0,
 				new Token(TokenKind.End, new Slice()),
