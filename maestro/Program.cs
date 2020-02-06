@@ -60,11 +60,11 @@ namespace Maestro
 				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
-				var testCommand = engine.InstantiateCommand<Tuple0>(compileResult, "no my-command");
+				var testCommand = engine.InstantiateCommand<Tuple1>(compileResult, "#my-command");
 				if (testCommand.isSome)
 				{
 					System.Console.WriteLine("RUN MY COMMAND\n");
-					var executeResult = engine.Execute(testCommand.value, default);
+					var executeResult = engine.Execute(testCommand.value, new Value("from C#"));
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();

@@ -2,8 +2,8 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
-command my-command {
-	"hello from command" | print;
+command my-command $arg {
+	"hello from command", $arg | print;
 }
 
-my-command3;
+my-command 45;

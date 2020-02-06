@@ -17,10 +17,7 @@ namespace Maestro
 			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
 
 			var tupleSizes = vm.tupleSizes;
-			tupleSizes.PushBackUnchecked(0);
-
 			var inputSlices = vm.inputSlices;
-			inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
 
 			void MoveTail(int toIndex, int count)
 			{

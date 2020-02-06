@@ -74,6 +74,10 @@ namespace Maestro
 		{
 			var instructionIndex = executable.chunk.commandDefinitions.buffer[executable.commandIndex].codeIndex;
 
+			var frameStackIndex = vm.stack.count;
+			vm.stack.GrowUnchecked(args.Size);
+			args.Write(vm.stack.buffer, frameStackIndex);
+
 			vm.stackFrames.count = 0;
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
 				executable.chunk.bytes.count - 1,
@@ -82,9 +86,15 @@ namespace Maestro
 			));
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
 				instructionIndex,
-				vm.stack.count,
+				frameStackIndex,
 				executable.commandIndex
 			));
+
+			vm.tupleSizes.count = 0;
+			vm.inputSlices.count = 0;
+
+			vm.tupleSizes.PushBackUnchecked(0);
+			vm.inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
 
 			var maybeExecuteError = vm.Execute(executable.chunk, executable.externalCommandInstances);
 			vm.stack.ZeroClear();
