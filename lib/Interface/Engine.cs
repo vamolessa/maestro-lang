@@ -72,7 +72,7 @@ namespace Maestro
 
 		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
 		{
-			var instructionIndex = executable.chunk.commandDefinitions.buffer[executable.commandIndex].codeIndex;
+			var command = executable.chunk.commandDefinitions.buffer[executable.commandIndex];
 
 			var frameStackIndex = vm.stack.count;
 			vm.stack.GrowUnchecked(args.Size);
@@ -85,18 +85,22 @@ namespace Maestro
 				0
 			));
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				instructionIndex,
+				command.codeIndex,
 				frameStackIndex,
 				executable.commandIndex
 			));
 
 			vm.tupleSizes.count = 0;
-			vm.inputSlices.count = 0;
-
 			vm.tupleSizes.PushBackUnchecked(0);
+
+			vm.inputSlices.count = 0;
 			vm.inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
 
-			var maybeExecuteError = vm.Execute(executable.chunk, executable.externalCommandInstances);
+			var maybeExecuteError = vm.Execute(
+				executable.chunk,
+				executable.externalCommandInstances,
+				-command.externalCommandInstancesBaseIndex
+			);
 			vm.stack.ZeroClear();
 			vm.debugInfo.Clear();
 

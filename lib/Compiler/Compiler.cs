@@ -59,6 +59,8 @@ namespace Maestro
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
+
+			variables.count = 0;
 			scopes.count = 0;
 		}
 

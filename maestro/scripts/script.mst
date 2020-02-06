@@ -7,3 +7,4 @@ command my-command $arg {
 }
 
 my-command 45;
+"324234" | print;

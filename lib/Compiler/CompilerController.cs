@@ -159,6 +159,8 @@ namespace Maestro
 				parameterCount = byte.MaxValue;
 			}
 
+			var externalCommandInstancesIndexOffset = compiler.chunk.externalCommandInstances.count;
+
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
@@ -168,7 +170,13 @@ namespace Maestro
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
 
-			var success = compiler.chunk.AddCommand(new CommandDefinition(name, commandCodeIndex, (byte)parameterCount));
+			var success = compiler.chunk.AddCommand(new CommandDefinition(
+				name,
+				commandCodeIndex,
+				externalCommandInstancesIndexOffset,
+				(byte)parameterCount
+			));
+
 			if (!success)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
@@ -405,7 +413,7 @@ namespace Maestro
 				}
 				else
 				{
-					compiler.EmitExecuteNativeCommand(externalCommandIndex, slice);
+					compiler.EmitExecuteExternalCommand(externalCommandIndex, slice);
 				}
 			}
 			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))

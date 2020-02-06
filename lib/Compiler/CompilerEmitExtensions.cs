@@ -55,7 +55,7 @@ namespace Maestro
 			self.EmitByte((byte)localIndex);
 		}
 
-		public static void EmitExecuteNativeCommand(this Compiler self, int commandIndex, Slice slice)
+		public static void EmitExecuteExternalCommand(this Compiler self, int commandIndex, Slice slice)
 		{
 			var instanceIndex = self.chunk.externalCommandInstances.count;
 			self.chunk.externalCommandInstances.PushBack(new ExternalCommandInstance(commandIndex, self.sourceIndex, slice));

@@ -5,7 +5,7 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances, int externalCommandInstancesIndexOffset)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
@@ -13,11 +13,10 @@ namespace Maestro
 
 			var bytes = chunk.bytes.buffer;
 			var stack = vm.stack;
-			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
-			var frameStackIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex;
 
 			var tupleSizes = vm.tupleSizes;
 			var inputSlices = vm.inputSlices;
+			var frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
 
 			void MoveTail(int toIndex, int count)
 			{
@@ -30,7 +29,7 @@ namespace Maestro
 			while (true)
 			{
 #if DEBUG_TRACE
-				switch ((Instruction)bytes[codeIndex])
+				switch ((Instruction)bytes[frame.codeIndex])
 				{
 				case Instruction.DebugHook:
 				case Instruction.DebugPushDebugFrame:
@@ -40,15 +39,15 @@ namespace Maestro
 				default:
 					debugSb.Clear();
 					vm.stack = stack;
-					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frameStackIndex;
+					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frame.stackIndex;
 					vm.TraceStack(debugSb);
-					chunk.DisassembleInstruction(codeIndex, debugSb);
+					chunk.DisassembleInstruction(frame.codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
 					break;
 				}
 #endif
 
-				var nextInstruction = (Instruction)bytes[codeIndex++];
+				var nextInstruction = (Instruction)bytes[frame.codeIndex++];
 				switch (nextInstruction)
 				{
 				case Instruction.Halt:
@@ -59,7 +58,7 @@ namespace Maestro
 					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + externalCommandInstancesIndexOffset;
 
 						var definitionIndex = chunk.externalCommandInstances.buffer[index].definitionIndex;
 						var parameterCount = chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
@@ -84,31 +83,25 @@ namespace Maestro
 					}
 				case Instruction.ExecuteCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 						var definition = chunk.commandDefinitions.buffer[index];
 
-						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
-						codeIndex = definition.codeIndex;
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
 
-						frameStackIndex = stack.count - definition.parameterCount;
+						frame.commandIndex = index;
+						frame.codeIndex = definition.codeIndex;
+						frame.stackIndex = stack.count - definition.parameterCount;
 
 						var inputCount = tupleSizes.PopLast();
-						inputSlices.PushBackUnchecked(new Slice(frameStackIndex - inputCount, inputCount));
+						inputSlices.PushBackUnchecked(new Slice(frame.stackIndex - inputCount, inputCount));
 
-						vm.stackFrames.PushBackUnchecked(new StackFrame(codeIndex, frameStackIndex, index));
+						vm.stackFrames.PushBackUnchecked(frame);
 						break;
 					}
 				case Instruction.Return:
 					{
-						var frame = vm.stackFrames.buffer[--vm.stackFrames.count];
-
-						var inputSlice = inputSlices.PopLast();
-						MoveTail(inputSlice.index, tupleSizes.buffer[tupleSizes.count - 1]);
-						;
-
-						frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
-						codeIndex = frame.codeIndex;
-						frameStackIndex = frame.stackIndex;
+						frame = vm.stackFrames.buffer[--vm.stackFrames.count - 1];
+						MoveTail(inputSlices.PopLast().index, tupleSizes.buffer[tupleSizes.count - 1]);
 						break;
 					}
 				case Instruction.PushEmptyTuple:
@@ -116,7 +109,7 @@ namespace Maestro
 					break;
 				case Instruction.PopTupleKeeping:
 					{
-						var count = bytes[codeIndex++] - tupleSizes.PopLast();
+						var count = bytes[frame.codeIndex++] - tupleSizes.PopLast();
 						if (count > 0)
 							stack.GrowUnchecked(count);
 						else
@@ -127,7 +120,7 @@ namespace Maestro
 					tupleSizes.buffer[tupleSizes.count - 2] += tupleSizes.PopLast();
 					break;
 				case Instruction.Pop:
-					stack.count -= bytes[codeIndex++];
+					stack.count -= bytes[frame.codeIndex++];
 					break;
 				case Instruction.PushFalse:
 					stack.PushBackUnchecked(new Value(ValueKind.FalseKind));
@@ -139,20 +132,20 @@ namespace Maestro
 					break;
 				case Instruction.PushLiteral:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 						stack.PushBackUnchecked(chunk.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
 				case Instruction.SetLocal:
 					{
-						var index = frameStackIndex + bytes[codeIndex++];
+						var index = frame.stackIndex + bytes[frame.codeIndex++];
 						stack.buffer[index] = stack.PopLast();
 						break;
 					}
 				case Instruction.PushLocal:
 					{
-						var index = frameStackIndex + bytes[codeIndex++];
+						var index = frame.stackIndex + bytes[frame.codeIndex++];
 						stack.PushBackUnchecked(stack.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
@@ -167,26 +160,26 @@ namespace Maestro
 					}
 				case Instruction.JumpBackward:
 					{
-						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						codeIndex -= offset;
+						var offset = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
+						frame.codeIndex -= offset;
 						break;
 					}
 				case Instruction.JumpForward:
 					{
-						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
-						codeIndex += offset;
+						var offset = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
+						frame.codeIndex += offset;
 						break;
 					}
 				case Instruction.IfConditionJump:
 					{
-						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var offset = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 
 						var count = tupleSizes.PopLast();
 						while (count-- > 0)
 						{
 							if (!stack.buffer[--stack.count].IsTruthy())
 							{
-								codeIndex += offset;
+								frame.codeIndex += offset;
 								while (count-- > 0)
 									--stack.count;
 								break;
@@ -196,7 +189,7 @@ namespace Maestro
 					}
 				case Instruction.ForEachConditionJump:
 					{
-						var offset = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var offset = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 
 						var elementCount = tupleSizes.buffer[tupleSizes.count - 1];
 						var baseIndex = stack.count - (elementCount + 2);
@@ -209,7 +202,7 @@ namespace Maestro
 						}
 						else
 						{
-							codeIndex += offset;
+							frame.codeIndex += offset;
 							stack.count -= elementCount;
 							--tupleSizes.count;
 						}
@@ -219,7 +212,7 @@ namespace Maestro
 					if (vm.debugger.isSome)
 					{
 						vm.stack = stack;
-						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = codeIndex;
+						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
 						vm.debugger.value.OnDebugHook();
 					}
 					break;
@@ -231,9 +224,9 @@ namespace Maestro
 					break;
 				case Instruction.DebugPushVariableInfo:
 					{
-						var nameIndex = BytesHelper.BytesToUShort(bytes[codeIndex++], bytes[codeIndex++]);
+						var nameIndex = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 						var name = chunk.literals.buffer[nameIndex].asObject as string;
-						var stackIndex = frameStackIndex + bytes[codeIndex++];
+						var stackIndex = frame.stackIndex + bytes[frame.codeIndex++];
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
 					}
