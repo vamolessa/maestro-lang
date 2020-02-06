@@ -1,5 +1,3 @@
-arrumar o // e a ordem da uri no disassemble
-
 permitir carregar outras instancias de external commands
 
 tests!!

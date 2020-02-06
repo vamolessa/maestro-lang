@@ -32,14 +32,14 @@ namespace Maestro
 			sb.Append("== ");
 			sb.Append(self.bytes.count);
 			sb.AppendLine(" bytes ==");
-			sb.AppendLine("line byte instruction");
 
-			var currentSourceIndex = -1;
-			for (var index = 0; index < self.bytes.count;)
+			if (self.sources.count > 0)
 			{
-				PrintCommandName(self, index, sb);
+				sb.AppendLine("line byte instruction");
+				sb.AppendLine("---- ---- -----------");
 
-				if (self.sources.count > 0)
+				var currentSourceIndex = -1;
+				for (var index = 0; index < self.bytes.count;)
 				{
 					var sourceIndex = self.FindSourceIndex(index);
 					var source = self.sources.buffer[sourceIndex];
@@ -49,11 +49,23 @@ namespace Maestro
 						currentSourceIndex = sourceIndex;
 					}
 
+					PrintCommandName(self, index, sb);
 					PrintLineNumber(self, source.content, index, sb);
+					index = DisassembleInstruction(self, index, sb);
+					sb.AppendLine();
 				}
+			}
+			else
+			{
+				sb.AppendLine("byte instruction");
+				sb.AppendLine("---- -----------");
 
-				index = DisassembleInstruction(self, index, sb);
-				sb.AppendLine();
+				for (var index = 0; index < self.bytes.count;)
+				{
+					PrintCommandName(self, index, sb);
+					index = DisassembleInstruction(self, index, sb);
+					sb.AppendLine();
+				}
 			}
 
 			sb.AppendLine("== end ==");
@@ -66,7 +78,7 @@ namespace Maestro
 				var definition = self.commandDefinitions.buffer[i];
 				if (definition.codeIndex == codeIndex)
 				{
-					sb.Append("  // ");
+					sb.Append("   # ");
 					sb.AppendLine(definition.name);
 					break;
 				}
