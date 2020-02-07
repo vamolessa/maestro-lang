@@ -1,4 +1,4 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("test")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("tests")]
 
 namespace Maestro
 {

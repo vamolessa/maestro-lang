@@ -125,7 +125,7 @@ namespace Maestro
 				sb.Append(self.asNumber.asInt);
 				break;
 			case ValueKind.Float _:
-				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", self.asNumber.asFloat);
+				sb.AppendFormat(CultureInfo.InvariantCulture, "{0:0.00}", self.asNumber.asFloat);
 				break;
 			case string s:
 				sb.Append('"').Append(s).Append('"');
