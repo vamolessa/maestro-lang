@@ -108,13 +108,19 @@ namespace Maestro
 			vm.inputSlices.count = 0;
 			vm.inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
 
+			if (vm.debugger.isSome)
+				vm.debugger.value.OnBegin(vm);
+
 			var maybeExecuteError = vm.Execute(
 				executable.chunk,
 				executable.externCommandInstances,
 				-command.externCommandSlice.index
 			);
+
+			if (vm.debugger.isSome)
+				vm.debugger.value.OnEnd(vm);
+
 			vm.stack.ZeroClear();
-			vm.debugInfo.Clear();
 
 			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
 		}

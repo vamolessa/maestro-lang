@@ -16,7 +16,7 @@ public sealed class AssertCommand : ICommand<Tuple0>
 	public readonly Value[] expectedValues;
 	public Value[] gotValues;
 
-	public AssertCommand(Value[] expectValues)
+	public AssertCommand(params Value[] expectValues)
 	{
 		this.expectedValues = expectValues;
 		this.gotValues = null;
@@ -33,6 +33,26 @@ public sealed class AssertCommand : ICommand<Tuple0>
 	public void AssertExpectedInputs()
 	{
 		Assert.Equal(expectedValues, gotValues);
+	}
+}
+
+public sealed class AssertCleanupDebugger : IDebugger
+{
+	public int expectedStackSize = 0;
+
+	public void OnBegin(VirtualMachine vm)
+	{
+	}
+
+	public void OnEnd(VirtualMachine vm)
+	{
+		Assert.Equal(expectedStackSize, vm.stack.count);
+		Assert.Equal(0, vm.debugInfo.frames.count);
+		Assert.Equal(0, vm.debugInfo.variableInfos.count);
+	}
+
+	public void OnHook(VirtualMachine vm)
+	{
 	}
 }
 
@@ -107,6 +127,7 @@ public readonly struct TestCommand<T> where T : struct, ITuple
 public static class TestHelper
 {
 	public static readonly Mode CompilerMode = Mode.Debug;
+	public static readonly AssertCleanupDebugger assertCleanupDebugger = new AssertCleanupDebugger();
 
 	public static TestCompiled Compile(string source)
 	{
@@ -129,18 +150,20 @@ public static class TestHelper
 		return new TestCommand<T>(compiled.engine, executable.value);
 	}
 
-	public static void Run(this TestCompiled compiled)
+	public static void Run(this TestCompiled compiled, int expectedStackSize = 0)
 	{
-		Run(compiled.engine, compiled.result.executable);
+		Run(compiled.engine, compiled.result.executable, expectedStackSize);
 	}
 
-	public static void Run<T>(this TestCommand<T> command) where T : struct, ITuple
+	public static void Run<T>(this TestCommand<T> command, int expectedStackSize = 0) where T : struct, ITuple
 	{
-		Run(command.engine, command.executable);
+		Run(command.engine, command.executable, expectedStackSize);
 	}
 
-	private static void Run<T>(Engine engine, Executable<T> executable) where T : struct, ITuple
+	private static void Run<T>(Engine engine, Executable<T> executable, int expectedStackSize) where T : struct, ITuple
 	{
+		assertCleanupDebugger.expectedStackSize = expectedStackSize;
+		engine.SetDebugger(assertCleanupDebugger);
 		var executeResult = engine.Execute(executable, default);
 		if (executeResult.error.isSome)
 			throw new RuntimeErrorException(executeResult);

@@ -13,8 +13,9 @@ namespace Maestro
 
 	public interface IDebugger
 	{
-		void Reset(Buffer<Source> sources);
-		void OnDebugHook();
+		void OnBegin(VirtualMachine vm);
+		void OnEnd(VirtualMachine vm);
+		void OnHook(VirtualMachine vm);
 	}
 
 	internal sealed class ExternCommandBindingRegistry
