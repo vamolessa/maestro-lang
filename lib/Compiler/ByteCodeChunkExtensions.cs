@@ -135,7 +135,7 @@ namespace Maestro
 			case Instruction.DebugPushVariableInfo:
 				return DebugPushLocalInfoInstruction(self, instruction, index, sb);
 			case Instruction.ExecuteNativeCommand:
-				return ExecuteExternalCommandInstruction(self, instruction, index, sb);
+				return ExecuteExternCommandInstruction(self, instruction, index, sb);
 			case Instruction.ExecuteCommand:
 				return ExecuteCommandInstruction(self, instruction, index, sb);
 			case Instruction.JumpBackward:
@@ -199,15 +199,15 @@ namespace Maestro
 			return ++index;
 		}
 
-		private static int ExecuteExternalCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int ExecuteExternCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
 		{
 			var instanceIndex = BytesHelper.BytesToUShort(
 				chunk.bytes.buffer[++index],
 				chunk.bytes.buffer[++index]
 			);
 
-			var instance = chunk.externalCommandInstances.buffer[instanceIndex];
-			var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+			var instance = chunk.externCommandInstances.buffer[instanceIndex];
+			var definition = chunk.externCommandDefinitions.buffer[instance.definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");

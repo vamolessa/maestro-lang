@@ -24,7 +24,7 @@ namespace Maestro
 			new ExactScanner("foreach").ForToken(TokenKind.ForEach),
 			new ExactScanner("in").ForToken(TokenKind.In),
 			new ExactScanner("command").ForToken(TokenKind.Command),
-			new ExactScanner("external").ForToken(TokenKind.External),
+			new ExactScanner("extern").ForToken(TokenKind.Extern),
 			new ExactScanner("return").ForToken(TokenKind.Return),
 
 			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),

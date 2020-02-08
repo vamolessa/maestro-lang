@@ -11,8 +11,8 @@ namespace Maestro
 		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
 		public Buffer<Value> literals = new Buffer<Value>(32);
-		public Buffer<ExternalCommandDefinition> externalCommandDefinitions = new Buffer<ExternalCommandDefinition>(16);
-		internal Buffer<ExternalCommandInstance> externalCommandInstances = new Buffer<ExternalCommandInstance>(32);
+		public Buffer<ExternCommandDefinition> externCommandDefinitions = new Buffer<ExternCommandDefinition>(16);
+		internal Buffer<ExternCommandInstance> externCommandInstances = new Buffer<ExternCommandInstance>(32);
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
 
 		internal ByteCodeChunk()
@@ -38,11 +38,11 @@ namespace Maestro
 			return literals.count - 1;
 		}
 
-		internal bool AddExternalCommand(ExternalCommandDefinition definition)
+		internal bool AddExternCommand(ExternCommandDefinition definition)
 		{
-			for (var i = 0; i < externalCommandDefinitions.count; i++)
+			for (var i = 0; i < externCommandDefinitions.count; i++)
 			{
-				if (definition.name == externalCommandDefinitions.buffer[i].name)
+				if (definition.name == externCommandDefinitions.buffer[i].name)
 					return false;
 			}
 
@@ -52,15 +52,15 @@ namespace Maestro
 					return false;
 			}
 
-			externalCommandDefinitions.PushBack(definition);
+			externCommandDefinitions.PushBack(definition);
 			return true;
 		}
 
 		internal bool AddCommand(CommandDefinition definition)
 		{
-			for (var i = 0; i < externalCommandDefinitions.count; i++)
+			for (var i = 0; i < externCommandDefinitions.count; i++)
 			{
-				if (definition.name == externalCommandDefinitions.buffer[i].name)
+				if (definition.name == externCommandDefinitions.buffer[i].name)
 					return false;
 			}
 

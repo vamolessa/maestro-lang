@@ -5,11 +5,11 @@
 47 | $message;
 
 
-# declaring external commands
-external command print 0;
+# declaring extern commands
+extern command print 0;
 
 
-# using external commands
+# using extern commands
 $message | print;
 
 

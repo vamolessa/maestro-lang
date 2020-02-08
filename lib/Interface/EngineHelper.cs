@@ -17,18 +17,18 @@ namespace Maestro
 		void OnDebugHook();
 	}
 
-	internal sealed class ExternalCommandBindingRegistry
+	internal sealed class ExternCommandBindingRegistry
 	{
-		internal Buffer<ExternalCommandBinding> bindings = new Buffer<ExternalCommandBinding>();
+		internal Buffer<ExternCommandBinding> bindings = new Buffer<ExternCommandBinding>();
 
-		internal void Register(ExternalCommandBinding binding)
+		internal void Register(ExternCommandBinding binding)
 		{
 			var existingBinding = Find(binding.definition.name);
 			if (!existingBinding.isSome)
 				bindings.PushBack(binding);
 		}
 
-		internal Option<ExternalCommandBinding> Find(string name)
+		internal Option<ExternCommandBinding> Find(string name)
 		{
 			for (var i = 0; i < bindings.count; i++)
 			{
@@ -43,14 +43,14 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static ExternalCommandCallback[] InstantiateExternalCommands(ExternalCommandBindingRegistry bindingRegistry, ByteCodeChunk chunk, Slice instancesSlice, ref Buffer<CompileError> errors)
+		internal static ExternCommandCallback[] InstantiateExternCommands(ExternCommandBindingRegistry bindingRegistry, ByteCodeChunk chunk, Slice instancesSlice, ref Buffer<CompileError> errors)
 		{
-			var instances = new ExternalCommandCallback[instancesSlice.length];
+			var instances = new ExternCommandCallback[instancesSlice.length];
 
 			for (var i = 0; i < instancesSlice.length; i++)
 			{
-				var instance = chunk.externalCommandInstances.buffer[i + instancesSlice.index];
-				var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+				var instance = chunk.externCommandInstances.buffer[i + instancesSlice.index];
+				var definition = chunk.externCommandDefinitions.buffer[instance.definitionIndex];
 
 				var binding = bindingRegistry.Find(definition.name);
 				if (!binding.isSome)
@@ -58,7 +58,7 @@ namespace Maestro
 					errors.PushBack(new CompileError(
 						instance.sourceIndex,
 						instance.slice,
-						new CompileErrors.ExternalCommands.ExternalCommandHasNoBinding
+						new CompileErrors.ExternCommands.ExternCommandHasNoBinding
 						{
 							name = definition.name
 						})
@@ -71,7 +71,7 @@ namespace Maestro
 					errors.PushBack(new CompileError(
 						instance.sourceIndex,
 						instance.slice,
-						new CompileErrors.ExternalCommands.IncompatibleExternalCommand
+						new CompileErrors.ExternCommands.IncompatibleExternCommand
 						{
 							name = definition.name,
 							expectedParameterCount = definition.parameterCount,

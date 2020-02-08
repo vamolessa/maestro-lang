@@ -33,7 +33,7 @@ namespace Maestro
 			Set(TokenKind.ForEach, null, null, Precedence.None);
 			Set(TokenKind.In, null, null, Precedence.None);
 			Set(TokenKind.Command, null, null, Precedence.None);
-			Set(TokenKind.External, null, null, Precedence.None);
+			Set(TokenKind.Extern, null, null, Precedence.None);
 			Set(TokenKind.Return, null, null, Precedence.None);
 			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
 			Set(TokenKind.Variable, CompilerController.LoadLocal, null, Precedence.None);

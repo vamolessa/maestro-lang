@@ -1,6 +1,15 @@
 using Maestro;
 using System.Text;
 
+public sealed class BypassCommand<T> : ICommand<T> where T : struct, ITuple
+{
+	public void Execute(ref Context context, T args)
+	{
+		for (var i = 0; i < context.inputCount; i++)
+			context.PushValue(context.GetInput(i));
+	}
+}
+
 public sealed class CompileErrorException : System.Exception
 {
 	public readonly CompileResult result;

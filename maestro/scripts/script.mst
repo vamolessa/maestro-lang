@@ -1,6 +1,6 @@
-external command elements 0;
-external command print 0;
-external command test-command 2;
+extern command elements 0;
+extern command print 0;
+extern command test-command 2;
 
 command my-command $arg {
 	"hello from command", $arg | print;
