@@ -277,7 +277,7 @@ namespace Maestro
 			if (parser.currentToken.kind == TokenKind.End)
 			{
 				parser.Next();
-				return true;
+				return false;
 			}
 
 			var prefixRule = parseRules.GetPrefixRule(parser.currentToken.kind);

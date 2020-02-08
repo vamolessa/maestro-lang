@@ -13,7 +13,7 @@ public sealed class FormattingTests
 	[InlineData("abc\ndef", 0, 0, 3)]
 	[InlineData("abc\ndef", 1, 4, 3)]
 	[InlineData("\n", 0, 0, 0)]
-	public void GetLineTests(string source, ushort lineIndex, ushort expectedIndex, ushort expectedLength)
+	public void GetLine(string source, ushort lineIndex, ushort expectedIndex, ushort expectedLength)
 	{
 		var slice = FormattingHelper.GetLineSlice(source, lineIndex);
 		Assert.Equal(expectedIndex, slice.index);
@@ -27,7 +27,7 @@ public sealed class FormattingTests
 	[InlineData("0123\n56789", 7, 1, 2, 2)]
 	[InlineData("0123\n\t\t789", 7, 1, 2, 8)]
 	[InlineData("01\r23456789", 6, 0, 6, 5)]
-	public void GetLineAndColumnTests(string source, int index, int expectedLineIndex, int expectedColumnIndex, int expectedFormattedColumnIndex)
+	public void GetLineAndColumn(string source, int index, int expectedLineIndex, int expectedColumnIndex, int expectedFormattedColumnIndex)
 	{
 		var position = FormattingHelper.GetLineAndColumn(source, index);
 		Assert.Equal(expectedLineIndex, position.lineIndex);
@@ -41,7 +41,7 @@ public sealed class FormattingTests
 	[InlineData("abc ", 0, 3)]
 	[InlineData(" abc ", 1, 3)]
 	[InlineData(" \t\nabc", 3, 3)]
-	public void TrimTests(string source, ushort expectedIndex, ushort expectedLength)
+	public void Trim(string source, ushort expectedIndex, ushort expectedLength)
 	{
 		var slice = new Slice(0, source.Length);
 		slice = FormattingHelper.Trim(source, slice);

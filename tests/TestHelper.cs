@@ -1,5 +1,6 @@
 using Maestro;
 using System.Text;
+using Xunit;
 
 public sealed class BypassCommand<T> : ICommand<T> where T : struct, ITuple
 {
@@ -7,6 +8,31 @@ public sealed class BypassCommand<T> : ICommand<T> where T : struct, ITuple
 	{
 		for (var i = 0; i < context.inputCount; i++)
 			context.PushValue(context.GetInput(i));
+	}
+}
+
+public sealed class AssertCommand : ICommand<Tuple0>
+{
+	public readonly Value[] expectedValues;
+	public Value[] gotValues;
+
+	public AssertCommand(Value[] expectValues)
+	{
+		this.expectedValues = expectValues;
+		this.gotValues = null;
+	}
+
+	public void Execute(ref Context context, Tuple0 args)
+	{
+		gotValues = new Value[context.inputCount];
+
+		for (var i = 0; i < gotValues.Length; i++)
+			gotValues[i] = context.GetInput(i);
+	}
+
+	public void AssertExpectedInputs()
+	{
+		Assert.Equal(expectedValues, gotValues);
 	}
 }
 
@@ -103,12 +129,12 @@ public static class TestHelper
 		return new TestCommand<T>(compiled.engine, executable.value);
 	}
 
-	public static void Run(TestCompiled compiled)
+	public static void Run(this TestCompiled compiled)
 	{
 		Run(compiled.engine, compiled.result.executable);
 	}
 
-	public static void Run<T>(TestCommand<T> command) where T : struct, ITuple
+	public static void Run<T>(this TestCommand<T> command) where T : struct, ITuple
 	{
 		Run(command.engine, command.executable);
 	}
