@@ -5,7 +5,7 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternCommandCallback[] externCommandInstances, int externCommandInstancesIndexOffset)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances, int externalCommandInstancesIndexOffset)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
@@ -58,10 +58,10 @@ namespace Maestro
 					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + externCommandInstancesIndexOffset;
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + externalCommandInstancesIndexOffset;
 
-						var definitionIndex = chunk.externCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = chunk.externCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var definitionIndex = chunk.externalCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -69,7 +69,7 @@ namespace Maestro
 
 						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						externCommandInstances[index].Invoke(ref context);
+						externalCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
 						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);

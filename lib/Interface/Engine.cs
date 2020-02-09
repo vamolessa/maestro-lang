@@ -6,12 +6,12 @@ namespace Maestro
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly ExternCommandBindingRegistry bindingRegistry = new ExternCommandBindingRegistry();
+		internal readonly ExternalCommandBindingRegistry bindingRegistry = new ExternalCommandBindingRegistry();
 
 		public void RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
-			bindingRegistry.Register(new ExternCommandBinding(
-				new ExternCommandDefinition(
+			bindingRegistry.Register(new ExternalCommandBinding(
+				new ExternalCommandDefinition(
 					name,
 					default(T).Size
 				),
@@ -33,10 +33,10 @@ namespace Maestro
 			var chunk = new ByteCodeChunk();
 			var errors = controller.CompileSource(chunk, importResolver, mode, source);
 
-			var instances = EngineHelper.InstantiateExternCommands(
+			var instances = EngineHelper.InstantiateExternalCommands(
 				bindingRegistry,
 				chunk,
-				new Slice(0, chunk.externCommandInstances.count),
+				new Slice(0, chunk.externalCommandInstances.count),
 				ref errors
 			);
 
@@ -61,10 +61,10 @@ namespace Maestro
 					return Option.None;
 
 				var errors = new Buffer<CompileError>();
-				var instances = EngineHelper.InstantiateExternCommands(
+				var instances = EngineHelper.InstantiateExternalCommands(
 					bindingRegistry,
 					chunk,
-					definition.externCommandSlice,
+					definition.externalCommandSlice,
 					ref errors
 				);
 
@@ -113,8 +113,8 @@ namespace Maestro
 
 			var maybeExecuteError = vm.Execute(
 				executable.chunk,
-				executable.externCommandInstances,
-				-command.externCommandSlice.index
+				executable.externalCommandInstances,
+				-command.externalCommandSlice.index
 			);
 
 			if (vm.debugger.isSome)

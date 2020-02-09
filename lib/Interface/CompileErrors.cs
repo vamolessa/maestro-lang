@@ -49,54 +49,54 @@ namespace Maestro.CompileErrors
 		}
 	}
 
-	namespace ExternCommands
+	namespace ExternalCommands
 	{
 		internal struct ExpectedCommandKeyword : IFormattedMessage
 		{
 			public string Format() => "Expected 'command' keyword";
 		}
 
-		internal struct ExpectedExternCommandIdentifier : IFormattedMessage
+		internal struct ExpectedExternalCommandIdentifier : IFormattedMessage
 		{
-			public string Format() => "Expected extern command name";
+			public string Format() => "Expected external command name";
 		}
 
-		internal struct ExpectedExternCommandParameterCount : IFormattedMessage
+		internal struct ExpectedExternalCommandParameterCount : IFormattedMessage
 		{
-			public string Format() => "Expected extern command parameter count number";
+			public string Format() => "Expected external command parameter count number";
 		}
 
-		internal struct TooManyExternCommandParameters : IFormattedMessage
+		internal struct TooManyExternalCommandParameters : IFormattedMessage
 		{
-			public string Format() => $"Too many extern command parameters. Max is {byte.MaxValue}";
+			public string Format() => $"Too many external command parameters. Max is {byte.MaxValue}";
 		}
 
-		internal struct ExpectedSemiColonAfterExternCommand : IFormattedMessage
+		internal struct ExpectedSemiColonAfterExternalCommand : IFormattedMessage
 		{
-			public string Format() => "Expected ';' after extern command declaration";
+			public string Format() => "Expected ';' after external command declaration";
 		}
 
-		internal struct WrongNumberOfExternCommandArguments : IFormattedMessage
+		internal struct WrongNumberOfExternalCommandArguments : IFormattedMessage
 		{
 			public string commandName;
 			public int expected;
 			public int got;
-			public string Format() => $"Wrong number of arguments for extern command '{commandName}'. Expected {expected}. Got {got}";
+			public string Format() => $"Wrong number of arguments for external command '{commandName}'. Expected {expected}. Got {got}";
 		}
 
-		internal struct ExternCommandHasNoBinding : IFormattedMessage
+		internal struct ExternalCommandHasNoBinding : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Could not find a binding for extern command '{name}'";
+			public string Format() => $"Could not find a binding for external command '{name}'";
 		}
 
-		internal struct IncompatibleExternCommand : IFormattedMessage
+		internal struct IncompatibleExternalCommand : IFormattedMessage
 		{
 			public string name;
 			public int expectedParameterCount;
 			public int gotParameterCount;
 
-			public string Format() => $"Incompatible binding for extern command '{name}'. Expected {expectedParameterCount} parameters. Got {gotParameterCount}";
+			public string Format() => $"Incompatible binding for external command '{name}'. Expected {expectedParameterCount} parameters. Got {gotParameterCount}";
 		}
 	}
 
@@ -112,7 +112,7 @@ namespace Maestro.CompileErrors
 			public string Format() => "Expected command parameter variable";
 		}
 
-		internal struct TooManyExternCommandParameterVariables : IFormattedMessage
+		internal struct TooManyExternalCommandParameterVariables : IFormattedMessage
 		{
 			public string Format() => $"Too many command parameter variables. Max is {byte.MaxValue}";
 		}

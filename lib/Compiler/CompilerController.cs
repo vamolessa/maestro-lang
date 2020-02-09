@@ -48,8 +48,8 @@ namespace Maestro
 		{
 			if (compiler.parser.Match(TokenKind.Import))
 				ImportDeclaration();
-			else if (compiler.parser.Match(TokenKind.Extern))
-				ExternCommandDeclaration();
+			else if (compiler.parser.Match(TokenKind.External))
+				ExternalCommandDeclaration();
 			else if (compiler.parser.Match(TokenKind.Command))
 				CommandDeclaration();
 			else
@@ -102,27 +102,27 @@ namespace Maestro
 				ExpressionStatement();
 		}
 
-		private void ExternCommandDeclaration()
+		private void ExternalCommandDeclaration()
 		{
 			var slice = compiler.parser.previousToken.slice;
 
-			compiler.parser.Consume(TokenKind.Command, new CompileErrors.ExternCommands.ExpectedCommandKeyword());
-			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternCommands.ExpectedExternCommandIdentifier());
+			compiler.parser.Consume(TokenKind.Command, new CompileErrors.ExternalCommands.ExpectedCommandKeyword());
+			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternalCommands.ExpectedExternalCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
-			compiler.parser.Consume(TokenKind.IntLiteral, new CompileErrors.ExternCommands.ExpectedExternCommandParameterCount());
+			compiler.parser.Consume(TokenKind.IntLiteral, new CompileErrors.ExternalCommands.ExpectedExternalCommandParameterCount());
 			var parameterCount = CompilerHelper.GetParsedInt(compiler);
 			if (parameterCount > byte.MaxValue)
 			{
-				compiler.AddSoftError(compiler.parser.previousToken.slice, new CompileErrors.ExternCommands.TooManyExternCommandParameters());
+				compiler.AddSoftError(compiler.parser.previousToken.slice, new CompileErrors.ExternalCommands.TooManyExternalCommandParameters());
 				parameterCount = byte.MaxValue;
 			}
 
 			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.ExternCommands.ExpectedSemiColonAfterExternCommand());
+			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternalCommand());
 
-			var success = compiler.chunk.AddExternCommand(new ExternCommandDefinition(name, (byte)parameterCount));
+			var success = compiler.chunk.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
 			if (!success)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
@@ -155,11 +155,11 @@ namespace Maestro
 
 			if (parameterCount > byte.MaxValue)
 			{
-				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyExternCommandParameterVariables());
+				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyExternalCommandParameterVariables());
 				parameterCount = byte.MaxValue;
 			}
 
-			var externCommandInstancesBaseIndex = compiler.chunk.externCommandInstances.count;
+			var externalCommandInstancesBaseIndex = compiler.chunk.externalCommandInstances.count;
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
@@ -174,8 +174,8 @@ namespace Maestro
 				name,
 				commandCodeIndex,
 				new Slice(
-					externCommandInstancesBaseIndex,
-					compiler.chunk.externCommandInstances.count - externCommandInstancesBaseIndex
+					externalCommandInstancesBaseIndex,
+					compiler.chunk.externalCommandInstances.count - externalCommandInstancesBaseIndex
 				),
 				(byte)parameterCount
 			));
@@ -402,21 +402,21 @@ namespace Maestro
 				argCount += 1;
 			}
 
-			if (compiler.ResolveToExternCommandIndex(commandSlice).TryGet(out var externCommandIndex))
+			if (compiler.ResolveToExternalCommandIndex(commandSlice).TryGet(out var externalCommandIndex))
 			{
-				var externCommand = compiler.chunk.externCommandDefinitions.buffer[externCommandIndex];
-				if (argCount != externCommand.parameterCount)
+				var externalCommand = compiler.chunk.externalCommandDefinitions.buffer[externalCommandIndex];
+				if (argCount != externalCommand.parameterCount)
 				{
-					compiler.AddSoftError(slice, new CompileErrors.ExternCommands.WrongNumberOfExternCommandArguments
+					compiler.AddSoftError(slice, new CompileErrors.ExternalCommands.WrongNumberOfExternalCommandArguments
 					{
-						commandName = externCommand.name,
-						expected = externCommand.parameterCount,
+						commandName = externalCommand.name,
+						expected = externalCommand.parameterCount,
 						got = argCount
 					});
 				}
 				else
 				{
-					compiler.EmitExecuteExternCommand(externCommandIndex, slice);
+					compiler.EmitExecuteExternalCommand(externalCommandIndex, slice);
 				}
 			}
 			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))

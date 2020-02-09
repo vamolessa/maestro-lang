@@ -45,11 +45,11 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public static Option<int> ResolveToExternCommandIndex(this Compiler self, Slice slice)
+		public static Option<int> ResolveToExternalCommandIndex(this Compiler self, Slice slice)
 		{
-			for (var i = 0; i < self.chunk.externCommandDefinitions.count; i++)
+			for (var i = 0; i < self.chunk.externalCommandDefinitions.count; i++)
 			{
-				var command = self.chunk.externCommandDefinitions.buffer[i];
+				var command = self.chunk.externalCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 					return i;
 			}

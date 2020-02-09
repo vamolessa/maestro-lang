@@ -18,7 +18,7 @@ public sealed class PipingTests
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "extern command assert 0;extern command bypass 0;\n" + source;
+		source = "external command assert 0;external command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 		assertCommand.AssertExpectedInputs();
 	}

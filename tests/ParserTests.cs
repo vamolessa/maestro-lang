@@ -31,7 +31,7 @@ public sealed class ParserTests
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple1>());
-		source = "extern command bypass 1;\n" + source;
+		source = "external command bypass 1;\n" + source;
 		TestHelper.Compile(engine, source);
 	}
 
@@ -48,7 +48,7 @@ public sealed class ParserTests
 		{
 			var engine = new Engine();
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple1>());
-			source = "extern command bypass 1;\n" + source;
+			source = "external command bypass 1;\n" + source;
 			TestHelper.Compile(engine, source);
 		});
 	}
