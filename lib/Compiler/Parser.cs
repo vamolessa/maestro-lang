@@ -51,10 +51,9 @@ namespace Maestro
 
 		public void Consume<E>(TokenKind tokenKind, E error) where E : struct, IFormattedMessage
 		{
-			if (currentToken.kind == tokenKind)
-				Next();
-			else
-				onError(currentToken.slice, error);
+			Next();
+			if (previousToken.kind != tokenKind)
+				onError(previousToken.slice, error);
 		}
 	}
 }

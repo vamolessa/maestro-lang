@@ -112,6 +112,13 @@ namespace Maestro.CompileErrors
 			public string Format() => "Expected command parameter variable";
 		}
 
+		internal struct DuplicatedCommandParameterVariable : IFormattedMessage
+		{
+			public string commandName;
+			public string parameterName;
+			public string Format() => $"Command '{commandName}' already has a parameter variable named '{parameterName}'";
+		}
+
 		internal struct TooManyExternalCommandParameterVariables : IFormattedMessage
 		{
 			public string Format() => $"Too many command parameter variables. Max is {byte.MaxValue}";

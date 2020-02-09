@@ -147,6 +147,23 @@ namespace Maestro
 			{
 				compiler.parser.Consume(TokenKind.Variable, new CompileErrors.Commands.ExpectedCommandParameterVariable());
 				var parameterSlice = compiler.parser.previousToken.slice;
+
+				for (var i = 0; i < parameterCount; i++)
+				{
+					ref var otherParameter = ref compiler.variables.buffer[compiler.variables.count - parameterCount + i];
+					var otherParameterSlice = otherParameter.slice;
+					if (CompilerHelper.AreEqual(compiler.parser.tokenizer.source, parameterSlice, otherParameterSlice))
+					{
+						compiler.AddSoftError(parameterSlice, new CompileErrors.Commands.DuplicatedCommandParameterVariable
+						{
+							commandName = name,
+							parameterName = CompilerHelper.GetSlice(compiler, parameterSlice)
+						});
+						otherParameter.flag = VariableFlag.Fulfilled;
+						break;
+					}
+				}
+
 				parametersSlice = parametersSlice.ExpandedTo(parameterSlice);
 				parameterCount += 1;
 

@@ -16,7 +16,7 @@ public sealed class ParserTests
 	[InlineData("(false);")]
 	[InlineData("(99, true, \"string\");")]
 	[InlineData("(((false)));")]
-	public void SimpleStatements(string source)
+	public void SimpleStatement(string source)
 	{
 		TestHelper.Compile(source);
 	}
@@ -27,12 +27,12 @@ public sealed class ParserTests
 	[InlineData("1, false | bypass 0 | bypass 1;")]
 	[InlineData("1, false | bypass (\"string\" | bypass 1);")]
 	[InlineData("1, false | bypass bypass bypass 0;")]
-	public void CommandStatements(string source)
+	public void ExecuteCommandStatement(string source)
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple1>());
 		source = "external command bypass 1;\n" + source;
-		TestHelper.Compile(engine, source);
+		TestHelper.Compile(engine, source).Run();
 	}
 
 	[Theory]
@@ -42,7 +42,7 @@ public sealed class ParserTests
 	[InlineData("0);")]
 	[InlineData(")0;")]
 	[InlineData("(0;);")]
-	public void FailStatements(string source)
+	public void FailStatement(string source)
 	{
 		Assert.Throws<CompileErrorException>(() =>
 		{
