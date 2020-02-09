@@ -84,6 +84,8 @@ namespace Maestro
 				return self.asNumber.asInt != 0;
 			case ValueKind.Float _:
 				return self.asNumber.asFloat != 0.0f;
+			case string s:
+				return s.Length != 0;
 			default:
 				return true;
 			}

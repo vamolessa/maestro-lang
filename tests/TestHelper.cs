@@ -34,6 +34,11 @@ public sealed class AssertCommand : ICommand<Tuple0>
 	{
 		Assert.Equal(expectedValues, gotValues);
 	}
+
+	public void AssertNotCalled()
+	{
+		Assert.Null(gotValues);
+	}
 }
 
 public sealed class AssertCleanupDebugger : IDebugger
