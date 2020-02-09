@@ -19,6 +19,8 @@ public sealed class IfTests
 	[InlineData("if true, 1, \"string\" {assert;}")]
 	[InlineData("if true, true, false {} else {assert;}")]
 	[InlineData("if false, true, true {} else {assert;}")]
+	[InlineData("if true | bypass {assert;}")]
+	[InlineData("if true, 1, \"string\" | bypass {assert;}")]
 	public void IfTrue(string source)
 	{
 		var assertCommand = new AssertCommand(new Value[0]);
@@ -40,6 +42,8 @@ public sealed class IfTests
 	[InlineData("if 1 {} else {assert;}")]
 	[InlineData("if 4.3 {} else {assert;}")]
 	[InlineData("if \"string\" {} else {assert;}")]
+	[InlineData("if true, true, false {assert;}")]
+	[InlineData("if false, true, true {assert;}")]
 	public void IfFalse(string source)
 	{
 		var assertCommand = new AssertCommand(new Value[0]);
