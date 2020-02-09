@@ -44,6 +44,7 @@ public sealed class CommandTests
 	[InlineData("command c {return $$ | bypass;} c | assert;")]
 	[InlineData("command c {return $$ | bypass;} 1 | c | assert;", 1)]
 	[InlineData("command c {return $$ | bypass;} 1,2,3 | c | assert;", 1, 2, 3)]
+	[InlineData("command c $arg {return $arg;} c 1 | assert;", 1)]
 	public void Execute(string source, params int[] expected)
 	{
 		var expectedValues = TestHelper.ToValueArray(expected);
