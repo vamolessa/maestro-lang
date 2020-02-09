@@ -118,7 +118,7 @@ namespace Maestro
 				self.EmitInstruction(instruction);
 		}
 
-		public static void EmitDebugPushVariableInfo(this Compiler self, Slice slice, VariableFlag flag)
+		public static void EmitDebugPushVariableInfo(this Compiler self, Slice slice)
 		{
 			if (self.mode != Mode.Debug)
 				return;
@@ -134,6 +134,21 @@ namespace Maestro
 			self.EmitInstruction(Instruction.DebugPushVariableInfo);
 			self.EmitUShort((ushort)nameLiteralIndex);
 			self.EmitByte((byte)stackIndex);
+		}
+
+		public static void EmitDebugPopVariableInfo(this Compiler self, int count)
+		{
+			if (self.mode != Mode.Debug)
+				return;
+
+			if (count == 0)
+				return;
+
+			if (count > byte.MaxValue)
+				count = byte.MaxValue;
+
+			self.EmitInstruction(Instruction.DebugPopVariableInfo);
+			self.EmitByte((byte)count);
 		}
 	}
 }

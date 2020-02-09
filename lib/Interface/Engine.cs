@@ -121,6 +121,7 @@ namespace Maestro
 				vm.debugger.value.OnEnd(vm);
 
 			vm.stack.ZeroClear();
+			vm.debugInfo.Clear();
 
 			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
 		}

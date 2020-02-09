@@ -129,6 +129,7 @@ namespace Maestro
 			case Instruction.Pop:
 			case Instruction.SetLocal:
 			case Instruction.PushLocal:
+			case Instruction.DebugPopVariableInfo:
 				return TwoByteInstruction(self, instruction, index, sb);
 			case Instruction.PushLiteral:
 				return LoadLiteralInstruction(self, instruction, index, sb);

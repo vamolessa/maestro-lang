@@ -136,6 +136,7 @@ namespace Maestro
 			var nameSlice = compiler.parser.previousToken.slice;
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
+			compiler.EmitDebugInstruction(Instruction.DebugPushDebugFrame);
 			compiler.PushScope(ScopeType.CommandBody);
 
 			var parameterCount = 0;
@@ -182,6 +183,7 @@ namespace Maestro
 			Block();
 
 			compiler.PopScope();
+			compiler.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 
 			compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			compiler.EmitInstruction(Instruction.Return);

@@ -17,7 +17,6 @@ namespace Maestro
 		public static void PushScope(this Compiler self, ScopeType scopeType)
 		{
 			self.scopes.PushBackUnchecked(new Scope(scopeType, self.variables.count));
-			self.EmitDebugInstruction(Instruction.DebugPushDebugFrame);
 		}
 
 		public static void PopScope(this Compiler self)
@@ -38,10 +37,9 @@ namespace Maestro
 				}
 			}
 
-			self.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
-
 			var localCount = self.variables.count - scope.variablesStartIndex;
 			self.variables.count -= localCount;
+			self.EmitDebugPopVariableInfo(localCount);
 			self.EmitPop(localCount <= byte.MaxValue ? (byte)localCount : byte.MaxValue);
 		}
 	}

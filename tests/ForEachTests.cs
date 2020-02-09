@@ -50,9 +50,7 @@ public sealed class ForEachTests
 	public void IterationElements(string source, params int[] expected)
 	{
 		var appendCommand = new AppendElementCommand();
-		var expectedElements = new Value[expected.Length];
-		for (var i = 0; i < expectedElements.Length; i++)
-			expectedElements[i] = new Value(expected[i]);
+		var expectedElements = TestHelper.ToValueArray(expected);
 
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());

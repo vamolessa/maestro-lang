@@ -4,7 +4,7 @@ namespace Maestro
 	{
 		public static int AddVariable(this Compiler self, Slice slice, VariableFlag flag)
 		{
-			self.EmitDebugPushVariableInfo(slice, flag);
+			self.EmitDebugPushVariableInfo(slice);
 
 			if (
 				flag == VariableFlag.NotRead &&

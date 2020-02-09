@@ -95,7 +95,11 @@ namespace Maestro
 			RestoreState(current);
 
 			if (stateStack.count == 0)
+			{
+				this.EmitInstruction(Instruction.PushEmptyTuple);
+				this.EmitInstruction(Instruction.Return);
 				this.EmitInstruction(Instruction.Halt);
+			}
 		}
 
 		public void AddSoftError(Slice slice, IFormattedMessage error)

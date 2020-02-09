@@ -16,8 +16,6 @@ namespace Maestro
 
 			public void Execute(ref Context context, Tuple0 args)
 			{
-				System.Console.WriteLine("PRINT INSTANCE NUMBER {0}", instanceNumber);
-
 				var sb = new StringBuilder();
 				for (var i = 0; i < context.inputCount; i++)
 				{
@@ -37,20 +35,6 @@ namespace Maestro
 			}
 		}
 
-		public sealed class TestCommand : ICommand<Tuple2>
-		{
-			public void Execute(ref Context context, Tuple2 args)
-			{
-				// for (var i = 0; i < context.inputCount; i++)
-				// 	context.PushValue(context.GetInput(0));
-
-				(var arg0, var arg1) = args;
-				System.Console.WriteLine("TEST COMMAND WITH {0} INPUTS AND ARGS {1}, {2}", context.inputCount, arg0, arg1);
-				context.PushValue(arg0);
-				context.PushValue(arg1);
-			}
-		}
-
 		public static void Main(string[] args)
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.mst");
@@ -59,7 +43,6 @@ namespace Maestro
 			var engine = new Engine();
 			engine.RegisterCommand("print", () => new PrintCommand());
 			engine.RegisterCommand("bypass", () => new BypassCommand());
-			engine.RegisterCommand("test-command", () => new TestCommand());
 
 			var sb = new StringBuilder();
 

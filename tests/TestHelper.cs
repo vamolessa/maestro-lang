@@ -134,6 +134,14 @@ public static class TestHelper
 	public static readonly Mode CompilerMode = Mode.Debug;
 	public static readonly AssertCleanupDebugger assertCleanupDebugger = new AssertCleanupDebugger();
 
+	public static Value[] ToValueArray(params int[] values)
+	{
+		var array = new Value[values.Length];
+		for (var i = 0; i < array.Length; i++)
+			array[i] = new Value(values[i]);
+		return array;
+	}
+
 	public static TestCompiled Compile(string source)
 	{
 		return Compile(new Engine(), source);

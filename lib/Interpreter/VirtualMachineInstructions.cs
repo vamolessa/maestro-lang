@@ -35,6 +35,7 @@ namespace Maestro
 				case Instruction.DebugPushDebugFrame:
 				case Instruction.DebugPopDebugFrame:
 				case Instruction.DebugPushVariableInfo:
+				case Instruction.DebugPopVariableInfo:
 					break;
 				default:
 					debugSb.Clear();
@@ -230,6 +231,9 @@ namespace Maestro
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
 					}
+				case Instruction.DebugPopVariableInfo:
+					vm.debugInfo.variableInfos.count -= bytes[frame.codeIndex++];
+					break;
 				default:
 					goto case Instruction.Halt;
 				}

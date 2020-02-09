@@ -45,6 +45,7 @@ namespace Maestro
 
 		public void Clear()
 		{
+			frames.count = 0;
 			variableInfos.ZeroClear();
 		}
 

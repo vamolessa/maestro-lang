@@ -25,5 +25,6 @@ namespace Maestro
 		DebugPushDebugFrame,
 		DebugPopDebugFrame,
 		DebugPushVariableInfo,
+		DebugPopVariableInfo,
 	}
 }
