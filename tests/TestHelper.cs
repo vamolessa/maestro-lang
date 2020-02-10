@@ -182,7 +182,7 @@ public static class TestHelper
 	private static void Run<T>(Engine engine, Executable<T> executable, T args) where T : struct, ITuple
 	{
 		engine.SetDebugger(assertCleanupDebugger);
-		var executeResult = engine.Execute(executable, args);
+		var executeResult = engine.ExecuteScope().Execute(executable, args);
 		if (executeResult.error.isSome)
 			throw new RuntimeErrorException(executeResult);
 	}

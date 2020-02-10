@@ -57,7 +57,7 @@ namespace Maestro
 				if (testCommand.isSome)
 				{
 					System.Console.WriteLine("RUN MY COMMAND\n");
-					var executeResult = engine.Execute(testCommand.value, "from C#");
+					var executeResult = engine.ExecuteScope().Execute(testCommand.value, "from C#");
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();
@@ -69,7 +69,7 @@ namespace Maestro
 				else
 				{
 					System.Console.WriteLine("RUN ENTIRE BINARY\n");
-					var executeResult = engine.Execute(executable, default);
+					var executeResult = engine.ExecuteScope().Execute(executable, default);
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();

@@ -82,48 +82,9 @@ namespace Maestro
 			vm.debugger = debugger;
 		}
 
-		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
+		public ExecuteScope ExecuteScope()
 		{
-			var command = executable.chunk.commandDefinitions.buffer[executable.commandIndex];
-
-			var frameStackIndex = vm.stack.count;
-			vm.stack.GrowUnchecked(args.Size);
-			args.Write(vm.stack.buffer, frameStackIndex);
-
-			vm.stackFrames.count = 0;
-			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				executable.chunk.bytes.count - 1,
-				0,
-				0
-			));
-			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				command.codeIndex,
-				frameStackIndex,
-				executable.commandIndex
-			));
-
-			vm.tupleSizes.count = 0;
-			vm.tupleSizes.PushBackUnchecked(0);
-
-			vm.inputSlices.count = 0;
-			vm.inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
-
-			if (vm.debugger.isSome)
-				vm.debugger.value.OnBegin(vm);
-
-			var maybeExecuteError = vm.Execute(
-				executable.chunk,
-				executable.externalCommandInstances,
-				-command.externalCommandSlice.index
-			);
-
-			if (vm.debugger.isSome)
-				vm.debugger.value.OnEnd(vm);
-
-			vm.stack.ZeroClear();
-			vm.debugInfo.Clear();
-
-			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
+			return new ExecuteScope(vm);
 		}
 	}
 }
