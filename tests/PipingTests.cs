@@ -8,10 +8,9 @@ public sealed class PipingTests
 	[InlineData("1 | bypass | assert;", 1)]
 	[InlineData("1, 2 | assert;", 1, 2)]
 	[InlineData("1, 2, (3 | bypass) | assert;", 1, 2, 3)]
-	public void SimplePiping(string source, params int[] expected)
+	public void SimplePiping(string source, params object[] expected)
 	{
-		var expectedValues = TestHelper.ToValueArray(expected);
-		var assertCommand = new AssertCommand(expectedValues);
+		var assertCommand = new AssertCommand(expected);
 
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);

@@ -51,10 +51,9 @@ public sealed class CommandTests
 	[InlineData("command c $arg {return $arg;} c 1 | assert;", 1)]
 	[InlineData("command c $arg0 $arg1 $arg2 {return $arg0, $arg1, $arg2;} c 1 2 3 | assert;", 1, 2, 3)]
 	[InlineData("command c $arg0 $arg1 $arg2 {false | $_var; return $arg0, $arg1, $arg2;} c 1 2 3 | assert;", 1, 2, 3)]
-	public void Execute(string source, params int[] expected)
+	public void Execute(string source, params object[] expected)
 	{
-		var expectedValues = TestHelper.ToValueArray(expected);
-		var assertCommand = new AssertCommand(expectedValues);
+		var assertCommand = new AssertCommand(expected);
 
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
@@ -64,11 +63,11 @@ public sealed class CommandTests
 	}
 
 	[Theory]
-	[InlineData("command c $a0 $a1 {$a0, $a1 | assert;}", 1, 2, 1, 2)]
-	public void ExecutingNewInstance(string source, int arg0, int arg1, params int[] expected)
+	[InlineData("command c $_0 $_1 {$_0, $_1 | assert;}", 1, 2, 1, 2)]
+	[InlineData("command c $_0 $_1 {$$ | assert;}", 1, 2)]
+	public void ExecutingNewInstance(string source, int arg0, int arg1, params object[] expected)
 	{
-		var expectedValues = TestHelper.ToValueArray(expected);
-		var assertCommand = new AssertCommand(expectedValues);
+		var assertCommand = new AssertCommand(expected);
 
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());

@@ -47,7 +47,7 @@ public sealed class ForEachTests
 	[InlineData("foreach $e in 1 | bypass {append $e;}", 1)]
 	[InlineData("foreach $e in 1,2,3 | bypass {append $e;}", 1, 2, 3)]
 	[InlineData("foreach $e in bypass {append $e;}")]
-	public void IterationElements(string source, params int[] expected)
+	public void IterationElements(string source, params object[] expected)
 	{
 		var appendCommand = new AppendElementCommand();
 		var expectedElements = TestHelper.ToValueArray(expected);

@@ -23,7 +23,7 @@ public sealed class IfTests
 	[InlineData("if true, 1, \"string\" | bypass {assert;}")]
 	public void IfTrue(string source)
 	{
-		var assertCommand = new AssertCommand(new Value[0]);
+		var assertCommand = new AssertCommand(new object[0]);
 
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);
@@ -46,7 +46,7 @@ public sealed class IfTests
 	[InlineData("if false, true, true {assert;}")]
 	public void IfFalse(string source)
 	{
-		var assertCommand = new AssertCommand(new Value[0]);
+		var assertCommand = new AssertCommand(new object[0]);
 
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);

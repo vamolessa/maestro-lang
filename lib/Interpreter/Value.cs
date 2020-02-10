@@ -57,6 +57,15 @@ namespace Maestro
 			this.asObject = ValueKind.FloatKind;
 		}
 
+		public Value(bool value)
+		{
+			this.asNumber = default;
+			if (value)
+				this.asObject = ValueKind.TrueKind;
+			else
+				this.asObject = ValueKind.FalseKind;
+		}
+
 		public Value(object value)
 		{
 			this.asNumber = default;
@@ -82,9 +91,7 @@ namespace Maestro
 
 		public static implicit operator Value(bool value)
 		{
-			return value ?
-				new Value(ValueKind.TrueKind) :
-				new Value(ValueKind.FalseKind);
+			return new Value(value);
 		}
 
 		public static implicit operator Value(string value)

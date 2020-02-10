@@ -16,9 +16,9 @@ public sealed class AssertCommand : ICommand<Tuple0>
 	public readonly Value[] expectedValues;
 	public Value[] gotValues;
 
-	public AssertCommand(params Value[] expectValues)
+	public AssertCommand(params object[] expectValues)
 	{
-		this.expectedValues = expectValues;
+		this.expectedValues = TestHelper.ToValueArray(expectValues);
 		this.gotValues = null;
 	}
 
@@ -132,11 +132,19 @@ public static class TestHelper
 	public static readonly Mode CompilerMode = Mode.Debug;
 	public static readonly AssertCleanupDebugger assertCleanupDebugger = new AssertCleanupDebugger();
 
-	public static Value[] ToValueArray(params int[] values)
+	public static Value[] ToValueArray(params object[] values)
 	{
 		var array = new Value[values.Length];
-		for (var i = 0; i < array.Length; i++)
-			array[i] = new Value(values[i]);
+		for (var index = 0; index < array.Length; index++)
+		{
+			switch (values[index])
+			{
+			case int i: array[index] = new Value(i); break;
+			case float f: array[index] = new Value(f); break;
+			case bool b: array[index] = new Value(b); break;
+			case object o: array[index] = new Value(o); break;
+			}
+		}
 		return array;
 	}
 
