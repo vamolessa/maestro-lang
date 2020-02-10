@@ -43,13 +43,20 @@ public sealed class AssertCommand : ICommand<Tuple0>
 
 public sealed class AssertCleanupDebugger : IDebugger
 {
+	public readonly int expectedStackCount;
+
+	public AssertCleanupDebugger(int expectedStackCount)
+	{
+		this.expectedStackCount = expectedStackCount;
+	}
+
 	public void OnBegin(VirtualMachine vm)
 	{
 	}
 
 	public void OnEnd(VirtualMachine vm)
 	{
-		Assert.Equal(0, vm.stack.count);
+		Assert.Equal(expectedStackCount, vm.stack.count);
 		Assert.Equal(0, vm.debugInfo.frames.count);
 		Assert.Equal(0, vm.debugInfo.variableInfos.count);
 	}
@@ -113,6 +120,15 @@ public readonly struct TestCompiled
 		this.engine = engine;
 		this.result = result;
 	}
+
+	public TestExecuteScope<Tuple0> ExecuteScope()
+	{
+		return new TestExecuteScope<Tuple0>(
+			engine,
+			engine.ExecuteScope(),
+			result.executable
+		);
+	}
 }
 
 public readonly struct TestCommand<T> where T : struct, ITuple
@@ -125,12 +141,44 @@ public readonly struct TestCommand<T> where T : struct, ITuple
 		this.engine = engine;
 		this.executable = executable;
 	}
+
+	public TestExecuteScope<T> ExecuteScope()
+	{
+		return new TestExecuteScope<T>(
+			engine,
+			engine.ExecuteScope(),
+			executable
+		);
+	}
+}
+
+public readonly struct TestExecuteScope<T> : System.IDisposable where T : struct, ITuple
+{
+	public readonly Engine engine;
+	public readonly ExecuteScope scope;
+	public readonly Executable<T> executable;
+
+	internal TestExecuteScope(Engine engine, ExecuteScope scope, Executable<T> executable)
+	{
+		this.engine = engine;
+		this.scope = scope;
+		this.executable = executable;
+	}
+
+	public void Run(T args, int expectedStackCount = 0)
+	{
+		TestHelper.Run(engine, scope, executable, args, expectedStackCount);
+	}
+
+	public void Dispose()
+	{
+		scope.Dispose();
+	}
 }
 
 public static class TestHelper
 {
 	public static readonly Mode CompilerMode = Mode.Debug;
-	public static readonly AssertCleanupDebugger assertCleanupDebugger = new AssertCleanupDebugger();
 
 	public static Value[] ToValueArray(params object[] values)
 	{
@@ -169,20 +217,22 @@ public static class TestHelper
 		return new TestCommand<T>(compiled.engine, executable.value);
 	}
 
-	public static void Run(this TestCompiled compiled)
+	public static void Run(this TestCompiled compiled, int expectedStackCount = 0)
 	{
-		Run(compiled.engine, compiled.result.executable, default);
+		using var scope = compiled.ExecuteScope();
+		scope.Run(default, expectedStackCount);
 	}
 
-	public static void Run<T>(this TestCommand<T> command, T args) where T : struct, ITuple
+	public static void Run<T>(this TestCommand<T> command, T args, int expectedStackCount = 0) where T : struct, ITuple
 	{
-		Run(command.engine, command.executable, args);
+		using var scope = command.ExecuteScope();
+		scope.Run(args, expectedStackCount);
 	}
 
-	private static void Run<T>(Engine engine, Executable<T> executable, T args) where T : struct, ITuple
+	internal static void Run<T>(Engine engine, ExecuteScope scope, Executable<T> executable, T args, int expectedStackCount) where T : struct, ITuple
 	{
-		engine.SetDebugger(assertCleanupDebugger);
-		var executeResult = engine.ExecuteScope().Execute(executable, args);
+		engine.SetDebugger(new AssertCleanupDebugger(expectedStackCount));
+		var executeResult = scope.Execute(executable, args);
 		if (executeResult.error.isSome)
 			throw new RuntimeErrorException(executeResult);
 	}

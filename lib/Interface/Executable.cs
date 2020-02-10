@@ -17,17 +17,21 @@ namespace Maestro
 	public readonly struct ExecuteScope : System.IDisposable
 	{
 		private readonly VirtualMachine vm;
-		private readonly int startIndex;
 
 		internal ExecuteScope(VirtualMachine vm)
 		{
 			this.vm = vm;
-			this.startIndex = vm.stack.count;
 		}
 
-		public int StackSize
+		public int StackCount
 		{
 			get { return vm.stack.count; }
+		}
+
+		public Value this[int index]
+		{
+			get { return vm.stack.buffer[index]; }
+			set { vm.stack.buffer[index] = value; }
 		}
 
 		public void PushValue(Value value)
@@ -45,6 +49,13 @@ namespace Maestro
 			var command = executable.chunk.commandDefinitions.buffer[executable.commandIndex];
 
 			var frameStackIndex = vm.stack.count;
+
+			vm.tupleSizes.count = 0;
+			vm.tupleSizes.PushBackUnchecked(frameStackIndex);
+
+			vm.inputSlices.count = 0;
+			vm.inputSlices.PushBackUnchecked(new Slice(0, frameStackIndex));
+
 			vm.stack.GrowUnchecked(args.Size);
 			args.Write(vm.stack.buffer, frameStackIndex);
 
@@ -60,12 +71,6 @@ namespace Maestro
 				executable.commandIndex
 			));
 
-			vm.tupleSizes.count = 0;
-			vm.tupleSizes.PushBackUnchecked(0);
-
-			vm.inputSlices.count = 0;
-			vm.inputSlices.PushBackUnchecked(new Slice(frameStackIndex, 0));
-
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnBegin(vm);
 
@@ -78,14 +83,13 @@ namespace Maestro
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnEnd(vm);
 
-			vm.stack.ZeroClear();
-			vm.debugInfo.Clear();
-
 			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
 		}
 
 		public void Dispose()
 		{
+			vm.stack.ZeroClear();
+			vm.debugInfo.Clear();
 		}
 	}
 }

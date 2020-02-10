@@ -57,7 +57,8 @@ namespace Maestro
 				if (testCommand.isSome)
 				{
 					System.Console.WriteLine("RUN MY COMMAND\n");
-					var executeResult = engine.ExecuteScope().Execute(testCommand.value, "from C#");
+					using var executeScope = engine.ExecuteScope();
+					var executeResult = executeScope.Execute(testCommand.value, "from C#");
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();

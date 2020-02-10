@@ -79,4 +79,36 @@ public sealed class CommandTests
 
 		assertCommand.AssertExpectedInputs();
 	}
+
+	[Theory]
+	[InlineData("command c {$$ | assert; return $$;}")]
+	[InlineData("command c {$$ | assert; return $$;}", 1)]
+	[InlineData("command c {$$ | assert; return $$;}", 1, 2, 3)]
+	public void ExecutingNewInstanceWithInputAndReturn(string source, params object[] rawValues)
+	{
+		var values = TestHelper.ToValueArray(rawValues);
+		var assertCommand = new AssertCommand(rawValues);
+
+		var engine = new Engine();
+		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
+		engine.RegisterCommand("assert", () => assertCommand);
+		source = "external command assert 0;external command bypass 0;\n" + source;
+		var compiled = TestHelper.Compile(engine, source);
+		var command = compiled.Intantiate<Tuple0>("c");
+
+		using (var s = command.ExecuteScope())
+		{
+			foreach (var value in values)
+				s.scope.PushValue(value);
+			s.Run(default, values.Length);
+
+			var returns = new Value[s.scope.StackCount];
+			for (var i = 0; i < returns.Length; i++)
+				returns[i] = s.scope[i];
+
+			Assert.Equal(values, returns);
+		}
+
+		assertCommand.AssertExpectedInputs();
+	}
 }
