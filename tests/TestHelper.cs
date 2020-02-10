@@ -43,15 +43,13 @@ public sealed class AssertCommand : ICommand<Tuple0>
 
 public sealed class AssertCleanupDebugger : IDebugger
 {
-	public int expectedStackSize = 0;
-
 	public void OnBegin(VirtualMachine vm)
 	{
 	}
 
 	public void OnEnd(VirtualMachine vm)
 	{
-		Assert.Equal(expectedStackSize, vm.stack.count);
+		Assert.Equal(0, vm.stack.count);
 		Assert.Equal(0, vm.debugInfo.frames.count);
 		Assert.Equal(0, vm.debugInfo.variableInfos.count);
 	}
@@ -155,7 +153,7 @@ public static class TestHelper
 		return new TestCompiled(engine, compileResult);
 	}
 
-	public static TestCommand<T> Intantiate<T>(TestCompiled compiled, string commandName) where T : struct, ITuple
+	public static TestCommand<T> Intantiate<T>(this TestCompiled compiled, string commandName) where T : struct, ITuple
 	{
 		var executable = compiled.engine.InstantiateCommand<T>(compiled.result, commandName);
 		if (!executable.isSome)
@@ -163,21 +161,20 @@ public static class TestHelper
 		return new TestCommand<T>(compiled.engine, executable.value);
 	}
 
-	public static void Run(this TestCompiled compiled, int expectedStackSize = 0)
+	public static void Run(this TestCompiled compiled)
 	{
-		Run(compiled.engine, compiled.result.executable, expectedStackSize);
+		Run(compiled.engine, compiled.result.executable, default);
 	}
 
-	public static void Run<T>(this TestCommand<T> command, int expectedStackSize = 0) where T : struct, ITuple
+	public static void Run<T>(this TestCommand<T> command, T args) where T : struct, ITuple
 	{
-		Run(command.engine, command.executable, expectedStackSize);
+		Run(command.engine, command.executable, args);
 	}
 
-	private static void Run<T>(Engine engine, Executable<T> executable, int expectedStackSize) where T : struct, ITuple
+	private static void Run<T>(Engine engine, Executable<T> executable, T args) where T : struct, ITuple
 	{
-		assertCleanupDebugger.expectedStackSize = expectedStackSize;
 		engine.SetDebugger(assertCleanupDebugger);
-		var executeResult = engine.Execute(executable, default);
+		var executeResult = engine.Execute(executable, args);
 		if (executeResult.error.isSome)
 			throw new RuntimeErrorException(executeResult);
 	}

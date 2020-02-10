@@ -41,6 +41,28 @@ namespace Maestro
 			return self.value0;
 		}
 
+		public static implicit operator Tuple1(int value)
+		{
+			return new Tuple1(new Value(value));
+		}
+
+		public static implicit operator Tuple1(float value)
+		{
+			return new Tuple1(new Value(value));
+		}
+
+		public static implicit operator Tuple1(bool value)
+		{
+			return value ?
+				new Tuple1(new Value(ValueKind.TrueKind)) :
+				new Tuple1(new Value(ValueKind.FalseKind));
+		}
+
+		public static implicit operator Tuple1(string value)
+		{
+			return new Tuple1(new Value(value));
+		}
+
 		public void Read(Value[] buffer, int index)
 		{
 			value0 = buffer[index];

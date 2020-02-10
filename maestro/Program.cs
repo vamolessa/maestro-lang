@@ -57,7 +57,7 @@ namespace Maestro
 				if (testCommand.isSome)
 				{
 					System.Console.WriteLine("RUN MY COMMAND\n");
-					var executeResult = engine.Execute(testCommand.value, new Value("from C#"));
+					var executeResult = engine.Execute(testCommand.value, "from C#");
 					if (executeResult.error.isSome)
 					{
 						sb.Clear();

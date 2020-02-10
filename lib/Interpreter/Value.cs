@@ -69,6 +69,28 @@ namespace Maestro
 			this.AppendTo(sb);
 			return sb.ToString();
 		}
+
+		public static implicit operator Value(int value)
+		{
+			return new Value(value);
+		}
+
+		public static implicit operator Value(float value)
+		{
+			return new Value(value);
+		}
+
+		public static implicit operator Value(bool value)
+		{
+			return value ?
+				new Value(ValueKind.TrueKind) :
+				new Value(ValueKind.FalseKind);
+		}
+
+		public static implicit operator Value(string value)
+		{
+			return new Value(value);
+		}
 	}
 
 	public static class ValueExtensions
