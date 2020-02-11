@@ -49,6 +49,7 @@ public sealed class VariableTests
 	[InlineData("1 | $var0, $var1; $var0, $var1 | assert;", 1, null)]
 	[InlineData("1, 2 | $var0, $var1; $var0, $var1 | assert;", 1, 2)]
 	[InlineData("1, 2, 3 | $var0, $var1; $var0, $var1 | assert;", 1, 2)]
+	[InlineData("33 | $var0; $var0 | $var1; $var1 | $var2; $var2 | assert;", 33)]
 	public void Values(string source, params object[] expected)
 	{
 		expected = expected ?? new object[] { null };

@@ -59,9 +59,6 @@ namespace Maestro
 			sourceIndex = state.sourceIndex;
 
 			isInPanicMode = false;
-
-			variables.count = 0;
-			scopes.count = 0;
 		}
 
 		public void BeginSource(Source source)
@@ -85,13 +82,13 @@ namespace Maestro
 				new Token(TokenKind.End, new Slice())
 			));
 
-			this.PushScope(ScopeType.Normal);
+			this.BeginScope(ScopeType.Normal);
 		}
 
 		public void EndSource()
 		{
 			var current = stateStack.PopLast();
-			this.PopScope();
+			this.EndScope();
 			RestoreState(current);
 
 			if (stateStack.count == 0)

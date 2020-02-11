@@ -196,14 +196,14 @@ public static class TestHelper
 		return array;
 	}
 
-	public static TestCompiled Compile(string source)
-	{
-		return Compile(new Engine(), source);
-	}
-
 	public static TestCompiled Compile(Engine engine, string source)
 	{
-		var compileResult = engine.CompileSource(new Source(new Uri("source"), source), CompilerMode, Option.None);
+		return Compile(engine, source, Option.None);
+	}
+
+	public static TestCompiled Compile(Engine engine, string source, Option<IImportResolver> importResolver)
+	{
+		var compileResult = engine.CompileSource(new Source(new Uri("source"), source), CompilerMode, importResolver);
 		if (compileResult.errors.count > 0)
 			throw new CompileErrorException(compileResult);
 		return new TestCompiled(engine, compileResult);

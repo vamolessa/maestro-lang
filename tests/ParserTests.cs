@@ -18,7 +18,7 @@ public sealed class ParserTests
 	[InlineData("(((false)));")]
 	public void SimpleStatement(string source)
 	{
-		TestHelper.Compile(source);
+		TestHelper.Compile(new Engine(), source);
 	}
 
 	[Theory]

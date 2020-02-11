@@ -187,11 +187,6 @@ namespace Maestro.CompileErrors
 		{
 			public string Format() => "Expected ';' after return";
 		}
-
-		internal struct CanNotReturnFromOutsideCommand : IFormattedMessage
-		{
-			public string Format() => "Can not return from outside a command";
-		}
 	}
 
 	namespace Block

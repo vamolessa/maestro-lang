@@ -14,12 +14,12 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public static void PushScope(this Compiler self, ScopeType scopeType)
+		public static void BeginScope(this Compiler self, ScopeType scopeType)
 		{
 			self.scopes.PushBackUnchecked(new Scope(scopeType, self.variables.count));
 		}
 
-		public static void PopScope(this Compiler self)
+		public static void EndScope(this Compiler self)
 		{
 			var scope = self.scopes.PopLast();
 

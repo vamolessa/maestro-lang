@@ -24,4 +24,27 @@ public sealed class ReturnTests
 		assertCalledCommand.AssertExpectedInputs();
 		assertNotCalledCommand.AssertNotCalled();
 	}
+
+	[Theory]
+	[InlineData("return;")]
+	[InlineData("return 1;", 1)]
+	[InlineData("return 1, 2, 3;", 1, 2, 3)]
+	[InlineData("return 1, true, \"string\";", 1, true, "string")]
+	public void ReturnFromRoot(string source, params object[] expected)
+	{
+		var values = TestHelper.ToValueArray(expected);
+
+		var engine = new Engine();
+		var compiled = TestHelper.Compile(engine, source);
+		using (var s = compiled.ExecuteScope())
+		{
+			s.Run(default, expected.Length);
+
+			var returns = new Value[s.scope.StackCount];
+			for (var i = 0; i < returns.Length; i++)
+				returns[i] = s.scope[i];
+
+			Assert.Equal(values, returns);
+		}
+	}
 }

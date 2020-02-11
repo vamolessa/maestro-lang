@@ -137,7 +137,7 @@ namespace Maestro
 			var name = CompilerHelper.GetSlice(compiler, nameSlice);
 
 			compiler.EmitDebugInstruction(Instruction.DebugPushDebugFrame);
-			compiler.PushScope(ScopeType.CommandBody);
+			compiler.BeginScope(ScopeType.CommandBody);
 
 			var parameterCount = 0;
 			var parametersSlice = compiler.parser.currentToken.slice;
@@ -182,7 +182,7 @@ namespace Maestro
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
-			compiler.PopScope();
+			compiler.EndScope();
 			compiler.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 
 			compiler.EmitInstruction(Instruction.PushEmptyTuple);
@@ -244,7 +244,7 @@ namespace Maestro
 
 			Expression(false);
 
-			compiler.PushScope(ScopeType.IterationBody);
+			compiler.BeginScope(ScopeType.IterationBody);
 			compiler.AddVariable(new Slice(), VariableFlag.Fulfilled);
 			compiler.AddVariable(elementVariableSlice, VariableFlag.NotRead);
 
@@ -256,7 +256,7 @@ namespace Maestro
 
 			compiler.EndEmitBackwardJump(Instruction.JumpBackward, loopJump);
 			compiler.EndEmitForwardJump(breakJump);
-			compiler.PopScope();
+			compiler.EndScope();
 		}
 
 		private void ReturnStatement()
@@ -268,14 +268,11 @@ namespace Maestro
 				Expression(false);
 
 			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-
 			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Return.ExpectedSemiColonAfterReturn());
 
-			var commandScope = compiler.GetTopCommandScope();
-			if (!commandScope.isSome)
-				compiler.AddSoftError(slice, new CompileErrors.Return.CanNotReturnFromOutsideCommand());
+			if (compiler.GetTopCommandScope().isSome)
+				compiler.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 
-			compiler.EmitDebugInstruction(Instruction.DebugPopDebugFrame);
 			compiler.EmitInstruction(Instruction.Return);
 		}
 
@@ -352,7 +349,7 @@ namespace Maestro
 
 		private void Block()
 		{
-			compiler.PushScope(ScopeType.Normal);
+			compiler.BeginScope(ScopeType.Normal);
 			while (
 				!compiler.parser.Check(TokenKind.End) &&
 				!compiler.parser.Check(TokenKind.CloseCurlyBrackets)
@@ -362,7 +359,7 @@ namespace Maestro
 			}
 
 			compiler.parser.Consume(TokenKind.CloseCurlyBrackets, new CompileErrors.Block.ExpectedCloseCurlyBracketsAfterBlock());
-			compiler.PopScope();
+			compiler.EndScope();
 		}
 
 		internal static void Group(CompilerController self)
