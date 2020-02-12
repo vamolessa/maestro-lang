@@ -47,7 +47,7 @@ namespace Maestro
 				{
 					var source = executable.chunk.sources.buffer[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
-						source.uri.value,
+						source.uri,
 						source.content,
 						error.slice,
 						sb
@@ -81,7 +81,7 @@ namespace Maestro
 				return;
 
 			var source = chunk.sources.buffer[chunk.FindSourceIndex(error.value.instructionIndex)];
-			FormattingHelper.AddHighlightSlice(source.uri.value, source.content, error.value.slice, sb);
+			FormattingHelper.AddHighlightSlice(source.uri, source.content, error.value.slice, sb);
 		}
 
 		public void FormatCallStackTrace(StringBuilder sb)

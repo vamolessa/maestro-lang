@@ -38,7 +38,7 @@ namespace Maestro
 		public static void Main(string[] args)
 		{
 			var content = System.IO.File.ReadAllText("scripts/script.mst");
-			var source = new Source(new Uri("script.mst"), content);
+			var source = new Source("script.mst", content);
 
 			var engine = new Engine();
 			engine.RegisterCommand("print", () => new PrintCommand());
@@ -46,7 +46,7 @@ namespace Maestro
 
 			var sb = new StringBuilder();
 
-			var compileResult = engine.CompileSource(source, Mode.Debug, null);
+			var compileResult = engine.CompileSource(source, Mode.Debug);
 			if (compileResult.TryGetExecutable(out var executable))
 			{
 				sb.Clear();

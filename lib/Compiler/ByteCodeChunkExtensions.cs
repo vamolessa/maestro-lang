@@ -45,7 +45,7 @@ namespace Maestro
 					var source = self.sources.buffer[sourceIndex];
 					if (sourceIndex != currentSourceIndex)
 					{
-						sb.AppendLine(source.uri.value);
+						sb.AppendLine(source.uri);
 						currentSourceIndex = sourceIndex;
 					}
 

@@ -198,12 +198,7 @@ public static class TestHelper
 
 	public static TestCompiled Compile(Engine engine, string source)
 	{
-		return Compile(engine, source, Option.None);
-	}
-
-	public static TestCompiled Compile(Engine engine, string source, Option<IImportResolver> importResolver)
-	{
-		var compileResult = engine.CompileSource(new Source(new Uri("source"), source), CompilerMode, importResolver);
+		var compileResult = engine.CompileSource(new Source("source", source), CompilerMode);
 		if (compileResult.errors.count > 0)
 			throw new CompileErrorException(compileResult);
 		return new TestCompiled(engine, compileResult);

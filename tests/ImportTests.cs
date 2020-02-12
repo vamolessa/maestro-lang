@@ -3,32 +3,32 @@ using Maestro;
 
 public sealed class ImportTests
 {
-	public sealed class TestImportResolver : IImportResolver
-	{
-		public readonly string otherSource;
-
-		public TestImportResolver(string otherSource)
-		{
-			this.otherSource = otherSource;
-		}
-
-		public Option<string> ResolveSource(Uri requestingSourceUri, Uri importUri)
-		{
-			return otherSource;
-		}
-	}
-
 	[Theory]
 	[InlineData("", "")]
 	[InlineData("command c {}", "c;")]
-	public void TwoSources(string otherSource, string source)
+	public void ImportLibrary(string libSource, string source)
 	{
-		var importResolver = new TestImportResolver(otherSource);
-
 		var engine = new Engine();
+		engine.RegisterLibrary(new Source("lib", libSource));
+
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		otherSource = "external command bypass 0;\n" + otherSource;
-		source = "external command bypass 0;import \"otherSource\";\n" + source;
-		TestHelper.Compile(engine, source, importResolver).Run();
+		libSource = "external command bypass 0;\n" + libSource;
+		source = "external command bypass 0;import \"lib\";\n" + source;
+		TestHelper.Compile(engine, source).Run();
+	}
+
+	[Theory]
+	[InlineData("", "import \"lib\";")]
+	public void ImportFail(string libSource, string source)
+	{
+		Assert.Throws<CompileErrorException>(() =>
+		{
+			var engine = new Engine();
+
+			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
+			libSource = "external command bypass 0;\n" + libSource;
+			source = "external command bypass 0;\n" + source;
+			TestHelper.Compile(engine, source).Run();
+		});
 	}
 }

@@ -6,11 +6,6 @@ namespace Maestro
 		Debug
 	}
 
-	public interface IImportResolver
-	{
-		Option<string> ResolveSource(Uri requestingSourceUri, Uri importUri);
-	}
-
 	public interface IDebugger
 	{
 		void OnBegin(VirtualMachine vm);

@@ -7,6 +7,12 @@ namespace Maestro
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
 		internal readonly ExternalCommandBindingRegistry bindingRegistry = new ExternalCommandBindingRegistry();
+		internal readonly SourceCollection librarySources = new SourceCollection();
+
+		public void RegisterLibrary(Source source)
+		{
+			librarySources.AddSource(source);
+		}
 
 		public void RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
@@ -28,10 +34,10 @@ namespace Maestro
 			));
 		}
 
-		public CompileResult CompileSource(Source source, Mode mode, Option<IImportResolver> importResolver)
+		public CompileResult CompileSource(Source source, Mode mode)
 		{
 			var chunk = new ByteCodeChunk();
-			var errors = controller.CompileSource(chunk, importResolver, mode, source);
+			var errors = controller.CompileSource(chunk, librarySources, mode, source);
 
 			var instances = EngineHelper.InstantiateExternalCommands(
 				bindingRegistry,

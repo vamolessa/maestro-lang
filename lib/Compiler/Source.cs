@@ -2,36 +2,36 @@ namespace Maestro
 {
 	public readonly struct Source
 	{
-		public readonly Uri uri;
+		public readonly string uri;
 		public readonly string content;
 
-		public Source(Uri uri, string content)
+		public Source(string uri, string content)
 		{
 			this.uri = uri;
 			this.content = content;
 		}
 	}
 
-	public readonly struct Uri
+	public sealed class SourceCollection
 	{
-		public readonly string value;
+		private Buffer<Source> sources = new Buffer<Source>();
 
-		public static Uri Resolve(Uri baseUri, string path)
+		public void AddSource(Source source)
 		{
-			return path.StartsWith("/") ?
-				new Uri(path) :
-				new Uri(baseUri.GetPrefix() + path);
+			if (!GetSource(source.uri).isSome)
+				sources.PushBack(source);
 		}
 
-		public Uri(string path)
+		public Option<Source> GetSource(string uri)
 		{
-			this.value = path.StartsWith("/") ? path : "/" + path;
-		}
+			for (var i = 0; i < sources.count; i++)
+			{
+				var source = sources.buffer[i];
+				if (source.uri == uri)
+					return source;
+			}
 
-		private string GetPrefix()
-		{
-			var prefixLength = value.LastIndexOf("/") + 1;
-			return value.Substring(0, prefixLength);
+			return Option.None;
 		}
 	}
 }
