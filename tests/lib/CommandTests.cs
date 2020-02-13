@@ -106,7 +106,7 @@ public sealed class CommandTests
 			for (var i = 0; i < returns.Length; i++)
 				returns[i] = s.scope[i];
 
-			Assert.Equal(values, returns);
+			Assert.Equal(rawValues, TestHelper.ToObjectArray(returns));
 		}
 
 		assertCommand.AssertExpectedInputs();

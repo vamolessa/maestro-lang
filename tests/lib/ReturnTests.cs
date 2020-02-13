@@ -32,8 +32,6 @@ public sealed class ReturnTests
 	[InlineData("return 1, true, \"string\";", 1, true, "string")]
 	public void ReturnFromRoot(string source, params object[] expected)
 	{
-		var values = TestHelper.ToValueArray(expected);
-
 		var engine = new Engine();
 		var compiled = TestHelper.Compile(engine, source);
 		using (var s = compiled.ExecuteScope())
@@ -44,7 +42,7 @@ public sealed class ReturnTests
 			for (var i = 0; i < returns.Length; i++)
 				returns[i] = s.scope[i];
 
-			Assert.Equal(values, returns);
+			Assert.Equal(expected, TestHelper.ToObjectArray(returns));
 		}
 	}
 }

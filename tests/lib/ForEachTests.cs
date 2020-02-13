@@ -50,13 +50,13 @@ public sealed class ForEachTests
 	public void IterationElements(string source, params object[] expected)
 	{
 		var appendCommand = new AppendElementCommand();
-		var expectedElements = TestHelper.ToValueArray(expected);
 
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("append", () => appendCommand);
 		source = "external command bypass 0;external command append 1;\n" + source;
 		TestHelper.Compile(engine, source).Run();
-		Assert.Equal(expectedElements, appendCommand.elements.ToArray());
+
+		Assert.Equal(expected, TestHelper.ToObjectArray(appendCommand.elements.ToArray()));
 	}
 }

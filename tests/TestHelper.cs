@@ -13,12 +13,12 @@ public sealed class BypassCommand<T> : ICommand<T> where T : struct, ITuple
 
 public sealed class AssertCommand : ICommand<Tuple0>
 {
-	public readonly Value[] expectedValues;
+	public readonly object[] expectedValues;
 	public Value[] gotValues;
 
-	public AssertCommand(params object[] expectValues)
+	public AssertCommand(params object[] expectedValues)
 	{
-		this.expectedValues = TestHelper.ToValueArray(expectValues);
+		this.expectedValues = expectedValues;
 		this.gotValues = null;
 	}
 
@@ -32,7 +32,7 @@ public sealed class AssertCommand : ICommand<Tuple0>
 
 	public void AssertExpectedInputs()
 	{
-		Assert.Equal(expectedValues, gotValues);
+		Assert.Equal(expectedValues, TestHelper.ToObjectArray(gotValues));
 	}
 
 	public void AssertNotCalled()
@@ -179,6 +179,23 @@ public readonly struct TestExecuteScope<T> : System.IDisposable where T : struct
 public static class TestHelper
 {
 	public static readonly Mode CompilerMode = Mode.Debug;
+
+	public static object[] ToObjectArray(params Value[] values)
+	{
+		var array = new object[values.Length];
+		for (var index = 0; index < array.Length; index++)
+		{
+			switch (values[index].asObject)
+			{
+			case ValueKind.False _: array[index] = false; break;
+			case ValueKind.True _: array[index] = true; break;
+			case ValueKind.Int _: array[index] = values[index].asNumber.asInt; break;
+			case ValueKind.Float _: array[index] = values[index].asNumber.asFloat; break;
+			default: array[index] = values[index].asObject; break;
+			}
+		}
+		return array;
+	}
 
 	public static Value[] ToValueArray(params object[] values)
 	{
