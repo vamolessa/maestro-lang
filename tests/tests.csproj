@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\lib\lib.csproj" />
     <ProjectReference Include="..\stdlib\stdlib.csproj" />
+    <ProjectReference Include="..\debuglib\debuglib.csproj" />
   </ItemGroup>
 
 </Project>
