@@ -14,9 +14,14 @@ namespace Maestro
 			librarySources.AddSource(source);
 		}
 
-		public void RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
+		public bool RegisterSingletonCommand<T>(string name, ICommand<T> command) where T : struct, ITuple
 		{
-			bindingRegistry.Register(new ExternalCommandBinding(
+			return RegisterCommand(name, () => command);
+		}
+
+		public bool RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
+		{
+			return bindingRegistry.Register(new ExternalCommandBinding(
 				new ExternalCommandDefinition(
 					name,
 					default(T).Size

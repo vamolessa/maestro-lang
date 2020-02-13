@@ -6,7 +6,7 @@ namespace Maestro
 
 		internal int startIndex;
 		internal Buffer<Value> stack;
-		internal IFormattedMessage errorMessage;
+		internal string errorMessage;
 
 		public Value GetInput(int index)
 		{
@@ -16,6 +16,11 @@ namespace Maestro
 		public void PushValue(Value value)
 		{
 			stack.PushBack(value);
+		}
+
+		public void Error(string errorMessage)
+		{
+			this.errorMessage = errorMessage;
 		}
 	}
 

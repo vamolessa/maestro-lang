@@ -39,9 +39,9 @@ namespace Maestro
 	{
 		public readonly int instructionIndex;
 		public readonly Slice slice;
-		public readonly IFormattedMessage message;
+		public readonly string message;
 
-		public RuntimeError(int instructionIndex, Slice slice, IFormattedMessage message)
+		public RuntimeError(int instructionIndex, Slice slice, string message)
 		{
 			this.instructionIndex = instructionIndex;
 			this.slice = slice;

@@ -17,11 +17,14 @@ namespace Maestro
 	{
 		internal Buffer<ExternalCommandBinding> bindings = new Buffer<ExternalCommandBinding>();
 
-		internal void Register(ExternalCommandBinding binding)
+		internal bool Register(ExternalCommandBinding binding)
 		{
 			var existingBinding = Find(binding.definition.name);
-			if (!existingBinding.isSome)
-				bindings.PushBack(binding);
+			if (existingBinding.isSome)
+				return false;
+
+			bindings.PushBack(binding);
+			return true;
 		}
 
 		internal Option<ExternalCommandBinding> Find(string name)

@@ -139,6 +139,26 @@ namespace Maestro
 			}
 		}
 
+		public static string GetTypeName(this Value self)
+		{
+			switch (self.asObject)
+			{
+			case null:
+				return "null";
+			case ValueKind.False _:
+			case ValueKind.True _:
+				return "bool";
+			case ValueKind.Int _:
+				return "int";
+			case ValueKind.Float _:
+				return "float";
+			case string _:
+				return "string";
+			default:
+				return "object";
+			}
+		}
+
 		public static void AppendTo(this Value self, StringBuilder sb)
 		{
 			switch (self.asObject)

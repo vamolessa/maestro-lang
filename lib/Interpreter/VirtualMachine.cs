@@ -73,7 +73,7 @@ namespace Maestro
 		public DebugInfo debugInfo;
 		internal Option<IDebugger> debugger;
 
-		public RuntimeError NewError(ByteCodeChunk chunk, IFormattedMessage message)
+		public RuntimeError NewError(ByteCodeChunk chunk, string message)
 		{
 			var ip = -1;
 			if (stackFrames.count > 0)

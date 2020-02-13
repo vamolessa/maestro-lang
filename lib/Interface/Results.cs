@@ -75,7 +75,7 @@ namespace Maestro
 			if (!error.isSome)
 				return;
 
-			sb.Append(error.value.message.Format());
+			sb.Append(error.value.message);
 
 			if (error.value.instructionIndex < 0 || chunk.sources.count == 0)
 				return;

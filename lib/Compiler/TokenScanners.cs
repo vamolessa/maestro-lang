@@ -27,7 +27,7 @@ namespace Maestro
 			new ExactScanner("external").ForToken(TokenKind.External),
 			new ExactScanner("return").ForToken(TokenKind.Return),
 
-			new IdentifierScanner("", "_-").ForToken(TokenKind.Identifier),
+			new IdentifierScanner("", "_+-*/<>=").ForToken(TokenKind.Identifier),
 			new IdentifierScanner("$", "_-").ForToken(TokenKind.Variable),
 			new ExactScanner("$$").ForToken(TokenKind.InputVariable),
 
