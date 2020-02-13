@@ -106,36 +106,15 @@ namespace Maestro.StdLib
 			{
 			case null:
 				for (var i = 0; i < context.inputCount; i++)
-				{
-					var value = context.GetInput(i);
-					if (!(value.asObject is null))
-					{
-						context.PushValue(false);
-						return;
-					}
-				}
+					context.PushValue(context.GetInput(i).asObject is null);
 				break;
 			case ValueKind.False _:
 				for (var i = 0; i < context.inputCount; i++)
-				{
-					var value = context.GetInput(i);
-					if (!(value.asObject is ValueKind.False))
-					{
-						context.PushValue(false);
-						return;
-					}
-				}
+					context.PushValue(context.GetInput(i).asObject is ValueKind.False);
 				break;
 			case ValueKind.True _:
 				for (var i = 0; i < context.inputCount; i++)
-				{
-					var value = context.GetInput(i);
-					if (!(value.asObject is ValueKind.True))
-					{
-						context.PushValue(false);
-						return;
-					}
-				}
+					context.PushValue(context.GetInput(i).asObject is ValueKind.True);
 				break;
 			case ValueKind.Int _:
 				for (var i = 0; i < context.inputCount; i++)
@@ -144,22 +123,14 @@ namespace Maestro.StdLib
 					switch (value.asObject)
 					{
 					case ValueKind.Int _:
-						if (args.value0.asNumber.asInt != value.asNumber.asInt)
-						{
-							context.PushValue(false);
-							return;
-						}
+						context.PushValue(args.value0.asNumber.asInt == value.asNumber.asInt);
 						break;
 					case ValueKind.Float _:
-						if (args.value0.asNumber.asInt != value.asNumber.asFloat)
-						{
-							context.PushValue(false);
-							return;
-						}
+						context.PushValue(args.value0.asNumber.asInt == value.asNumber.asFloat);
 						break;
 					default:
 						context.PushValue(false);
-						return;
+						break;
 					}
 				}
 				break;
@@ -170,57 +141,31 @@ namespace Maestro.StdLib
 					switch (value.asObject)
 					{
 					case ValueKind.Int _:
-						if (args.value0.asNumber.asFloat != value.asNumber.asInt)
-						{
-							context.PushValue(false);
-							return;
-						}
+						context.PushValue(args.value0.asNumber.asFloat == value.asNumber.asInt);
 						break;
 					case ValueKind.Float _:
-						if (args.value0.asNumber.asFloat != value.asNumber.asFloat)
-						{
-							context.PushValue(false);
-							return;
-						}
+						context.PushValue(args.value0.asNumber.asFloat == value.asNumber.asFloat);
 						break;
 					default:
 						context.PushValue(false);
-						return;
+						break;
 					}
 				}
 				break;
 			case string argString:
 				for (var i = 0; i < context.inputCount; i++)
 				{
-					var value = context.GetInput(i);
-					if (value.asObject is string s)
-					{
-						if (argString != s)
-						{
-							context.PushValue(false);
-							return;
-						}
-					}
-					else
-					{
-						context.PushValue(false);
-						return;
-					}
+					context.PushValue(
+						context.GetInput(i).asObject is string s &&
+						argString == s
+					);
 				}
 				break;
 			default:
 				for (var i = 0; i < context.inputCount; i++)
-				{
-					var value = context.GetInput(i);
-					if (!args.value0.Equals(value.asObject))
-					{
-						context.PushValue(false);
-						return;
-					}
-				}
+					context.PushValue(args.value0.asObject.Equals(context.GetInput(i)));
 				break;
 			}
-			context.PushValue(true);
 		}
 	}
 }
