@@ -1,6 +1,6 @@
 namespace Maestro.StdLib
 {
-	public sealed class RemoveNullsCommand : ICommand<Tuple0>
+	public sealed class ExceptNullsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -13,7 +13,7 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class RemoveBoolsCommand : ICommand<Tuple0>
+	public sealed class ExceptBoolsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -33,7 +33,7 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class RemoveIntsCommand : ICommand<Tuple0>
+	public sealed class ExceptIntsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -46,9 +46,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class RemoveFloatsCommand : ICommand<Tuple1>
+	public sealed class ExceptFloatsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{
@@ -59,9 +59,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class RemoveStringsCommand : ICommand<Tuple1>
+	public sealed class ExceptStringsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{
@@ -72,9 +72,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class RemoveObjectsCommand : ICommand<Tuple1>
+	public sealed class ExceptObjectsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{

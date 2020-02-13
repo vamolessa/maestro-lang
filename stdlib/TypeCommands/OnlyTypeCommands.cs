@@ -1,6 +1,6 @@
 namespace Maestro.StdLib
 {
-	public sealed class KeepNullsCommand : ICommand<Tuple0>
+	public sealed class OnlyNullsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -13,7 +13,7 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class KeepBoolsCommand : ICommand<Tuple0>
+	public sealed class OnlyBoolsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -31,7 +31,7 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class KeepIntsCommand : ICommand<Tuple0>
+	public sealed class OnlyIntsCommand : ICommand<Tuple0>
 	{
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -44,9 +44,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class KeepFloatsCommand : ICommand<Tuple1>
+	public sealed class OnlyFloatsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{
@@ -57,9 +57,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class KeepStringsCommand : ICommand<Tuple1>
+	public sealed class OnlyStringsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{
@@ -70,9 +70,9 @@ namespace Maestro.StdLib
 		}
 	}
 
-	public sealed class KeepObjectsCommand : ICommand<Tuple1>
+	public sealed class OnlyObjectsCommand : ICommand<Tuple0>
 	{
-		public void Execute(ref Context context, Tuple1 args)
+		public void Execute(ref Context context, Tuple0 args)
 		{
 			for (var i = 0; i < context.inputCount; i++)
 			{

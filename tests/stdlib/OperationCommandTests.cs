@@ -60,6 +60,9 @@ public sealed class OperationCommandTests
 	[InlineData("1.0 | = 1 | assert;", true)]
 	[InlineData("\"\" | = \"\" | assert;", true)]
 	[InlineData("\"\" | = \"string\" | assert;", false)]
+	[InlineData("true | = 1 | assert;", false)]
+	[InlineData("1 | = 2.3 | assert;", false)]
+	[InlineData("2.3 | = \"string\" | assert;", false)]
 	public void Tests(string source, params object[] expected)
 	{
 		var assertCommand = new AssertCommand(expected);

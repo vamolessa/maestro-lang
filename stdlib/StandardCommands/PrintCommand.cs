@@ -6,6 +6,12 @@ namespace Maestro.StdLib
 	public sealed class PrintCommand : ICommand<Tuple0>
 	{
 		private readonly StringBuilder sb = new StringBuilder();
+		private readonly System.Action<string> writter;
+
+		public PrintCommand(System.Action<string> writter)
+		{
+			this.writter = writter;
+		}
 
 		public void Execute(ref Context context, Tuple0 args)
 		{
@@ -36,7 +42,7 @@ namespace Maestro.StdLib
 
 				sb.Append(' ');
 			}
-			System.Console.WriteLine(sb);
+			this.writter(sb.ToString());
 			sb.Clear();
 		}
 	}

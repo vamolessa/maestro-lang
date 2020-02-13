@@ -29,7 +29,7 @@ namespace Maestro.StdLib
 			}
 
 			var index = args.value0.asNumber.asInt;
-			if (index < context.inputCount)
+			if (index >= 0 && index < context.inputCount)
 				context.PushValue(context.GetInput(index));
 			else
 				context.PushValue(default);

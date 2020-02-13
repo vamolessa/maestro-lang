@@ -2,7 +2,7 @@
 {
 	public static class EngineStandardCommandsExtensions
 	{
-		public static void RegisterStandardCommands(this Engine engine)
+		public static void RegisterStandardCommands(this Engine engine, System.Action<string> writter)
 		{
 			engine.RegisterLibrary(new Source("std",
 				"external command print 0;" +
@@ -17,7 +17,7 @@
 				""
 			));
 
-			engine.RegisterSingletonCommand("print", new PrintCommand());
+			engine.RegisterSingletonCommand("print", new PrintCommand(writter));
 			engine.RegisterSingletonCommand("error", new ErrorCommand());
 
 			engine.RegisterSingletonCommand("count", new CountCommand());
