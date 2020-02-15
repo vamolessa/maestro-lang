@@ -4,31 +4,6 @@ using System.Text;
 
 public sealed class JsonTests
 {
-	private static Json.Value ObjectToValue(object value)
-	{
-		switch (value)
-		{
-		case bool b: return new Json.Value(b);
-		case int i: return new Json.Value(i);
-		case float f: return new Json.Value(f);
-		case string s: return new Json.Value(s);
-		default: return new Json.Value();
-		}
-	}
-
-	private static object ValueToObject(Json.Value value)
-	{
-		if (value.TryGet(out bool b))
-			return b;
-		if (value.TryGet(out int i))
-			return i;
-		if (value.TryGet(out float f))
-			return f;
-		if (value.TryGet(out string s))
-			return s;
-		return null;
-	}
-
 	[Theory]
 	[InlineData(null, "null")]
 	[InlineData(true, "true")]
@@ -41,7 +16,15 @@ public sealed class JsonTests
 	[InlineData("\"\\/\b\f\n\r\t", "\"\\\"\\\\/\\b\\f\\n\\r\\t\"")]
 	public void SerializeValue(object value, string expectedJson)
 	{
-		var jsonValue = ObjectToValue(value);
+		Json.Value jsonValue = value switch
+		{
+			bool b => b,
+			int i => i,
+			float f => f,
+			string s => s,
+			_ => default
+		};
+
 		var sb = new StringBuilder();
 		Json.Serialize(jsonValue, sb);
 		Assert.Equal(expectedJson, sb.ToString());
@@ -94,7 +77,7 @@ public sealed class JsonTests
 	{
 		var success = Json.TryDeserialize(json, out var value);
 		Assert.True(success);
-		Assert.Equal(expectedValue, ValueToObject(value));
+		Assert.Equal(expectedValue, value.wrapped);
 	}
 
 	[Fact]
@@ -109,21 +92,21 @@ public sealed class JsonTests
 
 		Assert.True(value["array"].IsArray);
 		Assert.Equal(6, value["array"].Count);
-		Assert.Equal("string", value["array"][0].GetOr(""));
-		Assert.False(value["array"][1].GetOr(true));
-		Assert.True(value["array"][2].IsNull);
-		Assert.Equal(0.25f, value["array"][3].GetOr(0.0f));
+		Assert.Equal("string", value["array"][0].wrapped);
+		Assert.Equal(false, value["array"][1].wrapped);
+		Assert.Null(value["array"][2].wrapped);
+		Assert.Equal(0.25f, value["array"][3].wrapped);
 
 		Assert.True(value["array"][4].IsObject);
-		Assert.Equal(7, value["array"][4]["int"].GetOr(0));
-		Assert.False(value["array"][4]["bool"].GetOr(true));
-		Assert.True(value["array"][4]["null"].IsNull);
-		Assert.Equal("some text", value["array"][4]["string"].GetOr(""));
+		Assert.Equal(7, value["array"][4]["int"].wrapped);
+		Assert.Equal(false, value["array"][4]["bool"].wrapped);
+		Assert.Null(value["array"][4]["null"].wrapped);
+		Assert.Equal("some text", value["array"][4]["string"].wrapped);
 
 		Assert.True(value["array"][5].IsArray);
 		Assert.Equal(0, value["array"][5].Count);
 
-		Assert.Equal("asdad", value["str"].GetOr(""));
+		Assert.Equal("asdad", value["str"].wrapped);
 		Assert.True(value["empty"].IsObject);
 	}
 }

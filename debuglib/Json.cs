@@ -1,50 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Maestro.Debug
 {
 	public static class Json
 	{
-		private static class ValueKind
-		{
-			public sealed class False { }
-			public sealed class True { }
-			public sealed class Int { }
-			public sealed class Float { }
-
-			public static readonly False FalseKind = new False();
-			public static readonly True TrueKind = new True();
-			public static readonly Int IntKind = new Int();
-			public static readonly Float FloatKind = new Float();
-		}
-
-		[StructLayout(LayoutKind.Explicit)]
-		internal readonly struct Number
-		{
-			[FieldOffset(0)]
-			public readonly int asInt;
-			[FieldOffset(0)]
-			public readonly float asFloat;
-
-			public Number(int value)
-			{
-				this.asFloat = default;
-				this.asInt = value;
-			}
-
-			public Number(float value)
-			{
-				this.asInt = default;
-				this.asFloat = value;
-			}
-		}
-
 		public readonly struct Value
 		{
-			internal readonly Number asNumber;
-			internal readonly object asObject;
+			public readonly object wrapped;
 
 			public static Value NewArray()
 			{
@@ -56,60 +20,32 @@ namespace Maestro.Debug
 				return new Value(new Dictionary<string, Value>());
 			}
 
-			public Value(bool value)
-			{
-				this.asNumber = default;
-				if (value)
-					this.asObject = ValueKind.TrueKind;
-				else
-					this.asObject = ValueKind.FalseKind;
-			}
-
-			public Value(int value)
-			{
-				this.asNumber = new Number(value);
-				this.asObject = ValueKind.IntKind;
-			}
-
-			public Value(float value)
-			{
-				this.asNumber = new Number(value);
-				this.asObject = ValueKind.FloatKind;
-			}
-
-			public Value(string value)
-			{
-				this.asNumber = default;
-				this.asObject = value;
-			}
-
 			private Value(object value)
 			{
-				this.asNumber = default;
-				this.asObject = value;
+				wrapped = value;
 			}
 
 			public int Count
 			{
-				get { return asObject is List<Value> l ? l.Count : 0; }
+				get { return wrapped is List<Value> l ? l.Count : 0; }
 			}
 
 			public Value this[int index]
 			{
-				get { return asObject is List<Value> l ? l[index] : default; }
-				set { if (asObject is List<Value> l) l[index] = value; }
+				get { return wrapped is List<Value> l ? l[index] : default; }
+				set { if (wrapped is List<Value> l) l[index] = value; }
 			}
 
 			public void Add(Value value)
 			{
-				if (asObject is List<Value> l)
+				if (wrapped is List<Value> l)
 					l.Add(value);
 			}
 
 			public Value this[string key]
 			{
-				get { return asObject is Dictionary<string, Value> d && d.TryGetValue(key, out var v) ? v : default; }
-				set { if (asObject is Dictionary<string, Value> d) d[key] = value; }
+				get { return wrapped is Dictionary<string, Value> d && d.TryGetValue(key, out var v) ? v : default; }
+				set { if (wrapped is Dictionary<string, Value> d) d[key] = value; }
 			}
 
 			public static implicit operator Value(bool value)
@@ -132,102 +68,14 @@ namespace Maestro.Debug
 				return new Value(value);
 			}
 
-			public bool IsNull
-			{
-				get { return asObject is null; }
-			}
-
 			public bool IsArray
 			{
-				get { return asObject is List<Value>; }
+				get { return wrapped is List<Value>; }
 			}
 
 			public bool IsObject
 			{
-				get { return asObject is Dictionary<string, Value>; }
-			}
-
-			public bool TryGet(out bool value)
-			{
-				switch (asObject)
-				{
-				case ValueKind.False _:
-					value = false;
-					return true;
-				case ValueKind.True _:
-					value = true;
-					return true;
-				default:
-					value = default;
-					return false;
-				}
-			}
-
-			public bool TryGet(out int value)
-			{
-				if (asObject is ValueKind.Int)
-				{
-					value = asNumber.asInt;
-					return true;
-				}
-				else
-				{
-					value = default;
-					return false;
-				}
-			}
-
-			public bool TryGet(out float value)
-			{
-				if (asObject is ValueKind.Float)
-				{
-					value = asNumber.asFloat;
-					return true;
-				}
-				else
-				{
-					value = default;
-					return false;
-				}
-			}
-
-			public bool TryGet(out string value)
-			{
-				if (asObject is string s)
-				{
-					value = s;
-					return true;
-				}
-				else
-				{
-					value = default;
-					return false;
-				}
-			}
-
-			public bool GetOr(bool defaultValue)
-			{
-				switch (asObject)
-				{
-				case ValueKind.False _: return false;
-				case ValueKind.True _: return true;
-				default: return defaultValue;
-				}
-			}
-
-			public int GetOr(int defaultValue)
-			{
-				return asObject is ValueKind.Int ? asNumber.asInt : defaultValue;
-			}
-
-			public float GetOr(float defaultValue)
-			{
-				return asObject is ValueKind.Float ? asNumber.asFloat : defaultValue;
-			}
-
-			public string GetOr(string defaultValue)
-			{
-				return asObject is string s ? s : defaultValue;
+				get { return wrapped is Dictionary<string, Value>; }
 			}
 		}
 
@@ -237,22 +85,19 @@ namespace Maestro.Debug
 
 		public static void Serialize(Value value, StringBuilder sb)
 		{
-			switch (value.asObject)
+			switch (value.wrapped)
 			{
 			case null:
 				sb.Append("null");
 				break;
-			case ValueKind.False _:
-				sb.Append("false");
+			case bool b:
+				sb.Append(b ? "true" : "false");
 				break;
-			case ValueKind.True _:
-				sb.Append("true");
+			case int i:
+				sb.Append(i);
 				break;
-			case ValueKind.Int _:
-				sb.Append(value.asNumber.asInt);
-				break;
-			case ValueKind.Float _:
-				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", value.asNumber.asFloat);
+			case float f:
+				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", f);
 				break;
 			case string s:
 				sb.Append('"');
@@ -323,20 +168,20 @@ namespace Maestro.Debug
 				Consume(source, ref index, 'l');
 				Consume(source, ref index, 'l');
 				SkipWhiteSpace(source, ref index);
-				return new Value(null);
+				return new Value();
 			case 'f':
 				Consume(source, ref index, 'a');
 				Consume(source, ref index, 'l');
 				Consume(source, ref index, 's');
 				Consume(source, ref index, 'e');
 				SkipWhiteSpace(source, ref index);
-				return new Value(false);
+				return false;
 			case 't':
 				Consume(source, ref index, 'r');
 				Consume(source, ref index, 'u');
 				Consume(source, ref index, 'e');
 				SkipWhiteSpace(source, ref index);
-				return new Value(true);
+				return true;
 			case '"':
 				return ConsumeString(source, ref index, sb);
 			case '[':
@@ -368,7 +213,7 @@ namespace Maestro.Debug
 							var key = ConsumeString(source, ref index, sb);
 							Consume(source, ref index, ':');
 							var value = Parse(source, ref index, sb);
-							obj[key.asObject as string] = value;
+							obj[key.wrapped as string] = value;
 						} while (Match(source, ref index, ','));
 						Consume(source, ref index, '}');
 					}
@@ -415,11 +260,11 @@ namespace Maestro.Debug
 
 						fraction += integer;
 						SkipWhiteSpace(source, ref index);
-						return new Value(negative ? -fraction : fraction);
+						return negative ? -fraction : fraction;
 					}
 
 					SkipWhiteSpace(source, ref index);
-					return new Value(negative ? -integer : integer);
+					return negative ? -integer : integer;
 				}
 			}
 		}
@@ -466,7 +311,7 @@ namespace Maestro.Debug
 				{
 				case '"':
 					SkipWhiteSpace(source, ref index);
-					return new Value(sb.ToString());
+					return sb.ToString();
 				case '\\':
 					switch (Next(source, ref index))
 					{
