@@ -45,6 +45,15 @@ namespace Maestro
 		public readonly Number asNumber;
 		public readonly object asObject;
 
+		public Value(bool value)
+		{
+			this.asNumber = default;
+			if (value)
+				this.asObject = ValueKind.TrueKind;
+			else
+				this.asObject = ValueKind.FalseKind;
+		}
+
 		public Value(int value)
 		{
 			this.asNumber = new Number(value);
@@ -55,15 +64,6 @@ namespace Maestro
 		{
 			this.asNumber = new Number(value);
 			this.asObject = ValueKind.FloatKind;
-		}
-
-		public Value(bool value)
-		{
-			this.asNumber = default;
-			if (value)
-				this.asObject = ValueKind.TrueKind;
-			else
-				this.asObject = ValueKind.FalseKind;
 		}
 
 		public Value(object value)

@@ -1,156 +1,258 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Maestro.Debug
 {
-	public readonly struct JsonValue
-	{
-		public readonly object wrapped;
-
-		public static JsonValue NewArray()
-		{
-			return new JsonValue(new List<JsonValue>());
-		}
-
-		public static JsonValue NewObject()
-		{
-			return new JsonValue(new Dictionary<string, JsonValue>());
-		}
-
-		public JsonValue(object value)
-		{
-			wrapped = value;
-		}
-
-		public int Count
-		{
-			get { return wrapped is List<JsonValue> l ? l.Count : 0; }
-		}
-
-		public JsonValue this[int index]
-		{
-			get { return wrapped is List<JsonValue> l ? l[index] : default; }
-			set { if (wrapped is List<JsonValue> l) l[index] = value; }
-		}
-
-		public void Add(JsonValue value)
-		{
-			if (wrapped is List<JsonValue> l)
-				l.Add(value);
-		}
-
-		public JsonValue this[string key]
-		{
-			get { return wrapped is Dictionary<string, JsonValue> d && d.TryGetValue(key, out var v) ? v : default; }
-			set { if (wrapped is Dictionary<string, JsonValue> d) d[key] = value; }
-		}
-
-		public static implicit operator JsonValue(bool value)
-		{
-			return new JsonValue(value);
-		}
-
-		public static implicit operator JsonValue(int value)
-		{
-			return new JsonValue(value);
-		}
-
-		public static implicit operator JsonValue(float value)
-		{
-			return new JsonValue(value);
-		}
-
-		public static implicit operator JsonValue(string value)
-		{
-			return new JsonValue(value);
-		}
-
-		public bool IsArray
-		{
-			get { return wrapped is List<JsonValue>; }
-		}
-
-		public bool IsObject
-		{
-			get { return wrapped is Dictionary<string, JsonValue>; }
-		}
-
-		public bool TryGet(out bool value)
-		{
-			if (wrapped is bool v)
-			{
-				value = v;
-				return true;
-			}
-			else
-			{
-				value = default;
-				return false;
-			}
-		}
-
-		public bool TryGet(out int value)
-		{
-			if (wrapped is int v)
-			{
-				value = v;
-				return true;
-			}
-			else
-			{
-				value = default;
-				return false;
-			}
-		}
-
-		public bool TryGet(out float value)
-		{
-			if (wrapped is float v)
-			{
-				value = v;
-				return true;
-			}
-			else
-			{
-				value = default;
-				return false;
-			}
-		}
-
-		public bool TryGet(out string value)
-		{
-			if (wrapped is string v)
-			{
-				value = v;
-				return true;
-			}
-			else
-			{
-				value = default;
-				return false;
-			}
-		}
-	}
-
 	public static class Json
 	{
+		private static class ValueKind
+		{
+			public sealed class False { }
+			public sealed class True { }
+			public sealed class Int { }
+			public sealed class Float { }
+
+			public static readonly False FalseKind = new False();
+			public static readonly True TrueKind = new True();
+			public static readonly Int IntKind = new Int();
+			public static readonly Float FloatKind = new Float();
+		}
+
+		[StructLayout(LayoutKind.Explicit)]
+		internal readonly struct Number
+		{
+			[FieldOffset(0)]
+			public readonly int asInt;
+			[FieldOffset(0)]
+			public readonly float asFloat;
+
+			public Number(int value)
+			{
+				this.asFloat = default;
+				this.asInt = value;
+			}
+
+			public Number(float value)
+			{
+				this.asInt = default;
+				this.asFloat = value;
+			}
+		}
+
+		public readonly struct Value
+		{
+			internal readonly Number asNumber;
+			internal readonly object asObject;
+
+			public static Value NewArray()
+			{
+				return new Value(new List<Value>());
+			}
+
+			public static Value NewObject()
+			{
+				return new Value(new Dictionary<string, Value>());
+			}
+
+			public Value(bool value)
+			{
+				this.asNumber = default;
+				if (value)
+					this.asObject = ValueKind.TrueKind;
+				else
+					this.asObject = ValueKind.FalseKind;
+			}
+
+			public Value(int value)
+			{
+				this.asNumber = new Number(value);
+				this.asObject = ValueKind.IntKind;
+			}
+
+			public Value(float value)
+			{
+				this.asNumber = new Number(value);
+				this.asObject = ValueKind.FloatKind;
+			}
+
+			public Value(string value)
+			{
+				this.asNumber = default;
+				this.asObject = value;
+			}
+
+			private Value(object value)
+			{
+				this.asNumber = default;
+				this.asObject = value;
+			}
+
+			public int Count
+			{
+				get { return asObject is List<Value> l ? l.Count : 0; }
+			}
+
+			public Value this[int index]
+			{
+				get { return asObject is List<Value> l ? l[index] : default; }
+				set { if (asObject is List<Value> l) l[index] = value; }
+			}
+
+			public void Add(Value value)
+			{
+				if (asObject is List<Value> l)
+					l.Add(value);
+			}
+
+			public Value this[string key]
+			{
+				get { return asObject is Dictionary<string, Value> d && d.TryGetValue(key, out var v) ? v : default; }
+				set { if (asObject is Dictionary<string, Value> d) d[key] = value; }
+			}
+
+			public static implicit operator Value(bool value)
+			{
+				return new Value(value);
+			}
+
+			public static implicit operator Value(int value)
+			{
+				return new Value(value);
+			}
+
+			public static implicit operator Value(float value)
+			{
+				return new Value(value);
+			}
+
+			public static implicit operator Value(string value)
+			{
+				return new Value(value);
+			}
+
+			public bool IsNull
+			{
+				get { return asObject is null; }
+			}
+
+			public bool IsArray
+			{
+				get { return asObject is List<Value>; }
+			}
+
+			public bool IsObject
+			{
+				get { return asObject is Dictionary<string, Value>; }
+			}
+
+			public bool TryGet(out bool value)
+			{
+				switch (asObject)
+				{
+				case ValueKind.False _:
+					value = false;
+					return true;
+				case ValueKind.True _:
+					value = true;
+					return true;
+				default:
+					value = default;
+					return false;
+				}
+			}
+
+			public bool TryGet(out int value)
+			{
+				if (asObject is ValueKind.Int)
+				{
+					value = asNumber.asInt;
+					return true;
+				}
+				else
+				{
+					value = default;
+					return false;
+				}
+			}
+
+			public bool TryGet(out float value)
+			{
+				if (asObject is ValueKind.Float)
+				{
+					value = asNumber.asFloat;
+					return true;
+				}
+				else
+				{
+					value = default;
+					return false;
+				}
+			}
+
+			public bool TryGet(out string value)
+			{
+				if (asObject is string s)
+				{
+					value = s;
+					return true;
+				}
+				else
+				{
+					value = default;
+					return false;
+				}
+			}
+
+			public bool GetOr(bool defaultValue)
+			{
+				switch (asObject)
+				{
+				case ValueKind.False _: return false;
+				case ValueKind.True _: return true;
+				default: return defaultValue;
+				}
+			}
+
+			public int GetOr(int defaultValue)
+			{
+				return asObject is ValueKind.Int ? asNumber.asInt : defaultValue;
+			}
+
+			public float GetOr(float defaultValue)
+			{
+				return asObject is ValueKind.Float ? asNumber.asFloat : defaultValue;
+			}
+
+			public string GetOr(string defaultValue)
+			{
+				return asObject is string s ? s : defaultValue;
+			}
+		}
+
 		private sealed class JsonParseException : System.Exception
 		{
 		}
 
-		public static void Serialize(JsonValue value, StringBuilder sb)
+		public static void Serialize(Value value, StringBuilder sb)
 		{
-			switch (value.wrapped)
+			switch (value.asObject)
 			{
-			case bool b:
-				sb.Append(b ? "true" : "false");
+			case null:
+				sb.Append("null");
 				break;
-			case int i:
-				sb.Append(i);
+			case ValueKind.False _:
+				sb.Append("false");
 				break;
-			case float f:
-				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", f);
+			case ValueKind.True _:
+				sb.Append("true");
+				break;
+			case ValueKind.Int _:
+				sb.Append(value.asNumber.asInt);
+				break;
+			case ValueKind.Float _:
+				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", value.asNumber.asFloat);
 				break;
 			case string s:
 				sb.Append('"');
@@ -170,7 +272,7 @@ namespace Maestro.Debug
 				}
 				sb.Append('"');
 				break;
-			case List<JsonValue> l:
+			case List<Value> l:
 				sb.Append('[');
 				foreach (var v in l)
 				{
@@ -181,7 +283,7 @@ namespace Maestro.Debug
 					sb.Remove(sb.Length - 1, 1);
 				sb.Append(']');
 				break;
-			case Dictionary<string, JsonValue> d:
+			case Dictionary<string, Value> d:
 				sb.Append('{');
 				foreach (var p in d)
 				{
@@ -193,13 +295,10 @@ namespace Maestro.Debug
 					sb.Remove(sb.Length - 1, 1);
 				sb.Append('}');
 				break;
-			default:
-				sb.Append("null");
-				break;
 			}
 		}
 
-		public static bool TryDeserialize(string source, out JsonValue value)
+		public static bool TryDeserialize(string source, out Value value)
 		{
 			try
 			{
@@ -214,7 +313,7 @@ namespace Maestro.Debug
 			}
 		}
 
-		private static JsonValue Parse(string source, ref int index, StringBuilder sb)
+		private static Value Parse(string source, ref int index, StringBuilder sb)
 		{
 			SkipWhiteSpace(source, ref index);
 			switch (Next(source, ref index))
@@ -224,26 +323,26 @@ namespace Maestro.Debug
 				Consume(source, ref index, 'l');
 				Consume(source, ref index, 'l');
 				SkipWhiteSpace(source, ref index);
-				return new JsonValue(null);
+				return new Value(null);
 			case 'f':
 				Consume(source, ref index, 'a');
 				Consume(source, ref index, 'l');
 				Consume(source, ref index, 's');
 				Consume(source, ref index, 'e');
 				SkipWhiteSpace(source, ref index);
-				return new JsonValue(false);
+				return new Value(false);
 			case 't':
 				Consume(source, ref index, 'r');
 				Consume(source, ref index, 'u');
 				Consume(source, ref index, 'e');
 				SkipWhiteSpace(source, ref index);
-				return new JsonValue(true);
+				return new Value(true);
 			case '"':
 				return ConsumeString(source, ref index, sb);
 			case '[':
 				{
 					SkipWhiteSpace(source, ref index);
-					var array = JsonValue.NewArray();
+					var array = Value.NewArray();
 					if (!Match(source, ref index, ']'))
 					{
 						do
@@ -259,7 +358,7 @@ namespace Maestro.Debug
 			case '{':
 				{
 					SkipWhiteSpace(source, ref index);
-					var obj = JsonValue.NewObject();
+					var obj = Value.NewObject();
 					if (!Match(source, ref index, '}'))
 					{
 						do
@@ -269,7 +368,7 @@ namespace Maestro.Debug
 							var key = ConsumeString(source, ref index, sb);
 							Consume(source, ref index, ':');
 							var value = Parse(source, ref index, sb);
-							obj[key.wrapped as string] = value;
+							obj[key.asObject as string] = value;
 						} while (Match(source, ref index, ','));
 						Consume(source, ref index, '}');
 					}
@@ -316,11 +415,11 @@ namespace Maestro.Debug
 
 						fraction += integer;
 						SkipWhiteSpace(source, ref index);
-						return new JsonValue(negative ? -fraction : fraction);
+						return new Value(negative ? -fraction : fraction);
 					}
 
 					SkipWhiteSpace(source, ref index);
-					return new JsonValue(negative ? -integer : integer);
+					return new Value(negative ? -integer : integer);
 				}
 			}
 		}
@@ -357,7 +456,7 @@ namespace Maestro.Debug
 				throw new JsonParseException();
 		}
 
-		private static JsonValue ConsumeString(string source, ref int index, StringBuilder sb)
+		private static Value ConsumeString(string source, ref int index, StringBuilder sb)
 		{
 			sb.Clear();
 			while (index < source.Length)
@@ -367,7 +466,7 @@ namespace Maestro.Debug
 				{
 				case '"':
 					SkipWhiteSpace(source, ref index);
-					return new JsonValue(sb.ToString());
+					return new Value(sb.ToString());
 				case '\\':
 					switch (Next(source, ref index))
 					{
