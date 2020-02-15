@@ -154,7 +154,22 @@ namespace Maestro.Debug
 				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", f);
 				break;
 			case string s:
-				sb.Append('"').Append(s).Append('"');
+				sb.Append('"');
+				foreach (var c in s)
+				{
+					switch (c)
+					{
+					case '\"': sb.Append("\\\""); break;
+					case '\\': sb.Append("\\\\"); break;
+					case '\b': sb.Append("\\b"); break;
+					case '\f': sb.Append("\\f"); break;
+					case '\n': sb.Append("\\n"); break;
+					case '\r': sb.Append("\\r"); break;
+					case '\t': sb.Append("\\t"); break;
+					default: sb.Append(c); break;
+					}
+				}
+				sb.Append('"');
 				break;
 			case List<JsonValue> l:
 				sb.Append('[');

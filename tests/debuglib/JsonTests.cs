@@ -13,6 +13,7 @@ public sealed class JsonTests
 	[InlineData(-1, "-1")]
 	[InlineData(99.5f, "99.5")]
 	[InlineData("string", "\"string\"")]
+	[InlineData("\"\\/\b\f\n\r\t", "\"\\\"\\\\/\\b\\f\\n\\r\\t\"")]
 	public void SerializeValue(object value, string expectedJson)
 	{
 		var jsonValue = new JsonValue(value);
