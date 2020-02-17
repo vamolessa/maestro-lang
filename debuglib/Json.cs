@@ -77,10 +77,36 @@ namespace Maestro.Debug
 			{
 				get { return wrapped is Dictionary<string, Value>; }
 			}
+
+			public bool TryGet<T>(out T value)
+			{
+				if (wrapped is T v)
+				{
+					value = v;
+					return true;
+				}
+				else
+				{
+					value = default;
+					return false;
+				}
+			}
+
+			public T GetOr<T>(T defaultValue)
+			{
+				return wrapped is T value ? value : defaultValue;
+			}
 		}
 
 		private sealed class JsonParseException : System.Exception
 		{
+		}
+
+		public static string Serialize(Value value)
+		{
+			var sb = new StringBuilder();
+			Serialize(value, sb);
+			return sb.ToString();
 		}
 
 		public static void Serialize(Value value, StringBuilder sb)
