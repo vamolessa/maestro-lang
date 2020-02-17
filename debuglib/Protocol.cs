@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Maestro.Debug
 {
-	public class ProtocolMessage
+	internal class ProtocolMessage
 	{
 		public readonly string type;
 		public int seq;
@@ -23,14 +23,16 @@ namespace Maestro.Debug
 			seq = value[nameof(seq)].GetOr(0);
 		}
 
-		public virtual void Serialize(ref Json.Value value)
+		public virtual Json.Value Serialize()
 		{
+			var value = Json.Value.NewObject();
 			value[nameof(type)] = type;
 			value[nameof(seq)] = seq;
+			return value;
 		}
 	}
 
-	public sealed class Response : ProtocolMessage
+	internal sealed class Response : ProtocolMessage
 	{
 		public readonly int request_seq;
 		public readonly string command;
@@ -69,9 +71,9 @@ namespace Maestro.Debug
 			this.body = body;
 		}
 
-		public override void Serialize(ref Json.Value value)
+		public override Json.Value Serialize()
 		{
-			base.Serialize(ref value);
+			var value = base.Serialize();
 
 			value[nameof(request_seq)] = request_seq;
 			value[nameof(command)] = command;
@@ -79,29 +81,12 @@ namespace Maestro.Debug
 			value[nameof(success)] = success;
 			value[nameof(message)] = message;
 			value[nameof(body)] = body;
+
+			return value;
 		}
 	}
 
-	public sealed class Event : ProtocolMessage
-	{
-		public readonly string @event;
-		public readonly Json.Value body;
-
-		public Event(string @event, Json.Value body = default) : base("event", 0)
-		{
-			this.@event = @event;
-			this.body = body;
-		}
-
-		public override void Serialize(ref Json.Value value)
-		{
-			base.Serialize(ref value);
-			value[nameof(@event)] = @event;
-			value[nameof(body)] = body;
-		}
-	}
-
-	public abstract class ProtocolServer
+	internal abstract class ProtocolServer
 	{
 		protected const int BUFFER_SIZE = 4096;
 		protected const string TWO_CRLF = "\r\n\r\n";
@@ -143,9 +128,13 @@ namespace Maestro.Debug
 			stopRequested = true;
 		}
 
-		public void SendEvent(Event e)
+		public void SendEvent(string eventName, Json.Value body = default)
 		{
-			SendMessage(e);
+			var message = Json.Value.NewObject();
+			message["event"] = eventName;
+			if (body.wrapped != null)
+				message["body"] = body;
+			SendMessage(message);
 		}
 
 		protected abstract void DispatchRequest(string command, Json.Value args, Response response);
@@ -170,7 +159,7 @@ namespace Maestro.Debug
 					var idx = s.IndexOf(TWO_CRLF);
 					if (idx != -1)
 					{
-						Match m = CONTENT_LENGTH_MATCHER.Match(s);
+						var m = CONTENT_LENGTH_MATCHER.Match(s);
 						if (m.Success && m.Groups.Count == 2)
 						{
 							bodyLength = System.Convert.ToInt32(m.Groups[1].ToString());
@@ -197,7 +186,7 @@ namespace Maestro.Debug
 					var arguments = message["arguments"];
 					var response = new Response(seq, command);
 					DispatchRequest(command, arguments, response);
-					SendMessage(response);
+					SendMessage(response.Serialize());
 					break;
 				}
 			case "response":
@@ -217,10 +206,10 @@ namespace Maestro.Debug
 			}
 		}
 
-		protected void SendMessage(ProtocolMessage message)
+		protected void SendMessage(Json.Value message)
 		{
-			if (message.seq == 0)
-				message.seq = sequenceNumber++;
+			if (message["seq"].GetOr(0) == 0)
+				message["seq"] = sequenceNumber++;
 
 			try
 			{
@@ -231,12 +220,9 @@ namespace Maestro.Debug
 			catch { }
 		}
 
-		private static byte[] ConvertToBytes(ProtocolMessage request)
+		private static byte[] ConvertToBytes(Json.Value message)
 		{
-			var jsonValue = Json.Value.NewObject();
-			request.Serialize(ref jsonValue);
-
-			var asJson = Json.Serialize(jsonValue);
+			var asJson = Json.Serialize(message);
 			var jsonBytes = Encoding.GetBytes(asJson);
 
 			var header = string.Format("Content-Length: {0}{1}", jsonBytes.Length, TWO_CRLF);

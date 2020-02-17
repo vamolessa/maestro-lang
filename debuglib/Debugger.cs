@@ -22,8 +22,8 @@ namespace Maestro.Debug
 						{
 							try
 							{
-								// var debugSession = new DebugSession();
-								// debugSession.Start(stream, stream);
+								var debugSession = new MaestroDebugSession();
+								debugSession.Start(stream, stream);
 							}
 							catch { }
 						}

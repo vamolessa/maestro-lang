@@ -1,20 +1,20 @@
 namespace Maestro.Debug
 {
-	public abstract class DebugSession : ProtocolServer
+	internal abstract class DebugSession : ProtocolServer
 	{
 		private bool clientLinesStartAt1 = true;
 		private bool clientPathsAreURI = true;
 
-		public void SendResponse(Response response, Json.Value body = default)
+		public void SendResponse(Response response, Json.Value body)
 		{
 			response.SetBody(body);
-			SendMessage(response);
+			SendMessage(response.Serialize());
 		}
 
 		public void SendErrorResponse(Response response, string errorMessage)
 		{
 			response.SetErrorBody(errorMessage, default);
-			SendMessage(response);
+			SendMessage(response.Serialize());
 		}
 
 		protected override void DispatchRequest(string command, Json.Value args, Response response)
@@ -107,10 +107,7 @@ namespace Maestro.Debug
 		}
 
 		public abstract void Initialize(Response response, Json.Value args);
-
-
 		public abstract void Attach(Response response, Json.Value arguments);
-
 		public abstract void Disconnect(Response response, Json.Value arguments);
 
 		public virtual void SetFunctionBreakpoints(Response response, Json.Value arguments)
