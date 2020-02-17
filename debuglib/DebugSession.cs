@@ -11,9 +11,9 @@ namespace Maestro.Debug
 			SendMessage(response.Serialize());
 		}
 
-		public void SendErrorResponse(Response response, string errorMessage)
+		public void SendErrorResponse(Response response, string errorMessage, Json.Value body = default)
 		{
-			response.SetErrorBody(errorMessage, default);
+			response.SetErrorBody(errorMessage, body);
 			SendMessage(response.Serialize());
 		}
 
@@ -25,20 +25,17 @@ namespace Maestro.Debug
 				{
 				case "initialize":
 					clientLinesStartAt1 = args["linesStartAt1"].GetOr(clientLinesStartAt1);
-					if (args["pathFormat"].TryGet(out string pathFormat))
+					switch (args["pathFormat"].wrapped)
 					{
-						switch (pathFormat)
-						{
-						case "uri":
-							clientPathsAreURI = true;
-							break;
-						case "path":
-							clientPathsAreURI = false;
-							break;
-						default:
-							SendErrorResponse(response, $"initialize: bad value '{pathFormat}' for pathFormat");
-							return;
-						}
+					case "uri":
+						clientPathsAreURI = true;
+						break;
+					case "path":
+						clientPathsAreURI = false;
+						break;
+					case string s:
+						SendErrorResponse(response, $"initialize: bad value '{s}' for pathFormat");
+						return;
 					}
 					Initialize(response, args);
 					break;

@@ -9,7 +9,7 @@ namespace Maestro.Debug
 	internal class ProtocolMessage
 	{
 		public readonly string type;
-		public int seq;
+		public readonly int seq;
 
 		public ProtocolMessage(string type, int seq)
 		{
@@ -90,8 +90,8 @@ namespace Maestro.Debug
 	{
 		protected const int BUFFER_SIZE = 4096;
 		protected const string TWO_CRLF = "\r\n\r\n";
-		protected static readonly Regex CONTENT_LENGTH_MATCHER = new Regex(@"Content-Length: (\d+)");
 
+		protected static readonly Regex CONTENT_LENGTH_MATCHER = new Regex(@"Content-Length: (\d+)");
 		protected static readonly Encoding Encoding = System.Text.Encoding.UTF8;
 
 		private int sequenceNumber = 1;
@@ -128,13 +128,33 @@ namespace Maestro.Debug
 			stopRequested = true;
 		}
 
-		public void SendEvent(string eventName, Json.Value body = default)
+		public void SendEvent(string eventType, Json.Value body = default)
 		{
 			var message = Json.Value.NewObject();
-			message["event"] = eventName;
-			if (body.wrapped != null)
-				message["body"] = body;
+			message["type"] = "event";
+			message["event"] = eventType;
+			message["body"] = body;
 			SendMessage(message);
+		}
+
+		public Task<Response> SendRequest(string command, Json.Value args)
+		{
+			var completionSource = new TaskCompletionSource<Response>();
+
+			var request = Json.Value.NewObject();
+			request["type"] = "request";
+			request["command"] = command;
+			request["arguments"] = args;
+
+			lock (pendingRequests)
+			{
+				var seq = sequenceNumber++;
+				request["seq"] = seq;
+				pendingRequests.Add(seq, completionSource);
+			}
+
+			SendMessage(request);
+			return completionSource.Task;
 		}
 
 		protected abstract void DispatchRequest(string command, Json.Value args, Response response);
