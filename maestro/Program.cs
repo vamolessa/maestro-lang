@@ -41,6 +41,7 @@ namespace Maestro
 			var source = new Source("script.mst", content);
 
 			var engine = new Engine();
+			engine.SetDebugger(new Debug.Debugger(47474));
 			engine.RegisterCommand("print", () => new PrintCommand());
 			engine.RegisterCommand("bypass", () => new BypassCommand());
 

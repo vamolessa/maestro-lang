@@ -26,11 +26,9 @@ namespace Maestro
 					name,
 					default(T).Size
 				),
-				() =>
-				{
+				() => {
 					var command = commandFactory();
-					return (ref Context context) =>
-					{
+					return (ref Context context) => {
 						var args = default(T);
 						args.Read(context.stack.buffer, context.startIndex + context.inputCount);
 						command.Execute(ref context, args);
@@ -88,9 +86,9 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public void SetDebugger(Option<IDebugger> debugger)
+		public void SetDebugger(IDebugger debugger)
 		{
-			vm.debugger = debugger;
+			vm.debugger = Option.Some(debugger);
 		}
 
 		public ExecuteScope ExecuteScope()
