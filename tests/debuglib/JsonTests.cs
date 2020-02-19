@@ -34,27 +34,26 @@ public sealed class JsonTests
 	[Fact]
 	public void SerializeComplex()
 	{
-		var smallObject = Json.Value.NewObject();
-		smallObject["int"] = 7;
-		smallObject["bool"] = false;
-		smallObject["null"] = null;
-		smallObject["string"] = "some text";
-
-		var a = Json.Value.NewArray();
-		a.Add("string");
-		a.Add(false);
-		a.Add(null);
-		a.Add(0.25f);
-		a.Add(smallObject);
-		a.Add(Json.Value.NewArray());
-
-		var o = Json.Value.NewObject();
-		o["array"] = a;
-		o["str"] = "asdad";
-		o["empty"] = Json.Value.NewObject();
+		var obj = new Json.Object {
+			{"array", new Json.Array {
+				{"string"},
+				{false},
+				{null},
+				{0.25f},
+				{new Json.Object{
+					{"int", 7},
+					{"bool", false},
+					{"null", null},
+					{"string", "some text"}
+				}},
+				{new Json.Array()}
+			}},
+			{"str", "asdad"},
+			{"empty", new Json.Object()}
+		};
 
 		var sb = new StringBuilder();
-		Json.Serialize(o, sb);
+		Json.Serialize(obj, sb);
 
 		Assert.Equal(
 			"{\"array\":[\"string\",false,null,0.25,{\"int\":7,\"bool\":false,\"null\":null,\"string\":\"some text\"},[]],\"str\":\"asdad\",\"empty\":{}}",

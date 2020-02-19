@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
@@ -6,21 +7,45 @@ namespace Maestro.Debug
 {
 	public static class Json
 	{
+		public struct Array : IEnumerable
+		{
+			internal List<Value> collection;
+
+			public void Add(Value value)
+			{
+				if (collection == null)
+					collection = new List<Value>();
+				collection.Add(value);
+			}
+
+			public IEnumerator GetEnumerator()
+			{
+				return collection.GetEnumerator();
+			}
+		}
+
+		public struct Object : IEnumerable
+		{
+			internal Dictionary<string, Value> collection;
+
+			public void Add(string key, Value value)
+			{
+				if (collection == null)
+					collection = new Dictionary<string, Value>();
+				collection.Add(key, value);
+			}
+
+			public IEnumerator GetEnumerator()
+			{
+				return collection.GetEnumerator();
+			}
+		}
+
 		public readonly struct Value
 		{
 			private static readonly List<Value> EmptyValues = new List<Value>();
 
 			public readonly object wrapped;
-
-			public static Value NewArray()
-			{
-				return new Value(new List<Value>());
-			}
-
-			public static Value NewObject()
-			{
-				return new Value(new Dictionary<string, Value>());
-			}
 
 			private Value(object value)
 			{
@@ -48,6 +73,16 @@ namespace Maestro.Debug
 			{
 				get { return wrapped is Dictionary<string, Value> d && d.TryGetValue(key, out var v) ? v : default; }
 				set { if (wrapped is Dictionary<string, Value> d) d[key] = value; }
+			}
+
+			public static implicit operator Value(Array value)
+			{
+				return new Value(value.collection ?? new List<Value>());
+			}
+
+			public static implicit operator Value(Object value)
+			{
+				return new Value(value.collection ?? new Dictionary<string, Value>());
 			}
 
 			public static implicit operator Value(bool value)
@@ -222,7 +257,7 @@ namespace Maestro.Debug
 			case '[':
 				{
 					SkipWhiteSpace(source, ref index);
-					var array = Value.NewArray();
+					var array = new Array();
 					if (!Match(source, ref index, ']'))
 					{
 						do
@@ -238,7 +273,7 @@ namespace Maestro.Debug
 			case '{':
 				{
 					SkipWhiteSpace(source, ref index);
-					var obj = Value.NewObject();
+					var obj = new Object();
 					if (!Match(source, ref index, '}'))
 					{
 						do
@@ -248,7 +283,7 @@ namespace Maestro.Debug
 							var key = ConsumeString(source, ref index, sb);
 							Consume(source, ref index, ':');
 							var value = Parse(source, ref index, sb);
-							obj[key.wrapped as string] = value;
+							obj.Add(key.wrapped as string, value);
 						} while (Match(source, ref index, ','));
 						Consume(source, ref index, '}');
 					}

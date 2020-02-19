@@ -25,10 +25,10 @@ namespace Maestro.Debug
 
 		public virtual Json.Value Serialize()
 		{
-			var value = Json.Value.NewObject();
-			value[nameof(type)] = type;
-			value[nameof(seq)] = seq;
-			return value;
+			return new Json.Object {
+				{nameof(type), type},
+				{nameof(seq), seq}
+			};
 		}
 	}
 
@@ -130,30 +130,31 @@ namespace Maestro.Debug
 
 		public void SendEvent(string eventType, Json.Value body = default)
 		{
-			var message = Json.Value.NewObject();
-			message["type"] = "event";
-			message["event"] = eventType;
-			message["body"] = body;
-			SendMessage(message);
+			SendMessage(new Json.Object {
+				{"type", "event"},
+				{"event", eventType},
+				{"body", body}
+			});
 		}
 
 		public Task<Response> SendRequest(string command, Json.Value args)
 		{
 			var completionSource = new TaskCompletionSource<Response>();
 
-			var request = Json.Value.NewObject();
-			request["type"] = "request";
-			request["command"] = command;
-			request["arguments"] = args;
-
+			var seq = 0;
 			lock (pendingRequests)
 			{
-				var seq = sequenceNumber++;
-				request["seq"] = seq;
+				seq = sequenceNumber++;
 				pendingRequests.Add(seq, completionSource);
 			}
 
-			SendMessage(request);
+			SendMessage(new Json.Object {
+				{"type", "request"},
+				{"command", command},
+				{"arguments", args},
+				{"seq", seq}
+			});
+
 			return completionSource.Task;
 		}
 

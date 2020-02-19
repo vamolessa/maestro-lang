@@ -45,22 +45,22 @@ namespace Maestro.Debug
 
 		void IDebugSession.Initialize(DebugSessionController controller, Response response, Json.Value args)
 		{
-			var capabilities = Json.Value.NewObject();
+			var capabilities = new Json.Object{
+				// This debug adapter does not need the configurationDoneRequest.
+				{"supportsConfigurationDoneRequest", false},
 
-			// This debug adapter does not need the configurationDoneRequest.
-			capabilities["supportsConfigurationDoneRequest"] = false;
+				// This debug adapter does not support function breakpoints.
+				{"supportsFunctionBreakpoints", false},
 
-			// This debug adapter does not support function breakpoints.
-			capabilities["supportsFunctionBreakpoints"] = false;
+				// This debug adapter doesn't support conditional breakpoints.
+				{"supportsConditionalBreakpoints", false},
 
-			// This debug adapter doesn't support conditional breakpoints.
-			capabilities["supportsConditionalBreakpoints"] = false;
+				// This debug adapter does not support a side effect free evaluate request for data hovers.
+				{"supportsEvaluateForHovers", false},
 
-			// This debug adapter does not support a side effect free evaluate request for data hovers.
-			capabilities["supportsEvaluateForHovers"] = false;
-
-			// This debug adapter does not support exception breakpoint filters
-			capabilities["exceptionBreakpointFilters"] = Json.Value.NewArray();
+				// This debug adapter does not support exception breakpoint filters
+				{"exceptionBreakpointFilters", new Json.Array()}
+			};
 
 			controller.SendResponse(response, capabilities);
 			controller.SendEvent("initialized");
@@ -79,11 +79,20 @@ namespace Maestro.Debug
 			var sourceName = arguments["source"]["name"].GetOr("");
 			var sourcePath = arguments["source"]["path"].GetOr("");
 
+			var breakpoints = new Json.Array();
 			foreach (var breakpoint in arguments["breakpoints"])
 			{
 				var line = breakpoint["line"].GetOr(0);
 				System.Console.WriteLine("BREAKPOINT ON {0} AT LINE {1}", sourceName, line);
+
+				breakpoints.Add(new Json.Object {
+					{"verified", true}
+				});
 			}
+
+			controller.SendResponse(response, new Json.Object {
+				{"breakpoints", breakpoints}
+			});
 		}
 
 		void IDebugSession.SetFunctionBreakpoints(DebugSessionController controller, Response response, Json.Value arguments)
