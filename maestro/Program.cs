@@ -37,6 +37,10 @@ namespace Maestro
 
 		public static void Main(string[] args)
 		{
+			var debugger = new Debug.Debugger(47474);
+			System.Console.WriteLine("WAITING FOR EVER");
+			while (true) { }
+
 			var content = System.IO.File.ReadAllText("scripts/script.mst");
 			var source = new Source("script.mst", content);
 

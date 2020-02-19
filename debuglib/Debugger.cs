@@ -63,8 +63,6 @@ namespace Maestro.Debug
 			capabilities["exceptionBreakpointFilters"] = Json.Value.NewArray();
 
 			controller.SendResponse(response, capabilities);
-
-			// Mono Debug is ready to accept breakpoints immediately
 			controller.SendEvent("initialized");
 		}
 
@@ -78,6 +76,14 @@ namespace Maestro.Debug
 
 		void IDebugSession.SetBreakpoints(DebugSessionController controller, Response response, Json.Value arguments)
 		{
+			var sourceName = arguments["source"]["name"].GetOr("");
+			var sourcePath = arguments["source"]["path"].GetOr("");
+
+			foreach (var breakpoint in arguments["breakpoints"])
+			{
+				var line = breakpoint["line"].GetOr(0);
+				System.Console.WriteLine("BREAKPOINT ON {0} AT LINE {1}", sourceName, line);
+			}
 		}
 
 		void IDebugSession.SetFunctionBreakpoints(DebugSessionController controller, Response response, Json.Value arguments)

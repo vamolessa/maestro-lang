@@ -1,6 +1,7 @@
 using Xunit;
 using Maestro.Debug;
 using System.Text;
+using System.Collections.Generic;
 
 public sealed class JsonTests
 {
@@ -108,5 +109,30 @@ public sealed class JsonTests
 
 		Assert.Equal("asdad", value["str"].wrapped);
 		Assert.True(value["empty"].IsObject);
+	}
+
+	[Theory]
+	[InlineData("[]")]
+	[InlineData("[1]", 1)]
+	[InlineData("[1, 2, 3]", 1, 2, 3)]
+	[InlineData("[true, 4, null, \"string\"]", true, 4, null, "string")]
+	[InlineData("4")]
+	[InlineData("4.5")]
+	[InlineData("true")]
+	[InlineData("false")]
+	[InlineData("\"string\"")]
+	[InlineData("{}")]
+	[InlineData("{\"key\": [false]}")]
+	public void Enumerate(string json, params object[] expectedValues)
+	{
+		var success = Json.TryDeserialize(json, out var value);
+		Assert.True(success);
+
+		var elements = new List<object>();
+		foreach (var e in value)
+			elements.Add(e.wrapped);
+		var elementsArray = elements.ToArray();
+
+		Assert.Equal(expectedValues, elementsArray);
 	}
 }

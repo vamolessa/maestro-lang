@@ -48,6 +48,7 @@ namespace Maestro.Debug
 		{
 			try
 			{
+				System.Console.WriteLine("DEBUGGER REQUEST: {0} ARGS:\n{1}", command, Json.Serialize(args));
 				switch (command)
 				{
 				case "initialize":

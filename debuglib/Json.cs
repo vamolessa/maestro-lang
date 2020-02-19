@@ -8,6 +8,8 @@ namespace Maestro.Debug
 	{
 		public readonly struct Value
 		{
+			private static readonly List<Value> EmptyValues = new List<Value>();
+
 			public readonly object wrapped;
 
 			public static Value NewArray()
@@ -95,6 +97,13 @@ namespace Maestro.Debug
 			public T GetOr<T>(T defaultValue)
 			{
 				return wrapped is T value ? value : defaultValue;
+			}
+
+			public List<Value>.Enumerator GetEnumerator()
+			{
+				return wrapped is List<Value> l ?
+					l.GetEnumerator() :
+					EmptyValues.GetEnumerator();
 			}
 		}
 
