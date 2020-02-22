@@ -1,0 +1,17 @@
+# this is a comment
+
+
+# variable declaration and assignment
+47 | $message;
+
+
+# declaring external commands
+external command print 0;
+
+
+# using external commands
+$message | print;
+
+
+# printing multiple values
+23, "some string", true, $message | print;
