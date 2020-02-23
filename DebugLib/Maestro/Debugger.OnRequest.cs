@@ -133,7 +133,7 @@ namespace Maestro.Debug
 					var stackFrames = new Json.Array();
 					lock (this)
 					{
-						for (var i = 0; i < vm.stackFrames.count; i++)
+						for (var i = vm.stackFrames.count - 1; i >= 1; i--)
 						{
 							var frame = vm.stackFrames.buffer[i];
 							var command = chunk.commandDefinitions.buffer[frame.commandIndex];
@@ -155,9 +155,9 @@ namespace Maestro.Debug
 							stackFrames.Add(new Json.Object {
 								{"id", i},
 								{"name", command.name},
+								{"source", responseSourceObject},
 								{"line", helper.ConvertDebuggerLineToClient(pos.lineIndex)},
 								{"column", helper.ConvertDebuggerColumnToClient(pos.columnIndex)},
-								{"source", responseSourceObject},
 							});
 						}
 					}
@@ -188,11 +188,13 @@ namespace Maestro.Debug
 				}
 				break;
 			case "threads":
-				server.SendResponse(request, new Json.Array{
-					new Json.Object{
-						{"id", 1},
-						{"name", "main"},
-					},
+				server.SendResponse(request, new Json.Object {
+					{"threads", new Json.Array{
+						new Json.Object{
+							{"id", 1},
+							{"name", "main"},
+						},
+					}}
 				});
 				break;
 			case "setBreakpoints":

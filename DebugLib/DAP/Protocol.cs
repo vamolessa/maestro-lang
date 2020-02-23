@@ -220,7 +220,7 @@ namespace Maestro.Debug
 		{
 			message["seq"] = nextSequenceNumber++;
 
-			System.Console.WriteLine("\nSEND MESSAGE\n{0}\n\n", Json.Serialize(message));
+			System.Console.WriteLine("SEND {0}\n", Json.Serialize(message));
 
 			try
 			{

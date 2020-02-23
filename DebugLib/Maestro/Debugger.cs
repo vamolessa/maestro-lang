@@ -6,12 +6,12 @@ namespace Maestro.Debug
 {
 	public readonly struct SourcePosition
 	{
-		public readonly string sourcePath;
+		public readonly string sourceUri;
 		public readonly int line;
 
-		public SourcePosition(string sourcePath, int line)
+		public SourcePosition(string sourceUri, int line)
 		{
-			this.sourcePath = sourcePath;
+			this.sourceUri = sourceUri;
 			this.line = line;
 		}
 	}
@@ -110,13 +110,13 @@ namespace Maestro.Debug
 					{
 						var breakpoint = breakpoints.buffer[i];
 						var wasOnBreakpoint =
-							lastPosition.sourcePath == position.sourcePath &&
+							// lastPosition.sourceUri == breakpoint.sourceUri &&
 							lastPosition.line == breakpoint.line;
 
 						if (!wasOnBreakpoint && position.line == breakpoint.line)
 						{
 							state = State.Paused;
-							System.Console.WriteLine("SEND STOPPED FORM CONTINUING");
+							System.Console.WriteLine("SEND STOPPED FORM CONTINUING AT LINE {0}", position.line);
 							SendStoppedEvent("breakpoint");
 							break;
 						}
@@ -124,7 +124,7 @@ namespace Maestro.Debug
 				}
 				break;
 			case State.Stepping:
-				if (lastPosition.sourcePath != position.sourcePath || lastPosition.line != position.line)
+				if (lastPosition.sourceUri != position.sourceUri || lastPosition.line != position.line)
 				{
 					lock (this)
 					{
@@ -156,7 +156,7 @@ namespace Maestro.Debug
 			sourceUri = sourceUri.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
 			for (var i = 0; i < breakpoints.count; i++)
 			{
-				sourcePath = breakpoints.buffer[i].sourcePath;
+				sourcePath = breakpoints.buffer[i].sourceUri;
 				sourcePath = sourcePath.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
 
 				if (sourcePath.EndsWith(sourceUri))
