@@ -20,6 +20,8 @@ namespace Maestro.Debug
 
 			public IEnumerator GetEnumerator()
 			{
+				if (collection == null)
+					collection = new List<Value>();
 				return collection.GetEnumerator();
 			}
 		}
@@ -37,6 +39,8 @@ namespace Maestro.Debug
 
 			public IEnumerator GetEnumerator()
 			{
+				if (collection == null)
+					collection = new Dictionary<string, Value>();
 				return collection.GetEnumerator();
 			}
 		}

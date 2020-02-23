@@ -14,9 +14,9 @@ namespace Maestro
 		}
 	}
 
-	internal static class ByteCodeChunkExtensions
+	public static class ByteCodeChunkExtensions
 	{
-		internal static int FindSourceIndex(this ByteCodeChunk self, int codeIndex)
+		public static int FindSourceIndex(this ByteCodeChunk self, int codeIndex)
 		{
 			for (var i = 0; i < self.sourceStartIndexes.count; i++)
 			{

@@ -214,7 +214,7 @@ namespace Maestro
 					{
 						vm.stack = stack;
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
-						vm.debugger.value.OnHook(vm);
+						vm.debugger.value.OnHook(vm, chunk);
 					}
 					break;
 				case Instruction.DebugPushDebugFrame:

@@ -7,9 +7,21 @@ using System.Threading;
 
 namespace Maestro.Debug
 {
-	public sealed class ProtocolServer
+	internal readonly struct Request
 	{
-		public delegate Json.Value OnRequest(string request, Json.Value arguments);
+		public readonly int seq;
+		public readonly string command;
+
+		internal Request(int seq, string command)
+		{
+			this.seq = seq;
+			this.command = command;
+		}
+	}
+
+	internal sealed class ProtocolServer
+	{
+		public delegate void OnRequest(Request request, Json.Value arguments);
 
 		private const int BUFFER_SIZE = 4096;
 		private const string TWO_CRLF = "\r\n\r\n";
@@ -107,6 +119,31 @@ namespace Maestro.Debug
 			isServing = false;
 		}
 
+		public void SendResponse(Request request, Json.Value body = default)
+		{
+			SendMessage(new Json.Object
+			{
+				{"type", "response"},
+				{"request_seq", request.seq},
+				{"command", request.command},
+				{"success", true},
+				{"body", body},
+			});
+		}
+
+		public void SendErrorResponse(Request request, string errorMessage, Json.Value body = default)
+		{
+			SendMessage(new Json.Object
+			{
+				{"type", "response"},
+				{"request_seq", request.seq},
+				{"command", request.command},
+				{"success", false},
+				{"message", errorMessage},
+				{"body", body},
+			});
+		}
+
 		public void SendEvent(string eventName, Json.Value body = default)
 		{
 			SendMessage(new Json.Object {
@@ -162,21 +199,16 @@ namespace Maestro.Debug
 					var command = message["command"].GetOr("");
 					var arguments = message["arguments"];
 
-					var response = default(Json.Value);
+					var request = new Request(request_seq, command);
 
 					try
 					{
-						response = onRequest(command, arguments);
+						onRequest(request, arguments);
 					}
 					catch (System.Exception e)
 					{
-						response = ErrorResponse($"error while processing request '{command}' (exception: {e.Message})");
+						SendErrorResponse(request, $"error while processing request '{command}' (exception: {e.Message})");
 					}
-
-					response["type"] = "response";
-					response["request_seq"] = request_seq;
-					response["command"] = command;
-					SendMessage(response);
 					break;
 				}
 			}

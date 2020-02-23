@@ -8,9 +8,9 @@ namespace Maestro
 
 	public interface IDebugger
 	{
-		void OnBegin(VirtualMachine vm);
-		void OnEnd(VirtualMachine vm);
-		void OnHook(VirtualMachine vm);
+		void OnBegin(VirtualMachine vm, ByteCodeChunk chunk);
+		void OnEnd(VirtualMachine vm, ByteCodeChunk chunk);
+		void OnHook(VirtualMachine vm, ByteCodeChunk chunk);
 	}
 
 	internal sealed class ExternalCommandBindingRegistry

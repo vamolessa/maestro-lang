@@ -1,13 +1,15 @@
 namespace Maestro.Debug
 {
-	public readonly struct DebugSessionHelper
+	internal readonly struct DebugSessionHelper
 	{
 		private readonly bool clientLinesStartAt1;
+		private readonly bool clientColumnsStartAt1;
 		private readonly bool clientPathsAreUri;
 
 		public DebugSessionHelper(Json.Value arguments)
 		{
 			clientLinesStartAt1 = arguments["linesStartAt1"].GetOr(true);
+			clientColumnsStartAt1 = arguments["columnsStartAt1"].GetOr(true);
 
 			switch (arguments["pathFormat"].wrapped)
 			{
@@ -19,27 +21,32 @@ namespace Maestro.Debug
 
 		public int ConvertDebuggerLineToClient(int line)
 		{
-			return clientLinesStartAt1 ? line : line - 1;
+			return clientLinesStartAt1 ? line + 1 : line;
 		}
 
 		public int ConvertClientLineToDebugger(int line)
 		{
-			return clientLinesStartAt1 ? line : line + 1;
+			return clientLinesStartAt1 ? line - 1 : line;
+		}
+
+		public int ConvertDebuggerColumnToClient(int column)
+		{
+			return clientColumnsStartAt1 ? column + 1 : column;
+		}
+
+		public int ConvertClientColumnToDebugger(int column)
+		{
+			return clientColumnsStartAt1 ? column - 1 : column;
 		}
 
 		public string ConvertDebuggerPathToClient(string path)
 		{
 			if (clientPathsAreUri)
 			{
-				try
-				{
-					var uri = new System.Uri(path);
+				if (System.Uri.TryCreate(path, System.UriKind.RelativeOrAbsolute, out var uri))
 					return uri.AbsoluteUri;
-				}
-				catch
-				{
+				else
 					return null;
-				}
 			}
 			else
 			{

@@ -1,11 +1,41 @@
+using System.IO;
 using System.Net;
+using System.Threading;
 
 namespace Maestro.Debug
 {
-	public sealed class Debugger : IDebugger
+	public readonly struct SourcePosition
 	{
+		public readonly string sourcePath;
+		public readonly int line;
+
+		public SourcePosition(string sourcePath, int line)
+		{
+			this.sourcePath = sourcePath;
+			this.line = line;
+		}
+	}
+
+	public sealed partial class Debugger : IDebugger
+	{
+		private enum State
+		{
+			Paused,
+			Continuing,
+			Stepping,
+		}
+
 		private readonly ProtocolServer server;
-		private DebugSessionHelper helper;
+		private DebugSessionHelper helper = default;
+
+		private Buffer<SourcePosition> breakpoints = new Buffer<SourcePosition>();
+
+		private VirtualMachine vm;
+		private ByteCodeChunk chunk;
+		private bool isDebugging = false;
+		private bool isConnected = false;
+		private State state = State.Paused;
+		private SourcePosition lastPosition = new SourcePosition();
 
 		public Debugger(ushort port)
 		{
@@ -13,101 +43,109 @@ namespace Maestro.Debug
 			server.Start(IPAddress.Parse("127.0.0.1"), port);
 		}
 
-		private Json.Value OnRequest(string request, Json.Value arguments)
+		void IDebugger.OnBegin(VirtualMachine vm, ByteCodeChunk chunk)
 		{
-			System.Console.WriteLine("DEBUGGER REQUEST: {0} ARGS:\n{1}", request, Json.Serialize(arguments));
+			this.vm = vm;
+			this.chunk = chunk;
 
-			switch (request)
+			state = State.Paused;
+			isDebugging = true;
+			if (isConnected)
 			{
-			case "initialize":
-				{
-					helper = new DebugSessionHelper(arguments);
-					var capabilities = new Json.Object{
-						// This debug adapter does not need the configurationDoneRequest.
-						{"supportsConfigurationDoneRequest", false},
-
-						// This debug adapter does not support function breakpoints.
-						{"supportsFunctionBreakpoints", false},
-
-						// This debug adapter doesn't support conditional breakpoints.
-						{"supportsConditionalBreakpoints", false},
-
-						// This debug adapter does not support a side effect free evaluate request for data hovers.
-						{"supportsEvaluateForHovers", false},
-
-						// This debug adapter does not support exception breakpoint filters
-						{"exceptionBreakpointFilters", new Json.Array()}
-					};
-
-					server.SendEvent("initialized");
-					return ProtocolServer.Response(capabilities);
-				}
-			case "attach":
-				return ProtocolServer.Response();
-			case "disconnect":
-				server.Stop();
-				return ProtocolServer.Response();
-			case "next":
-				return ProtocolServer.Response();
-			case "continue":
-				return ProtocolServer.Response();
-			case "stepIn":
-				return ProtocolServer.Response();
-			case "stepOut":
-				return ProtocolServer.Response();
-			case "pause":
-				return ProtocolServer.Response();
-			case "stackTrace":
-				return ProtocolServer.Response();
-			case "scopes":
-				return ProtocolServer.Response();
-			case "variables":
-				return ProtocolServer.Response();
-			case "source":
-				return ProtocolServer.Response();
-			case "threads":
-				return ProtocolServer.Response();
-			case "setBreakpoints":
-				{
-					var sourceName = arguments["source"]["name"].GetOr("");
-					var sourcePath = arguments["source"]["path"].GetOr("");
-
-					var breakpoints = new Json.Array();
-					foreach (var breakpoint in arguments["breakpoints"])
-					{
-						var line = breakpoint["line"].GetOr(0);
-						System.Console.WriteLine("BREAKPOINT ON {0} AT LINE {1}", sourceName, line);
-
-						breakpoints.Add(new Json.Object {
-							{"verified", true}
-						});
-					}
-
-					return ProtocolServer.Response(new Json.Object {
-						{"breakpoints", breakpoints}
-					});
-				}
-			case "setFunctionBreakpoints":
-				return ProtocolServer.Response();
-			case "setExceptionBreakpoints":
-				return ProtocolServer.Response();
-			case "evaluate":
-				return ProtocolServer.Response();
-			default:
-				return ProtocolServer.ErrorResponse($"invalid request '{request}'");
+				server.SendEvent("stopped", new Json.Object {
+					{"reason", "entry"},
+					{"description", "Paused on entry"},
+				});
 			}
 		}
 
-		void IDebugger.OnBegin(VirtualMachine vm)
+		void IDebugger.OnEnd(VirtualMachine vm, ByteCodeChunk chunk)
 		{
+			isDebugging = false;
 		}
 
-		void IDebugger.OnEnd(VirtualMachine vm)
+		void IDebugger.OnHook(VirtualMachine vm, ByteCodeChunk chunk)
 		{
+			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
+			if (codeIndex < 0)
+				return;
+			var sourceIndex = chunk.FindSourceIndex(codeIndex);
+			if (sourceIndex < 0)
+				return;
+
+			var source = chunk.sources.buffer[sourceIndex];
+			var slice = chunk.sourceSlices.buffer[codeIndex];
+			var line = (ushort)(FormattingHelper.GetLineAndColumn(source.content, slice.index).lineIndex + 1);
+			var position = new SourcePosition(source.uri, line);
+
+			switch (state)
+			{
+			case State.Continuing:
+				lock (this)
+				{
+					for (var i = 0; i < breakpoints.count; i++)
+					{
+						var breakpoint = breakpoints.buffer[i];
+						var wasOnBreakpoint =
+							lastPosition.sourcePath == position.sourcePath &&
+							lastPosition.line == breakpoint.line;
+
+						if (!wasOnBreakpoint && position.line == breakpoint.line)
+						{
+							state = State.Paused;
+							server.SendEvent("stopped", new Json.Object {
+								{"reason", "breakpoint"},
+								{"description", "Paused on breakpoint"},
+							});
+							break;
+						}
+					}
+				}
+				break;
+			case State.Stepping:
+				if (lastPosition.sourcePath != position.sourcePath || lastPosition.line != position.line)
+				{
+					lock (this)
+					{
+						state = State.Paused;
+						server.SendEvent("stopped", new Json.Object {
+							{"reason", "breakpoint"},
+							{"description", "Paused on step"},
+						});
+					}
+					break;
+				}
+				break;
+			}
+
+			while (true)
+			{
+				lock (this)
+				{
+					if (state != State.Paused)
+						break;
+				}
+
+				Thread.Sleep(1000);
+			}
+
+			lastPosition = position;
 		}
 
-		void IDebugger.OnHook(VirtualMachine vm)
+		private bool TryMatchSourcePath(string sourceUri, out string sourcePath)
 		{
+			sourceUri = sourceUri.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
+			for (var i = 0; i < breakpoints.count; i++)
+			{
+				sourcePath = breakpoints.buffer[i].sourcePath;
+				sourcePath = sourcePath.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
+
+				if (sourcePath.EndsWith(sourceUri))
+					return true;
+			}
+
+			sourcePath = null;
+			return false;
 		}
 	}
 }

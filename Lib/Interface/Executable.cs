@@ -72,7 +72,7 @@ namespace Maestro
 			));
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnBegin(vm);
+				vm.debugger.value.OnBegin(vm, executable.chunk);
 
 			var maybeExecuteError = vm.Execute(
 				executable.chunk,
@@ -81,7 +81,7 @@ namespace Maestro
 			);
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnEnd(vm);
+				vm.debugger.value.OnEnd(vm, executable.chunk);
 
 			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
 		}

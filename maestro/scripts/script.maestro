@@ -2,14 +2,5 @@ external command elements 0;
 external command print 0;
 external command test-command 2;
 
-#"global value" | $global;
-
-command my-command $a $b {
-	$$;
-	$a | $x;
-	$b | $y;
-	return $x, $y;
-}
-
-+1, -2, 3 | my-command true false;
-$global | print;
+4 | $var;
+$var | print;
