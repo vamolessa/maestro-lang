@@ -2,42 +2,75 @@ namespace Maestro.Debug
 {
 	public sealed partial class Debugger
 	{
+		private void SendStoppedEvent(string reason)
+		{
+			server.SendEvent("stopped", new Json.Object {
+				{"reason", reason},
+				{"description", "Paused on " + reason},
+				{"threadId", 1},
+			});
+		}
+
 		private void OnRequest(Request request, Json.Value arguments)
 		{
-			System.Console.WriteLine("DEBUGGER REQUEST: {0} [{1}] ARGS:\n{2}", request.command, request.seq, Json.Serialize(arguments));
+			System.Console.WriteLine("DEBUGGER REQUEST: {0} [{1}] ARGS: {2}", request.command, request.seq, Json.Serialize(arguments));
 
 			switch (request.command)
 			{
 			case "initialize":
 				{
 					helper = new DebugSessionHelper(arguments);
-					var capabilities = new Json.Object{
-						// This debug adapter does not need the configurationDoneRequest.
-						{"supportsConfigurationDoneRequest", false},
-
-						// This debug adapter does not support function breakpoints.
+					server.SendResponse(request, new Json.Object{
+						{"supportsConfigurationDoneRequest", true},
 						{"supportsFunctionBreakpoints", false},
-
-						// This debug adapter doesn't support conditional breakpoints.
 						{"supportsConditionalBreakpoints", false},
-
-						// This debug adapter does not support a side effect free evaluate request for data hovers.
+						{"supportsHitConditionalBreakpoints", false},
 						{"supportsEvaluateForHovers", false},
+						{"exceptionBreakpointFilters", new Json.Array()},
+						{"supportsStepBack", false},
+						{"supportsSetVariable", false},
+						{"supportsRestartFrame", false},
+						{"supportsGotoTargetsRequest", false},
+						{"supportsStepInTargetsRequest", false},
+						{"supportsCompletionsRequest", false},
+						{"completionTriggerCharacters", false},
+						{"supportsModulesRequest", false},
+						{"additionalModuleColumns", false},
+						{"supportedChecksumAlgorithms", false},
+						{"supportsRestartRequest", false},
+						{"supportsExceptionOptions", false},
+						{"supportsValueFormattingOptions", false},
+						{"supportTerminateDebuggee", false},
+						{"supportsDelayedStackTraceLoading", false},
+						{"supportsLoadedSourcesRequest", false},
+						{"supportsLogPoints", false},
+						{"supportsTerminateThreadsRequest", false},
+						{"supportsSetExpression", false},
+						{"supportsTerminateRequest", false},
+						{"supportsDataBreakpoints", false},
+						{"supportsReadMemoryRequest", false},
+						{"supportsDisassembleRequest", false},
+						{"supportsCancelRequest", false},
+						{"supportsBreakpointLocationsRequest", false},
+					});
 
-						// This debug adapter does not support exception breakpoint filters
-						{"exceptionBreakpointFilters", new Json.Array()}
-					};
-
-					server.SendResponse(request, capabilities);
 					server.SendEvent("initialized");
-
-					isConnected = true;
-					if (isDebugging)
+				}
+				break;
+			case "configurationDone":
+				server.SendResponse(request);
+				lock (this)
+				{
+					switch (connectionState)
 					{
-						server.SendEvent("stopped", new Json.Object {
-							{"reason", "entry"},
-							{"description", "Paused on entry"},
-						});
+					case ConnectionState.Disconnected:
+						connectionState = ConnectionState.WaitingDebugger;
+						break;
+					case ConnectionState.WaitingClient:
+						System.Console.WriteLine("SEND STOPPED FROM CONFIGURATION DONE");
+						connectionState = ConnectionState.Connected;
+						SendStoppedEvent("entry");
+						break;
 					}
 				}
 				break;
@@ -45,7 +78,18 @@ namespace Maestro.Debug
 				server.SendResponse(request);
 				break;
 			case "disconnect":
-				isConnected = false;
+				lock (this)
+				{
+					switch (connectionState)
+					{
+					case ConnectionState.Connected:
+						connectionState = ConnectionState.WaitingClient;
+						break;
+					case ConnectionState.WaitingClient:
+						connectionState = ConnectionState.Disconnected;
+						break;
+					}
+				}
 				server.Stop();
 				server.SendResponse(request);
 				break;
@@ -86,17 +130,10 @@ namespace Maestro.Debug
 				break;
 			case "stackTrace":
 				{
-					var startIndex = arguments["startFrame"].GetOr(0);
-					var count = arguments["levels"].GetOr(0);
-
-					var sfs = new Json.Array();
+					var stackFrames = new Json.Array();
 					lock (this)
 					{
-						if (count == 0)
-							count = vm.stackFrames.count;
-						var endIndex = System.Math.Min(vm.stackFrames.count, startIndex + count);
-
-						for (var i = startIndex; i < endIndex; i++)
+						for (var i = 0; i < vm.stackFrames.count; i++)
 						{
 							var frame = vm.stackFrames.buffer[i];
 							var command = chunk.commandDefinitions.buffer[frame.commandIndex];
@@ -115,7 +152,7 @@ namespace Maestro.Debug
 							else
 								responseSourceObject.Add("sourceReference", sourceIndex + 1);
 
-							sfs.Add(new Json.Object {
+							stackFrames.Add(new Json.Object {
 								{"id", i},
 								{"name", command.name},
 								{"line", helper.ConvertDebuggerLineToClient(pos.lineIndex)},
@@ -124,7 +161,10 @@ namespace Maestro.Debug
 							});
 						}
 					}
-					server.SendResponse(request);
+
+					server.SendResponse(request, new Json.Object{
+						{"stackFrames", stackFrames}
+					});
 				}
 				break;
 			case "scopes":
@@ -148,7 +188,12 @@ namespace Maestro.Debug
 				}
 				break;
 			case "threads":
-				server.SendResponse(request);
+				server.SendResponse(request, new Json.Array{
+					new Json.Object{
+						{"id", 1},
+						{"name", "main"},
+					},
+				});
 				break;
 			case "setBreakpoints":
 				{

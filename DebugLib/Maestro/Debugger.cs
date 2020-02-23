@@ -25,6 +25,14 @@ namespace Maestro.Debug
 			Stepping,
 		}
 
+		private enum ConnectionState
+		{
+			Disconnected,
+			WaitingDebugger,
+			WaitingClient,
+			Connected,
+		}
+
 		private readonly ProtocolServer server;
 		private DebugSessionHelper helper = default;
 
@@ -32,8 +40,7 @@ namespace Maestro.Debug
 
 		private VirtualMachine vm;
 		private ByteCodeChunk chunk;
-		private bool isDebugging = false;
-		private bool isConnected = false;
+		private ConnectionState connectionState = ConnectionState.Disconnected;
 		private State state = State.Paused;
 		private SourcePosition lastPosition = new SourcePosition();
 
@@ -48,20 +55,36 @@ namespace Maestro.Debug
 			this.vm = vm;
 			this.chunk = chunk;
 
-			state = State.Paused;
-			isDebugging = true;
-			if (isConnected)
+			lock (this)
 			{
-				server.SendEvent("stopped", new Json.Object {
-					{"reason", "entry"},
-					{"description", "Paused on entry"},
-				});
+				state = State.Paused;
+				switch (connectionState)
+				{
+				case ConnectionState.Disconnected:
+					connectionState = ConnectionState.WaitingClient;
+					break;
+				case ConnectionState.WaitingDebugger:
+					connectionState = ConnectionState.Connected;
+					SendStoppedEvent("entry");
+					break;
+				}
 			}
 		}
 
 		void IDebugger.OnEnd(VirtualMachine vm, ByteCodeChunk chunk)
 		{
-			isDebugging = false;
+			lock (this)
+			{
+				switch (connectionState)
+				{
+				case ConnectionState.Connected:
+					connectionState = ConnectionState.WaitingDebugger;
+					break;
+				case ConnectionState.WaitingDebugger:
+					connectionState = ConnectionState.Disconnected;
+					break;
+				}
+			}
 		}
 
 		void IDebugger.OnHook(VirtualMachine vm, ByteCodeChunk chunk)
@@ -93,10 +116,8 @@ namespace Maestro.Debug
 						if (!wasOnBreakpoint && position.line == breakpoint.line)
 						{
 							state = State.Paused;
-							server.SendEvent("stopped", new Json.Object {
-								{"reason", "breakpoint"},
-								{"description", "Paused on breakpoint"},
-							});
+							System.Console.WriteLine("SEND STOPPED FORM CONTINUING");
+							SendStoppedEvent("breakpoint");
 							break;
 						}
 					}
@@ -108,10 +129,8 @@ namespace Maestro.Debug
 					lock (this)
 					{
 						state = State.Paused;
-						server.SendEvent("stopped", new Json.Object {
-							{"reason", "breakpoint"},
-							{"description", "Paused on step"},
-						});
+						System.Console.WriteLine("SEND STOPPED FORM STEPPING");
+						SendStoppedEvent("step");
 					}
 					break;
 				}

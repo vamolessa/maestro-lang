@@ -133,6 +133,8 @@ namespace Maestro.Debug
 
 		public void SendErrorResponse(Request request, string errorMessage, Json.Value body = default)
 		{
+			System.Console.Error.WriteLine("SEND ERROR RESPONSE FOR REQUEST {0} '{1}'", request.command, errorMessage);
+
 			SendMessage(new Json.Object
 			{
 				{"type", "response"},
@@ -217,6 +219,8 @@ namespace Maestro.Debug
 		private void SendMessage(Json.Value message)
 		{
 			message["seq"] = nextSequenceNumber++;
+
+			System.Console.WriteLine("\nSEND MESSAGE\n{0}\n\n", Json.Serialize(message));
 
 			try
 			{
