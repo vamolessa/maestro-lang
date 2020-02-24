@@ -8,9 +8,9 @@ namespace Maestro
 
 	public interface IDebugger
 	{
-		void OnBegin(VirtualMachine vm, ByteCodeChunk chunk);
-		void OnEnd(VirtualMachine vm, ByteCodeChunk chunk);
-		void OnHook(VirtualMachine vm, ByteCodeChunk chunk);
+		void OnBegin(VirtualMachine vm, Assembly assembly);
+		void OnEnd(VirtualMachine vm, Assembly assembly);
+		void OnHook(VirtualMachine vm, Assembly assembly);
 	}
 
 	internal sealed class ExternalCommandBindingRegistry
@@ -42,14 +42,14 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static ExternalCommandCallback[] InstantiateExternalCommands(ExternalCommandBindingRegistry bindingRegistry, ByteCodeChunk chunk, Slice instancesSlice, ref Buffer<CompileError> errors)
+		internal static ExternalCommandCallback[] InstantiateExternalCommands(ExternalCommandBindingRegistry bindingRegistry, Assembly assembly, Slice instancesSlice, ref Buffer<CompileError> errors)
 		{
 			var instances = new ExternalCommandCallback[instancesSlice.length];
 
 			for (var i = 0; i < instancesSlice.length; i++)
 			{
-				var instance = chunk.externalCommandInstances.buffer[i + instancesSlice.index];
-				var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+				var instance = assembly.externalCommandInstances.buffer[i + instancesSlice.index];
+				var definition = assembly.externalCommandDefinitions.buffer[instance.definitionIndex];
 
 				var binding = bindingRegistry.Find(definition.name);
 				if (!binding.isSome)

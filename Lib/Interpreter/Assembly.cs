@@ -2,8 +2,8 @@ using System.Diagnostics;
 
 namespace Maestro
 {
-	[DebuggerTypeProxy(typeof(ByteCodeChunkDebugView))]
-	public sealed class ByteCodeChunk
+	[DebuggerTypeProxy(typeof(AssemblyDebugView))]
+	public sealed class Assembly
 	{
 		public Buffer<Source> sources = new Buffer<Source>(0);
 		public Buffer<byte> bytes = new Buffer<byte>(256);
@@ -15,7 +15,7 @@ namespace Maestro
 		internal Buffer<ExternalCommandInstance> externalCommandInstances = new Buffer<ExternalCommandInstance>(32);
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
 
-		internal ByteCodeChunk()
+		internal Assembly()
 		{
 			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, new Slice(), 0));
 		}

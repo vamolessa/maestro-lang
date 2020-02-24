@@ -30,7 +30,7 @@ namespace Maestro
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
 			if (errors.count == 0)
-				executable.chunk.Disassemble(sb);
+				executable.assembly.Disassemble(sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
@@ -40,12 +40,12 @@ namespace Maestro
 				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
-				if (executable.chunk.sources.count == 0)
+				if (executable.assembly.sources.count == 0)
 					continue;
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
-					var source = executable.chunk.sources.buffer[error.sourceIndex];
+					var source = executable.assembly.sources.buffer[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
 						source.uri,
 						source.content,
@@ -60,13 +60,13 @@ namespace Maestro
 	public readonly struct ExecuteResult
 	{
 		public readonly Option<RuntimeError> error;
-		internal readonly ByteCodeChunk chunk;
+		internal readonly Assembly assembly;
 		internal readonly Buffer<StackFrame> stackFrames;
 
-		internal ExecuteResult(Option<RuntimeError> error, ByteCodeChunk chunk, Buffer<StackFrame> stackFrames)
+		internal ExecuteResult(Option<RuntimeError> error, Assembly assembly, Buffer<StackFrame> stackFrames)
 		{
 			this.error = error;
-			this.chunk = chunk;
+			this.assembly = assembly;
 			this.stackFrames = stackFrames;
 		}
 
@@ -77,10 +77,10 @@ namespace Maestro
 
 			sb.Append(error.value.message);
 
-			if (error.value.instructionIndex < 0 || chunk.sources.count == 0)
+			if (error.value.instructionIndex < 0 || assembly.sources.count == 0)
 				return;
 
-			var source = chunk.sources.buffer[chunk.FindSourceIndex(error.value.instructionIndex)];
+			var source = assembly.sources.buffer[assembly.FindSourceIndex(error.value.instructionIndex)];
 			FormattingHelper.AddHighlightSlice(source.uri, source.content, error.value.slice, sb);
 		}
 
@@ -93,19 +93,19 @@ namespace Maestro
 			{
 				var frame = stackFrames.buffer[i];
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
-				var sourceIndex = chunk.sourceSlices.buffer[codeIndex].index;
+				var sourceIndex = assembly.sourceSlices.buffer[codeIndex].index;
 
 				var commandName = string.Empty;
 				if (frame.commandIndex >= 0)
-					commandName = chunk.commandDefinitions.buffer[frame.commandIndex].name;
+					commandName = assembly.commandDefinitions.buffer[frame.commandIndex].name;
 
-				if (chunk.sources.count == 0)
+				if (assembly.sources.count == 0)
 				{
 					sb.AppendLine(commandName);
 					continue;
 				}
 
-				var source = chunk.sources.buffer[chunk.FindSourceIndex(codeIndex)];
+				var source = assembly.sources.buffer[assembly.FindSourceIndex(codeIndex)];
 
 				var pos = FormattingHelper.GetLineAndColumn(
 					source.content,

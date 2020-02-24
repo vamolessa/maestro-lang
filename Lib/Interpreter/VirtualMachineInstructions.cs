@@ -5,13 +5,13 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances, int externalCommandInstancesIndexOffset)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, Assembly assembly, ExternalCommandCallback[] externalCommandInstances, int externalCommandInstancesIndexOffset)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
 #endif
 
-			var bytes = chunk.bytes.buffer;
+			var bytes = assembly.bytes.buffer;
 			var stack = vm.stack;
 
 			var tupleSizes = vm.tupleSizes;
@@ -42,7 +42,7 @@ namespace Maestro
 					vm.stack = stack;
 					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frame.stackIndex;
 					vm.TraceStack(debugSb);
-					chunk.DisassembleInstruction(frame.codeIndex, debugSb);
+					assembly.DisassembleInstruction(frame.codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
 					break;
 				}
@@ -61,8 +61,8 @@ namespace Maestro
 					{
 						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + externalCommandInstancesIndexOffset;
 
-						var definitionIndex = chunk.externalCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = chunk.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var definitionIndex = assembly.externalCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = assembly.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -79,13 +79,13 @@ namespace Maestro
 						MoveTail(context.startIndex, returnCount);
 
 						if (context.errorMessage != null)
-							return vm.NewError(chunk, context.errorMessage);
+							return vm.NewError(assembly, context.errorMessage);
 						break;
 					}
 				case Instruction.ExecuteCommand:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
-						var definition = chunk.commandDefinitions.buffer[index];
+						var definition = assembly.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
 
@@ -134,7 +134,7 @@ namespace Maestro
 				case Instruction.PushLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
-						stack.PushBackUnchecked(chunk.literals.buffer[index]);
+						stack.PushBackUnchecked(assembly.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
@@ -216,7 +216,7 @@ namespace Maestro
 						vm.stack = stack;
 						vm.tupleSizes = tupleSizes;
 						vm.inputSlices = inputSlices;
-						vm.debugger.value.OnHook(vm, chunk);
+						vm.debugger.value.OnHook(vm, assembly);
 					}
 					break;
 				case Instruction.DebugPushDebugFrame:
@@ -228,7 +228,7 @@ namespace Maestro
 				case Instruction.DebugPushVariableInfo:
 					{
 						var nameIndex = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
-						var name = chunk.literals.buffer[nameIndex].asObject as string;
+						var name = assembly.literals.buffer[nameIndex].asObject as string;
 						var stackIndex = frame.stackIndex + bytes[frame.codeIndex++];
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;

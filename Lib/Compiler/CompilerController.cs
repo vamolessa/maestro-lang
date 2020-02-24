@@ -8,11 +8,11 @@ namespace Maestro
 		private SourceCollection librarySources = new SourceCollection();
 		private Buffer<Slice> slicesCache = new Buffer<Slice>(1);
 
-		public Buffer<CompileError> CompileSource(ByteCodeChunk chunk, SourceCollection librarySources, Mode mode, Source source)
+		public Buffer<CompileError> CompileSource(Assembly assembly, SourceCollection librarySources, Mode mode, Source source)
 		{
 			this.librarySources = librarySources;
 
-			compiler.Reset(mode, chunk);
+			compiler.Reset(mode, assembly);
 			Compile(source);
 
 			return compiler.errors;
@@ -65,9 +65,9 @@ namespace Maestro
 			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Imports.ExpectedSemiColonAfterImport());
 			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
 
-			for (var i = 0; i < compiler.chunk.sources.count; i++)
+			for (var i = 0; i < compiler.assembly.sources.count; i++)
 			{
-				if (compiler.chunk.sources.buffer[i].uri == importUri)
+				if (compiler.assembly.sources.buffer[i].uri == importUri)
 					return;
 			}
 
@@ -110,7 +110,7 @@ namespace Maestro
 			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
 			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternalCommand());
 
-			var success = compiler.chunk.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
+			var success = compiler.assembly.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
 			if (!success)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
@@ -118,7 +118,7 @@ namespace Maestro
 		private void CommandDeclaration()
 		{
 			var skipJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
-			var commandCodeIndex = compiler.chunk.bytes.count;
+			var commandCodeIndex = compiler.assembly.bytes.count;
 
 			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.Commands.ExpectedCommandIdentifier());
 			var nameSlice = compiler.parser.previousToken.slice;
@@ -165,7 +165,7 @@ namespace Maestro
 				parameterCount = byte.MaxValue;
 			}
 
-			var externalCommandInstancesBaseIndex = compiler.chunk.externalCommandInstances.count;
+			var externalCommandInstancesBaseIndex = compiler.assembly.externalCommandInstances.count;
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
@@ -177,12 +177,12 @@ namespace Maestro
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EndEmitForwardJump(skipJump);
 
-			var success = compiler.chunk.AddCommand(new CommandDefinition(
+			var success = compiler.assembly.AddCommand(new CommandDefinition(
 				name,
 				commandCodeIndex,
 				new Slice(
 					externalCommandInstancesBaseIndex,
-					compiler.chunk.externalCommandInstances.count - externalCommandInstancesBaseIndex
+					compiler.assembly.externalCommandInstances.count - externalCommandInstancesBaseIndex
 				),
 				(byte)parameterCount
 			));
@@ -408,7 +408,7 @@ namespace Maestro
 
 			if (compiler.ResolveToExternalCommandIndex(commandSlice).TryGet(out var externalCommandIndex))
 			{
-				var externalCommand = compiler.chunk.externalCommandDefinitions.buffer[externalCommandIndex];
+				var externalCommand = compiler.assembly.externalCommandDefinitions.buffer[externalCommandIndex];
 				if (argCount != externalCommand.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.ExternalCommands.WrongNumberOfExternalCommandArguments
@@ -425,7 +425,7 @@ namespace Maestro
 			}
 			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))
 			{
-				var command = compiler.chunk.commandDefinitions.buffer[commandIndex];
+				var command = compiler.assembly.commandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments

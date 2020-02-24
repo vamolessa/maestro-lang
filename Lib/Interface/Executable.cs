@@ -2,13 +2,13 @@ namespace Maestro
 {
 	public readonly struct Executable<T> where T : struct, ITuple
 	{
-		internal readonly ByteCodeChunk chunk;
+		internal readonly Assembly assembly;
 		internal readonly ExternalCommandCallback[] externalCommandInstances;
 		public readonly int commandIndex;
 
-		internal Executable(ByteCodeChunk chunk, ExternalCommandCallback[] externalCommandInstances, int commandIndex)
+		internal Executable(Assembly assembly, ExternalCommandCallback[] externalCommandInstances, int commandIndex)
 		{
-			this.chunk = chunk;
+			this.assembly = assembly;
 			this.externalCommandInstances = externalCommandInstances;
 			this.commandIndex = commandIndex;
 		}
@@ -46,7 +46,7 @@ namespace Maestro
 
 		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
 		{
-			var command = executable.chunk.commandDefinitions.buffer[executable.commandIndex];
+			var command = executable.assembly.commandDefinitions.buffer[executable.commandIndex];
 
 			var frameStackIndex = vm.stack.count;
 
@@ -61,7 +61,7 @@ namespace Maestro
 
 			vm.stackFrames.count = 0;
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				executable.chunk.bytes.count - 1,
+				executable.assembly.bytes.count - 1,
 				0,
 				0
 			));
@@ -72,18 +72,18 @@ namespace Maestro
 			));
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnBegin(vm, executable.chunk);
+				vm.debugger.value.OnBegin(vm, executable.assembly);
 
 			var maybeExecuteError = vm.Execute(
-				executable.chunk,
+				executable.assembly,
 				executable.externalCommandInstances,
 				-command.externalCommandSlice.index
 			);
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnEnd(vm, executable.chunk);
+				vm.debugger.value.OnEnd(vm, executable.assembly);
 
-			return new ExecuteResult(maybeExecuteError, executable.chunk, vm.stackFrames);
+			return new ExecuteResult(maybeExecuteError, executable.assembly, vm.stackFrames);
 		}
 
 		public void Dispose()

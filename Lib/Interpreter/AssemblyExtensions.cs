@@ -2,21 +2,21 @@ using System.Text;
 
 namespace Maestro
 {
-	internal sealed class ByteCodeChunkDebugView
+	internal sealed class AssemblyDebugView
 	{
 		internal readonly string[] lines;
 
-		internal ByteCodeChunkDebugView(ByteCodeChunk chunk)
+		internal AssemblyDebugView(Assembly assembly)
 		{
 			var sb = new StringBuilder();
-			chunk.Disassemble(sb);
+			assembly.Disassemble(sb);
 			lines = sb.ToString().Split(new string[] { "\n", "\r\n" }, System.StringSplitOptions.RemoveEmptyEntries);
 		}
 	}
 
-	public static class ByteCodeChunkExtensions
+	public static class AssemblyExtensions
 	{
-		public static int FindSourceIndex(this ByteCodeChunk self, int codeIndex)
+		public static int FindSourceIndex(this Assembly self, int codeIndex)
 		{
 			for (var i = 0; i < self.sourceStartIndexes.count; i++)
 			{
@@ -27,7 +27,7 @@ namespace Maestro
 			return -1;
 		}
 
-		internal static void Disassemble(this ByteCodeChunk self, StringBuilder sb)
+		internal static void Disassemble(this Assembly self, StringBuilder sb)
 		{
 			sb.Append("== ");
 			sb.Append(self.bytes.count);
@@ -71,7 +71,7 @@ namespace Maestro
 			sb.AppendLine("== end ==");
 		}
 
-		private static void PrintCommandName(ByteCodeChunk self, int codeIndex, StringBuilder sb)
+		private static void PrintCommandName(Assembly self, int codeIndex, StringBuilder sb)
 		{
 			for (var i = 0; i < self.commandDefinitions.count; i++)
 			{
@@ -85,7 +85,7 @@ namespace Maestro
 			}
 		}
 
-		private static void PrintLineNumber(ByteCodeChunk self, string source, int index, StringBuilder sb)
+		private static void PrintLineNumber(Assembly self, string source, int index, StringBuilder sb)
 		{
 			var currentSourceIndex = self.sourceSlices.buffer[index].index;
 			var currentPosition = FormattingHelper.GetLineAndColumn(source, currentSourceIndex);
@@ -102,7 +102,7 @@ namespace Maestro
 				sb.AppendFormat("{0,4} ", currentPosition.lineIndex);
 		}
 
-		internal static int DisassembleInstruction(this ByteCodeChunk self, int index, StringBuilder sb)
+		internal static int DisassembleInstruction(this Assembly self, int index, StringBuilder sb)
 		{
 			var instructionCode = self.bytes.buffer[index];
 			var instruction = (Instruction)instructionCode;
@@ -158,21 +158,21 @@ namespace Maestro
 			return index + 1;
 		}
 
-		private static int TwoByteInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int TwoByteInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
-			sb.Append(chunk.bytes.buffer[++index]);
+			sb.Append(assembly.bytes.buffer[++index]);
 			return ++index;
 		}
 
-		private static int LoadLiteralInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int LoadLiteralInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[++index],
-				chunk.bytes.buffer[++index]
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
 			);
-			var value = chunk.literals.buffer[literalIndex];
+			var value = assembly.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(' ');
@@ -181,15 +181,15 @@ namespace Maestro
 			return ++index;
 		}
 
-		private static int DebugPushLocalInfoInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int DebugPushLocalInfoInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
 			var literalIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[++index],
-				chunk.bytes.buffer[++index]
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
 			);
-			var stackIndex = chunk.bytes.buffer[++index];
+			var stackIndex = assembly.bytes.buffer[++index];
 
-			var name = chunk.literals.buffer[literalIndex];
+			var name = assembly.literals.buffer[literalIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
@@ -200,15 +200,15 @@ namespace Maestro
 			return ++index;
 		}
 
-		private static int ExecuteExternalCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int ExecuteExternalCommandInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
 			var instanceIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[++index],
-				chunk.bytes.buffer[++index]
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
 			);
 
-			var instance = chunk.externalCommandInstances.buffer[instanceIndex];
-			var definition = chunk.externalCommandDefinitions.buffer[instance.definitionIndex];
+			var instance = assembly.externalCommandInstances.buffer[instanceIndex];
+			var definition = assembly.externalCommandDefinitions.buffer[instance.definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
@@ -218,14 +218,14 @@ namespace Maestro
 			return ++index;
 		}
 
-		private static int ExecuteCommandInstruction(ByteCodeChunk chunk, Instruction instruction, int index, StringBuilder sb)
+		private static int ExecuteCommandInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
 			var definitionIndex = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[++index],
-				chunk.bytes.buffer[++index]
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
 			);
 
-			var definition = chunk.commandDefinitions.buffer[definitionIndex];
+			var definition = assembly.commandDefinitions.buffer[definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
@@ -235,11 +235,11 @@ namespace Maestro
 			return ++index;
 		}
 
-		private static int JumpInstruction(ByteCodeChunk chunk, Instruction instruction, int direction, int index, StringBuilder sb)
+		private static int JumpInstruction(Assembly assembly, Instruction instruction, int direction, int index, StringBuilder sb)
 		{
 			var offset = BytesHelper.BytesToUShort(
-				chunk.bytes.buffer[++index],
-				chunk.bytes.buffer[++index]
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
 			);
 
 			sb.Append(instruction.ToString());

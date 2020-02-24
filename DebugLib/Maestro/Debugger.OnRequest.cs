@@ -121,11 +121,11 @@ namespace Maestro.Debug
 						for (var i = vm.stackFrames.count - 1; i >= 1; i--)
 						{
 							var frame = vm.stackFrames.buffer[i];
-							var command = chunk.commandDefinitions.buffer[frame.commandIndex];
+							var command = assembly.commandDefinitions.buffer[frame.commandIndex];
 							var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
-							var sourceContentIndex = chunk.sourceSlices.buffer[codeIndex].index;
-							var sourceIndex = chunk.FindSourceIndex(codeIndex);
-							var source = chunk.sources.buffer[sourceIndex];
+							var sourceContentIndex = assembly.sourceSlices.buffer[codeIndex].index;
+							var sourceIndex = assembly.FindSourceIndex(codeIndex);
+							var source = assembly.sources.buffer[sourceIndex];
 							var pos = FormattingHelper.GetLineAndColumn(
 								source.content,
 								sourceContentIndex
@@ -234,7 +234,7 @@ namespace Maestro.Debug
 						return;
 					}
 
-					var source = chunk.sources.buffer[reference - 1];
+					var source = assembly.sources.buffer[reference - 1];
 					server.SendResponse(request, new Json.Object {
 						{"content", source.content}
 					});

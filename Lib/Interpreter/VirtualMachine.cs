@@ -73,7 +73,7 @@ namespace Maestro
 		public DebugInfo debugInfo;
 		internal Option<IDebugger> debugger;
 
-		public RuntimeError NewError(ByteCodeChunk chunk, string message)
+		public RuntimeError NewError(Assembly assembly, string message)
 		{
 			var ip = -1;
 			if (stackFrames.count > 0)
@@ -81,7 +81,7 @@ namespace Maestro
 
 			return new RuntimeError(
 				ip,
-				ip >= 0 ? chunk.sourceSlices.buffer[ip] : new Slice(),
+				ip >= 0 ? assembly.sourceSlices.buffer[ip] : new Slice(),
 				message
 			);
 		}

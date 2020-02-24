@@ -20,7 +20,7 @@ namespace Maestro
 
 		public Mode mode;
 		public readonly Parser parser;
-		public ByteCodeChunk chunk;
+		public Assembly assembly;
 
 		public int sourceIndex;
 		public bool isInPanicMode;
@@ -42,10 +42,10 @@ namespace Maestro
 			parser = new Parser(AddTokenizerError);
 		}
 
-		public void Reset(Mode mode, ByteCodeChunk chunk)
+		public void Reset(Mode mode, Assembly assembly)
 		{
 			this.mode = mode;
-			this.chunk = chunk;
+			this.assembly = assembly;
 
 			errors.ZeroClear();
 			stateStack.ZeroClear();
@@ -53,7 +53,7 @@ namespace Maestro
 
 		private void RestoreState(State state)
 		{
-			var sourceContent = chunk.sources.buffer[state.sourceIndex].content;
+			var sourceContent = assembly.sources.buffer[state.sourceIndex].content;
 			parser.tokenizer.Reset(sourceContent, state.tokenizerIndex);
 			parser.Reset(state.previousToken, state.currentToken);
 			sourceIndex = state.sourceIndex;
@@ -63,10 +63,10 @@ namespace Maestro
 
 		public void BeginSource(Source source)
 		{
-			var sourceIndex = chunk.sources.count;
-			chunk.sources.PushBack(source);
+			var sourceIndex = assembly.sources.count;
+			assembly.sources.PushBack(source);
 
-			chunk.sourceStartIndexes.PushBack(chunk.bytes.count);
+			assembly.sourceStartIndexes.PushBack(assembly.bytes.count);
 
 			stateStack.PushBack(new State(
 				this.sourceIndex,

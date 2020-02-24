@@ -4,14 +4,14 @@ namespace Maestro
 	{
 		public static void EmitByte(this Compiler self, byte value)
 		{
-			self.chunk.WriteByte(value, self.parser.previousToken.slice);
+			self.assembly.WriteByte(value, self.parser.previousToken.slice);
 		}
 
 		public static void EmitUShort(this Compiler self, ushort value)
 		{
 			BytesHelper.UShortToBytes(value, out var b0, out var b1);
-			self.chunk.WriteByte(b0, self.parser.previousToken.slice);
-			self.chunk.WriteByte(b1, self.parser.previousToken.slice);
+			self.assembly.WriteByte(b0, self.parser.previousToken.slice);
+			self.assembly.WriteByte(b1, self.parser.previousToken.slice);
 		}
 
 		public static void EmitInstruction(this Compiler self, Instruction instruction)
@@ -38,7 +38,7 @@ namespace Maestro
 
 		public static void EmitPushLiteral(this Compiler self, Value value)
 		{
-			var index = self.chunk.AddLiteral(value);
+			var index = self.assembly.AddLiteral(value);
 			self.EmitInstruction(Instruction.PushLiteral);
 			self.EmitUShort((ushort)index);
 		}
@@ -57,8 +57,8 @@ namespace Maestro
 
 		public static void EmitExecuteExternalCommand(this Compiler self, int commandIndex, Slice slice)
 		{
-			var instanceIndex = self.chunk.externalCommandInstances.count;
-			self.chunk.externalCommandInstances.PushBack(new ExternalCommandInstance(commandIndex, self.sourceIndex, slice));
+			var instanceIndex = self.assembly.externalCommandInstances.count;
+			self.assembly.externalCommandInstances.PushBack(new ExternalCommandInstance(commandIndex, self.sourceIndex, slice));
 			self.EmitInstruction(Instruction.ExecuteNativeCommand);
 			self.EmitUShort((ushort)instanceIndex);
 		}
@@ -71,14 +71,14 @@ namespace Maestro
 
 		public static int BeginEmitBackwardJump(this Compiler self)
 		{
-			return self.chunk.bytes.count;
+			return self.assembly.bytes.count;
 		}
 
 		public static void EndEmitBackwardJump(this Compiler self, Instruction instruction, int jumpIndex)
 		{
 			self.EmitInstruction(instruction);
 
-			var offset = self.chunk.bytes.count - jumpIndex + 2;
+			var offset = self.assembly.bytes.count - jumpIndex + 2;
 			if (offset > ushort.MaxValue)
 			{
 				self.AddSoftError(self.parser.previousToken.slice, new CompileErrors.General.TooMuchCodeToJumpOver());
@@ -93,12 +93,12 @@ namespace Maestro
 			self.EmitInstruction(instruction);
 			self.EmitUShort(0);
 
-			return self.chunk.bytes.count - 2;
+			return self.assembly.bytes.count - 2;
 		}
 
 		public static void EndEmitForwardJump(this Compiler self, int jumpIndex)
 		{
-			var offset = self.chunk.bytes.count - jumpIndex - 2;
+			var offset = self.assembly.bytes.count - jumpIndex - 2;
 			if (offset > ushort.MaxValue)
 			{
 				self.AddSoftError(self.parser.previousToken.slice, new CompileErrors.General.TooMuchCodeToJumpOver());
@@ -107,8 +107,8 @@ namespace Maestro
 
 			BytesHelper.UShortToBytes(
 				(ushort)offset,
-				out self.chunk.bytes.buffer[jumpIndex],
-				out self.chunk.bytes.buffer[jumpIndex + 1]
+				out self.assembly.bytes.buffer[jumpIndex],
+				out self.assembly.bytes.buffer[jumpIndex + 1]
 			);
 		}
 
@@ -124,7 +124,7 @@ namespace Maestro
 				return;
 
 			var name = CompilerHelper.GetSlice(self, slice);
-			var nameLiteralIndex = self.chunk.AddLiteral(new Value(name));
+			var nameLiteralIndex = self.assembly.AddLiteral(new Value(name));
 
 			var variablesStartIndex = self.GetTopCommandScope().Select(s => s.variablesStartIndex).GetOr(0);
 			var stackIndex = self.variables.count - variablesStartIndex;

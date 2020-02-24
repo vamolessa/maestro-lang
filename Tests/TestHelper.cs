@@ -50,18 +50,18 @@ public sealed class AssertCleanupDebugger : IDebugger
 		this.expectedStackCount = expectedStackCount;
 	}
 
-	public void OnBegin(VirtualMachine vm, ByteCodeChunk chunk)
+	public void OnBegin(VirtualMachine vm, Assembly assembly)
 	{
 	}
 
-	public void OnEnd(VirtualMachine vm, ByteCodeChunk chunk)
+	public void OnEnd(VirtualMachine vm, Assembly assembly)
 	{
 		Assert.Equal(expectedStackCount, vm.stack.count);
 		Assert.Equal(0, vm.debugInfo.frames.count);
 		Assert.Equal(0, vm.debugInfo.variableInfos.count);
 	}
 
-	public void OnHook(VirtualMachine vm, ByteCodeChunk chunk)
+	public void OnHook(VirtualMachine vm, Assembly assembly)
 	{
 	}
 }

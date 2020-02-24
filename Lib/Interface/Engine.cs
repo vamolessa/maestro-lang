@@ -39,17 +39,17 @@ namespace Maestro
 
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
-			var chunk = new ByteCodeChunk();
-			var errors = controller.CompileSource(chunk, librarySources, mode, source);
+			var assembly = new Assembly();
+			var errors = controller.CompileSource(assembly, librarySources, mode, source);
 
 			var instances = EngineHelper.InstantiateExternalCommands(
 				bindingRegistry,
-				chunk,
-				new Slice(0, chunk.externalCommandInstances.count),
+				assembly,
+				new Slice(0, assembly.externalCommandInstances.count),
 				ref errors
 			);
 
-			return new CompileResult(errors, new Executable<Tuple0>(chunk, instances, 0));
+			return new CompileResult(errors, new Executable<Tuple0>(assembly, instances, 0));
 		}
 
 		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
@@ -59,10 +59,10 @@ namespace Maestro
 
 			var parameterCount = default(T).Size;
 
-			var chunk = result.executable.chunk;
-			for (var i = 0; i < chunk.commandDefinitions.count; i++)
+			var assembly = result.executable.assembly;
+			for (var i = 0; i < assembly.commandDefinitions.count; i++)
 			{
-				var definition = chunk.commandDefinitions.buffer[i];
+				var definition = assembly.commandDefinitions.buffer[i];
 				if (definition.name != name)
 					continue;
 
@@ -72,7 +72,7 @@ namespace Maestro
 				var errors = new Buffer<CompileError>();
 				var instances = EngineHelper.InstantiateExternalCommands(
 					bindingRegistry,
-					chunk,
+					assembly,
 					definition.externalCommandSlice,
 					ref errors
 				);
@@ -80,7 +80,7 @@ namespace Maestro
 				if (errors.count > 0)
 					return Option.None;
 
-				return new Executable<T>(result.executable.chunk, instances, i);
+				return new Executable<T>(result.executable.assembly, instances, i);
 			}
 
 			return Option.None;

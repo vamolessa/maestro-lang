@@ -47,9 +47,9 @@ namespace Maestro
 
 		public static Option<int> ResolveToExternalCommandIndex(this Compiler self, Slice slice)
 		{
-			for (var i = 0; i < self.chunk.externalCommandDefinitions.count; i++)
+			for (var i = 0; i < self.assembly.externalCommandDefinitions.count; i++)
 			{
-				var command = self.chunk.externalCommandDefinitions.buffer[i];
+				var command = self.assembly.externalCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 					return i;
 			}
@@ -59,9 +59,9 @@ namespace Maestro
 
 		public static Option<int> ResolveToCommandIndex(this Compiler self, Slice slice)
 		{
-			for (var i = 0; i < self.chunk.commandDefinitions.count; i++)
+			for (var i = 0; i < self.assembly.commandDefinitions.count; i++)
 			{
-				var command = self.chunk.commandDefinitions.buffer[i];
+				var command = self.assembly.commandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 					return i;
 			}
