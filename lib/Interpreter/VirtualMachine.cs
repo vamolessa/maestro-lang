@@ -67,8 +67,8 @@ namespace Maestro
 	{
 		public Buffer<StackFrame> stackFrames = new Buffer<StackFrame>(4);
 		public Buffer<Value> stack = new Buffer<Value>(32);
-		internal Buffer<int> tupleSizes = new Buffer<int>(4);
-		internal Buffer<Slice> inputSlices = new Buffer<Slice>(4);
+		public Buffer<int> tupleSizes = new Buffer<int>(4);
+		public Buffer<Slice> inputSlices = new Buffer<Slice>(4);
 
 		public DebugInfo debugInfo;
 		internal Option<IDebugger> debugger;

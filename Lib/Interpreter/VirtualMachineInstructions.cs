@@ -212,8 +212,10 @@ namespace Maestro
 				case Instruction.DebugHook:
 					if (vm.debugger.isSome)
 					{
-						vm.stack = stack;
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
+						vm.stack = stack;
+						vm.tupleSizes = tupleSizes;
+						vm.inputSlices = inputSlices;
 						vm.debugger.value.OnHook(vm, chunk);
 					}
 					break;

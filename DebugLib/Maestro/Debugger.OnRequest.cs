@@ -4,6 +4,8 @@ namespace Maestro.Debug
 {
 	public sealed partial class Debugger
 	{
+		private const int InputScopeOffset = 1000;
+
 		private void SendStoppedEvent(string reason)
 		{
 			server.SendEvent("stopped", new Json.Object {
@@ -156,10 +158,15 @@ namespace Maestro.Debug
 					server.SendResponse(request, new Json.Object {
 						{"scopes", new Json.Array {
 							new Json.Object {
+								{"name", "Input"},
+								{"variablesReference", InputScopeOffset + frameIndex},
+								{"expensive", false},
+							},
+							new Json.Object {
 								{"name", "Locals"},
 								{"variablesReference", frameIndex},
 								{"expensive", false},
-							}
+							},
 						}}
 					});
 				}
@@ -167,31 +174,50 @@ namespace Maestro.Debug
 			case "variables":
 				{
 					var frameIndex = arguments["variablesReference"].GetOr(0);
-					var endStackIndex = vm.stack.count;
-					if (frameIndex < vm.stackFrames.count - 1)
-						endStackIndex = vm.stackFrames.buffer[frameIndex + 1].stackIndex;
-
+					var variables = new Json.Array();
 					var sb = new StringBuilder();
 
-					var variables = new Json.Array();
-					for (var i = 0; i < endStackIndex; i++)
+					if (frameIndex >= InputScopeOffset)
 					{
-						var variableIndex = vm.FindVariableIndex(i);
-						if (variableIndex.isSome)
+						frameIndex -= InputScopeOffset;
+						var inputSlice = vm.inputSlices.buffer[frameIndex - 1];
+						for (var i = 0; i < inputSlice.length; i++)
 						{
-							var variableInfo = vm.debugInfo.variableInfos.buffer[variableIndex.value];
-							var value = vm.stack.buffer[variableInfo.stackIndex];
-
+							var value = vm.stack.buffer[inputSlice.index + i];
 							sb.Clear();
 							value.AppendTo(sb);
 
-							variables.Add(new Json.Object
-							{
-								{"name", variableInfo.name},
+							variables.Add(new Json.Object {
+								{"name", i.ToString()},
 								{"value", sb.ToString()},
 								{"type", value.GetTypeName()},
 								{"variablesReference", 0},
 							});
+						}
+					}
+					else
+					{
+						var endStackIndex = vm.stack.count;
+						if (frameIndex < vm.stackFrames.count - 1)
+							endStackIndex = vm.stackFrames.buffer[frameIndex + 1].stackIndex;
+
+						for (var i = 0; i < endStackIndex; i++)
+						{
+							var variableIndex = vm.FindVariableIndex(i);
+							if (variableIndex.isSome)
+							{
+								var variableInfo = vm.debugInfo.variableInfos.buffer[variableIndex.value];
+								var value = vm.stack.buffer[variableInfo.stackIndex];
+								sb.Clear();
+								value.AppendTo(sb);
+
+								variables.Add(new Json.Object {
+									{"name", variableInfo.name},
+									{"value", sb.ToString()},
+									{"type", value.GetTypeName()},
+									{"variablesReference", 0},
+								});
+							}
 						}
 					}
 
