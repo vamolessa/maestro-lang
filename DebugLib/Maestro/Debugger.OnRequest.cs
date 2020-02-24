@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Maestro.Debug
 {
 	public sealed partial class Debugger
@@ -20,7 +22,7 @@ namespace Maestro.Debug
 			case "initialize":
 				{
 					helper = new DebugSessionHelper(arguments);
-					server.SendResponse(request, new Json.Object{
+					server.SendResponse(request, new Json.Object {
 						{"supportsConfigurationDoneRequest", true},
 						{"supportsFunctionBreakpoints", false},
 						{"supportsConditionalBreakpoints", false},
@@ -61,17 +63,7 @@ namespace Maestro.Debug
 				server.SendResponse(request);
 				lock (this)
 				{
-					switch (connectionState)
-					{
-					case ConnectionState.Disconnected:
-						connectionState = ConnectionState.WaitingDebugger;
-						break;
-					case ConnectionState.WaitingClient:
-						System.Console.WriteLine("SEND STOPPED FROM CONFIGURATION DONE");
-						connectionState = ConnectionState.Connected;
-						SendStoppedEvent("entry");
-						break;
-					}
+					isConnected = true;
 				}
 				break;
 			case "attach":
@@ -80,17 +72,8 @@ namespace Maestro.Debug
 			case "disconnect":
 				lock (this)
 				{
-					switch (connectionState)
-					{
-					case ConnectionState.Connected:
-						connectionState = ConnectionState.WaitingClient;
-						break;
-					case ConnectionState.WaitingClient:
-						connectionState = ConnectionState.Disconnected;
-						break;
-					}
+					isConnected = false;
 				}
-				server.Stop();
 				server.SendResponse(request);
 				break;
 			case "next":
@@ -168,10 +151,54 @@ namespace Maestro.Debug
 				}
 				break;
 			case "scopes":
-				server.SendResponse(request);
+				{
+					var frameIndex = arguments["frameId"].GetOr(0);
+					server.SendResponse(request, new Json.Object {
+						{"scopes", new Json.Array {
+							new Json.Object {
+								{"name", "Locals"},
+								{"variablesReference", frameIndex},
+								{"expensive", false},
+							}
+						}}
+					});
+				}
 				break;
 			case "variables":
-				server.SendResponse(request);
+				{
+					var frameIndex = arguments["variablesReference"].GetOr(0);
+					var endStackIndex = vm.stack.count;
+					if (frameIndex < vm.stackFrames.count - 1)
+						endStackIndex = vm.stackFrames.buffer[frameIndex + 1].stackIndex;
+
+					var sb = new StringBuilder();
+
+					var variables = new Json.Array();
+					for (var i = 0; i < endStackIndex; i++)
+					{
+						var variableIndex = vm.FindVariableIndex(i);
+						if (variableIndex.isSome)
+						{
+							var variableInfo = vm.debugInfo.variableInfos.buffer[variableIndex.value];
+							var value = vm.stack.buffer[variableInfo.stackIndex];
+
+							sb.Clear();
+							value.AppendTo(sb);
+
+							variables.Add(new Json.Object
+							{
+								{"name", variableInfo.name},
+								{"value", sb.ToString()},
+								{"type", value.GetTypeName()},
+								{"variablesReference", 0},
+							});
+						}
+					}
+
+					server.SendResponse(request, new Json.Object {
+						{"variables", variables}
+					});
+				}
 				break;
 			case "source":
 				{
@@ -182,7 +209,7 @@ namespace Maestro.Debug
 					}
 
 					var source = chunk.sources.buffer[reference - 1];
-					server.SendResponse(request, new Json.Object{
+					server.SendResponse(request, new Json.Object {
 						{"content", source.content}
 					});
 				}

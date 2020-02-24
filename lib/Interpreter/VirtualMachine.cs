@@ -86,7 +86,7 @@ namespace Maestro
 			);
 		}
 
-		internal Option<int> FindVariableIndex(int stackIndex)
+		public Option<int> FindVariableIndex(int stackIndex)
 		{
 			for (var i = 0; i < debugInfo.variableInfos.count; i++)
 			{

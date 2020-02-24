@@ -155,7 +155,7 @@ namespace Maestro
 			case string _:
 				return "string";
 			default:
-				return "object";
+				return self.asObject.GetType().Name;
 			}
 		}
 

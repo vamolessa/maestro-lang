@@ -40,14 +40,37 @@ namespace Maestro.Debug
 
 		private VirtualMachine vm;
 		private ByteCodeChunk chunk;
-		private ConnectionState connectionState = ConnectionState.Disconnected;
+		private bool isConnected = false;
 		private State state = State.Paused;
 		private SourcePosition lastPosition = new SourcePosition();
 
-		public Debugger(ushort port)
+		public Debugger()
 		{
 			server = new ProtocolServer(OnRequest);
+		}
+
+		public void Start(ushort port)
+		{
 			server.Start(IPAddress.Parse("127.0.0.1"), port);
+		}
+
+		public void Stop()
+		{
+			server.Stop();
+		}
+
+		public void WaitForClient()
+		{
+			while (true)
+			{
+				lock (this)
+				{
+					if (isConnected)
+						break;
+				}
+
+				Thread.Sleep(1000);
+			}
 		}
 
 		void IDebugger.OnBegin(VirtualMachine vm, ByteCodeChunk chunk)
@@ -57,34 +80,12 @@ namespace Maestro.Debug
 
 			lock (this)
 			{
-				state = State.Paused;
-				switch (connectionState)
-				{
-				case ConnectionState.Disconnected:
-					connectionState = ConnectionState.WaitingClient;
-					break;
-				case ConnectionState.WaitingDebugger:
-					connectionState = ConnectionState.Connected;
-					SendStoppedEvent("entry");
-					break;
-				}
+				state = State.Continuing;
 			}
 		}
 
 		void IDebugger.OnEnd(VirtualMachine vm, ByteCodeChunk chunk)
 		{
-			lock (this)
-			{
-				switch (connectionState)
-				{
-				case ConnectionState.Connected:
-					connectionState = ConnectionState.WaitingDebugger;
-					break;
-				case ConnectionState.WaitingDebugger:
-					connectionState = ConnectionState.Disconnected;
-					break;
-				}
-			}
 		}
 
 		void IDebugger.OnHook(VirtualMachine vm, ByteCodeChunk chunk)

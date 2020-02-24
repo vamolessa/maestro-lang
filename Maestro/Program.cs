@@ -40,8 +40,13 @@ namespace Maestro
 			var content = System.IO.File.ReadAllText("scripts/script.maestro");
 			var source = new Source("script.maestro", content);
 
+			var debugger = new Debug.Debugger();
+			debugger.Start(47474);
+			System.Console.WriteLine("WAITING FOR CLIENT");
+			debugger.WaitForClient();
+
 			var engine = new Engine();
-			engine.SetDebugger(new Debug.Debugger(47474));
+			engine.SetDebugger(debugger);
 			engine.RegisterCommand("print", () => new PrintCommand());
 			engine.RegisterCommand("bypass", () => new BypassCommand());
 
@@ -89,6 +94,8 @@ namespace Maestro
 				compileResult.FormatErrors(sb);
 				System.Console.WriteLine(sb);
 			}
+
+			debugger.Stop();
 		}
 	}
 }
