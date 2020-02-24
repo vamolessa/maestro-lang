@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\lib\lib.csproj" />
-    <ProjectReference Include="..\stdlib\stdlib.csproj" />
-    <ProjectReference Include="..\debuglib\debuglib.csproj" />
+    <ProjectReference Include="..\Lib\Lib.csproj" />
+    <ProjectReference Include="..\StdLib\StdLib.csproj" />
+    <ProjectReference Include="..\DebugLib\DebugLib.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
