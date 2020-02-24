@@ -37,8 +37,8 @@ namespace Maestro
 
 		public static void Main(string[] args)
 		{
-			var content = System.IO.File.ReadAllText("scripts/script.maestro");
-			var source = new Source("script.maestro", content);
+			var content = System.IO.File.ReadAllText("Scripts/Script.maestro");
+			var source = new Source("Script.maestro", content);
 
 			var debugger = new Debug.Debugger();
 			debugger.Start(47474);
