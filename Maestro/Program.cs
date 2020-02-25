@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Maestro.StdLib;
 
 namespace Maestro
 {
@@ -56,12 +57,9 @@ namespace Maestro
 
 			var engine = new Engine();
 			engine.SetDebugger(debugger);
-
-			engine.RegisterCommand("print", () => new PrintCommand());
-			engine.RegisterCommand("bypass", () => new BypassCommand());
+			engine.RegisterStandardCommands(t => System.Console.WriteLine(t));
 
 			var sb = new StringBuilder();
-
 			var compileResult = engine.CompileSource(source, Mode.Debug);
 			if (compileResult.TryGetExecutable(out var executable))
 			{

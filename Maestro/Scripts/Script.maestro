@@ -3,3 +3,12 @@ command c $arg {
 }
 
 c 5;
+
+
+trigger find "obj" | print;
+
+
+
+foreach $obj in find "objs" {
+	trigger $obj | print;
+}
