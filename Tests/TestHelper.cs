@@ -121,9 +121,9 @@ public readonly struct TestCompiled
 		this.result = result;
 	}
 
-	public TestExecuteScope<Tuple0> ExecuteScope()
+	public TestExecuteScope ExecuteScope()
 	{
-		return new TestExecuteScope<Tuple0>(
+		return new TestExecuteScope(
 			engine,
 			engine.ExecuteScope(),
 			result.executable
@@ -131,43 +131,22 @@ public readonly struct TestCompiled
 	}
 }
 
-public readonly struct TestCommand<T> where T : struct, ITuple
-{
-	public readonly Engine engine;
-	public readonly Executable<T> executable;
-
-	public TestCommand(Engine engine, Executable<T> executable)
-	{
-		this.engine = engine;
-		this.executable = executable;
-	}
-
-	public TestExecuteScope<T> ExecuteScope()
-	{
-		return new TestExecuteScope<T>(
-			engine,
-			engine.ExecuteScope(),
-			executable
-		);
-	}
-}
-
-public readonly struct TestExecuteScope<T> : System.IDisposable where T : struct, ITuple
+public readonly struct TestExecuteScope : System.IDisposable
 {
 	public readonly Engine engine;
 	public readonly ExecuteScope scope;
-	public readonly Executable<T> executable;
+	public readonly Executable executable;
 
-	internal TestExecuteScope(Engine engine, ExecuteScope scope, Executable<T> executable)
+	internal TestExecuteScope(Engine engine, ExecuteScope scope, Executable executable)
 	{
 		this.engine = engine;
 		this.scope = scope;
 		this.executable = executable;
 	}
 
-	public void Run(T args, int expectedStackCount = 0)
+	public void Run(int expectedStackCount = 0)
 	{
-		TestHelper.Run(engine, scope, executable, args, expectedStackCount);
+		TestHelper.Run(engine, scope, executable, expectedStackCount);
 	}
 
 	public void Dispose()
@@ -221,30 +200,16 @@ public static class TestHelper
 		return new TestCompiled(engine, compileResult);
 	}
 
-	public static TestCommand<T> Intantiate<T>(this TestCompiled compiled, string commandName) where T : struct, ITuple
-	{
-		var executable = compiled.engine.InstantiateCommand<T>(compiled.result, commandName);
-		if (!executable.isSome)
-			throw new CommandNotFound(commandName);
-		return new TestCommand<T>(compiled.engine, executable.value);
-	}
-
 	public static void Run(this TestCompiled compiled, int expectedStackCount = 0)
 	{
 		using var scope = compiled.ExecuteScope();
-		scope.Run(default, expectedStackCount);
+		scope.Run(expectedStackCount);
 	}
 
-	public static void Run<T>(this TestCommand<T> command, T args, int expectedStackCount = 0) where T : struct, ITuple
-	{
-		using var scope = command.ExecuteScope();
-		scope.Run(args, expectedStackCount);
-	}
-
-	internal static void Run<T>(Engine engine, ExecuteScope scope, Executable<T> executable, T args, int expectedStackCount) where T : struct, ITuple
+	internal static void Run(Engine engine, ExecuteScope scope, Executable executable, int expectedStackCount)
 	{
 		engine.SetDebugger(new AssertCleanupDebugger(expectedStackCount));
-		var executeResult = scope.Execute(executable, args);
+		var executeResult = scope.Execute(executable);
 		if (executeResult.error.isSome)
 			throw new RuntimeErrorException(executeResult);
 	}

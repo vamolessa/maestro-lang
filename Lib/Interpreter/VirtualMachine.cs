@@ -4,14 +4,14 @@ namespace Maestro
 {
 	public struct StackFrame
 	{
-		public FatAssembly fatAssembly;
+		public Executable executable;
 		public int codeIndex;
 		public int stackIndex;
 		public int commandIndex;
 
-		public StackFrame(FatAssembly fatAssembly, int codeIndex, int stackIndex, int commandIndex)
+		public StackFrame(Executable executable, int codeIndex, int stackIndex, int commandIndex)
 		{
-			this.fatAssembly = fatAssembly;
+			this.executable = executable;
 			this.codeIndex = codeIndex;
 			this.stackIndex = stackIndex;
 			this.commandIndex = commandIndex;

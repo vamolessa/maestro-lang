@@ -6,16 +6,15 @@ namespace Maestro
 		internal readonly ParseRules parseRules = new ParseRules();
 
 		internal Buffer<Slice> slicesCache = new Buffer<Slice>(1);
-		internal AssemblyRegistry assemblyRegistry;
+		internal ExecutableRegistry executableRegistry;
 		internal NativeCommandBindingRegistry bindingRegistry;
 
-		internal Buffer<CompileError> CompileSource(Mode mode, Source source, AssemblyRegistry assemblyRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
+		internal Buffer<CompileError> CompileSource(Mode mode, Source source, ExecutableRegistry assemblyRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
 		{
-			this.assemblyRegistry = assemblyRegistry;
+			this.executableRegistry = assemblyRegistry;
 			this.bindingRegistry = bindingRegistry;
 
 			assembly = new Assembly(source);
-			assembly.AddCommand(new CommandDefinition("entry point", 0, new Slice(), 0));
 			compiler.Reset(assembly, mode, source);
 
 			compiler.BeginScope(ScopeType.Normal);
@@ -117,8 +116,6 @@ namespace Maestro
 				parameterCount = byte.MaxValue;
 			}
 
-			var nativeCommandInstancesBaseIndex = compiler.assembly.nativeCommandInstances.count;
-
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
 
@@ -132,10 +129,6 @@ namespace Maestro
 			var success = compiler.assembly.AddCommand(new CommandDefinition(
 				name,
 				commandCodeIndex,
-				new Slice(
-					nativeCommandInstancesBaseIndex,
-					compiler.assembly.nativeCommandInstances.count - nativeCommandInstancesBaseIndex
-				),
 				(byte)parameterCount
 			));
 
@@ -395,7 +388,7 @@ namespace Maestro
 					compiler.EmitExecuteCommand(commandIndex);
 				}
 			}
-			else if (compiler.ResolveToExternalCommandIndex(assemblyRegistry, commandSlice).TryGet(out var externalCommandReference))
+			else if (compiler.ResolveToExternalCommandIndex(executableRegistry, commandSlice).TryGet(out var externalCommandReference))
 			{
 				var command = externalCommandReference.assembly.commandDefinitions.buffer[externalCommandReference.commandIndex];
 				if (argCount != command.parameterCount)

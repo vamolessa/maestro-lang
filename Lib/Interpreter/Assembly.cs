@@ -2,20 +2,6 @@ using System.Diagnostics;
 
 namespace Maestro
 {
-	public readonly struct FatAssembly
-	{
-		public readonly Assembly assembly;
-		internal readonly FatAssembly[] dependencies;
-		internal readonly NativeCommandCallback[] nativeCommandInstances;
-
-		internal FatAssembly(Assembly assembly, FatAssembly[] dependencies, NativeCommandCallback[] nativeCommandInstances)
-		{
-			this.assembly = assembly;
-			this.dependencies = dependencies;
-			this.nativeCommandInstances = nativeCommandInstances;
-		}
-	}
-
 	[DebuggerTypeProxy(typeof(AssemblyDebugView))]
 	public sealed class Assembly
 	{

@@ -13,27 +13,27 @@ namespace Maestro
 		void OnHook(VirtualMachine vm);
 	}
 
-	internal sealed class AssemblyRegistry
+	internal sealed class ExecutableRegistry
 	{
-		internal Buffer<FatAssembly> assemblies = new Buffer<FatAssembly>();
+		internal Buffer<Executable> executables = new Buffer<Executable>();
 
-		internal bool Register(FatAssembly fa)
+		internal bool Register(Executable executable)
 		{
-			var existingAssembly = Find(fa.assembly.source.uri);
+			var existingAssembly = Find(executable.assembly.source.uri);
 			if (existingAssembly.isSome)
 				return false;
 
-			assemblies.PushBack(fa);
+			executables.PushBack(executable);
 			return true;
 		}
 
-		internal Option<FatAssembly> Find(string name)
+		internal Option<Executable> Find(string name)
 		{
-			for (var i = 0; i < assemblies.count; i++)
+			for (var i = 0; i < executables.count; i++)
 			{
-				var fa = assemblies.buffer[i];
-				if (fa.assembly.source.uri == name)
-					return fa;
+				var executable = executables.buffer[i];
+				if (executable.assembly.source.uri == name)
+					return executable;
 			}
 
 			return Option.None;
@@ -69,16 +69,16 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static FatAssembly[] FindDependencyAssemblies(AssemblyRegistry assemblyRegistry, Assembly assembly, ref Buffer<CompileError> errors)
+		internal static Executable[] FindDependencyExecutables(ExecutableRegistry executableRegistry, Assembly assembly, ref Buffer<CompileError> errors)
 		{
 			if (assembly.dependencyUris.count == 0)
 				return null;
 
-			var dependencies = new FatAssembly[assembly.dependencyUris.count];
+			var dependencies = new Executable[assembly.dependencyUris.count];
 			for (var i = 0; i < dependencies.Length; i++)
 			{
 				var uri = assembly.dependencyUris.buffer[i];
-				var dependency = assemblyRegistry.Find(uri);
+				var dependency = executableRegistry.Find(uri);
 				if (!dependency.isSome)
 				{
 					errors.PushBack(new CompileError(new Slice(), new CompileErrors.Assembly.DependencyAssemblyNotFound

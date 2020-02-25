@@ -6,7 +6,7 @@ namespace Maestro
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly AssemblyRegistry assemblyRegistry = new AssemblyRegistry();
+		internal readonly ExecutableRegistry executableRegistry = new ExecutableRegistry();
 		internal readonly NativeCommandBindingRegistry bindingRegistry = new NativeCommandBindingRegistry();
 
 		public bool RegisterSingletonCommand<T>(string name, ICommand<T> command) where T : struct, ITuple
@@ -34,10 +34,10 @@ namespace Maestro
 
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
-			var errors = controller.CompileSource(mode, source, assemblyRegistry, bindingRegistry, out var assembly);
+			var errors = controller.CompileSource(mode, source, executableRegistry, bindingRegistry, out var assembly);
 
-			var dependencies = EngineHelper.FindDependencyAssemblies(
-				assemblyRegistry,
+			var dependencies = EngineHelper.FindDependencyExecutables(
+				executableRegistry,
 				assembly,
 				ref errors
 			);
@@ -49,56 +49,16 @@ namespace Maestro
 				ref errors
 			);
 
-			var fatAssembly = new FatAssembly(
+			var executable = new Executable(
 				assembly,
 				dependencies,
 				instances
 			);
 
 			if (errors.count == 0)
-				assemblyRegistry.Register(fatAssembly);
+				executableRegistry.Register(executable);
 
-			return new CompileResult(errors, new Executable<Tuple0>(fatAssembly, 0));
-		}
-
-		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
-		{
-			if (result.errors.count > 0)
-				return Option.None;
-
-			var parameterCount = default(T).Size;
-
-			var assembly = result.executable.fatAssembly.assembly;
-			for (var i = 0; i < assembly.commandDefinitions.count; i++)
-			{
-				var definition = assembly.commandDefinitions.buffer[i];
-				if (definition.name != name)
-					continue;
-
-				if (definition.parameterCount != parameterCount)
-					return Option.None;
-
-				var errors = new Buffer<CompileError>();
-				var instances = EngineHelper.InstantiateNativeCommands(
-					bindingRegistry,
-					assembly,
-					definition.nativeCommandSlice,
-					ref errors
-				);
-
-				if (errors.count > 0)
-					return Option.None;
-
-				var fatAssembly = new FatAssembly(
-					assembly,
-					result.executable.fatAssembly.dependencies,
-					instances
-				);
-
-				return new Executable<T>(fatAssembly, i);
-			}
-
-			return Option.None;
+			return new CompileResult(errors, executable);
 		}
 
 		public void SetDebugger(Option<IDebugger> debugger)

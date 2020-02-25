@@ -89,7 +89,7 @@ namespace Maestro.Debug
 		void IDebugger.OnHook(VirtualMachine vm)
 		{
 			var frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
-			var assembly = frame.fatAssembly.assembly;
+			var assembly = frame.executable.assembly;
 			var codeIndex = frame.codeIndex;
 			if (codeIndex < 0)
 				return;

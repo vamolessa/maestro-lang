@@ -96,11 +96,11 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public static Option<ExternalCommandReference> ResolveToExternalCommandIndex(this Compiler self, AssemblyRegistry assemblyRegistry, Slice slice)
+		public static Option<ExternalCommandReference> ResolveToExternalCommandIndex(this Compiler self, ExecutableRegistry executableRegistry, Slice slice)
 		{
-			for (var i = 0; i < assemblyRegistry.assemblies.count; i++)
+			for (var i = 0; i < executableRegistry.executables.count; i++)
 			{
-				var assembly = assemblyRegistry.assemblies.buffer[i].assembly;
+				var assembly = executableRegistry.executables.buffer[i].assembly;
 				var index = self.ResolveToCommandIndex(assembly, slice);
 				if (index.isSome)
 				{

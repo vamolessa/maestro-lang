@@ -121,7 +121,7 @@ namespace Maestro.Debug
 						for (var i = vm.stackFrames.count - 1; i >= 1; i--)
 						{
 							var frame = vm.stackFrames.buffer[i];
-							var assembly = frame.fatAssembly.assembly;
+							var assembly = frame.executable.assembly;
 							var command = assembly.commandDefinitions.buffer[frame.commandIndex];
 							var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 							var sourceContentIndex = assembly.sourceSlices.buffer[codeIndex].index;

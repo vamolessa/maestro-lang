@@ -5,15 +5,15 @@ namespace Maestro
 	public readonly struct CompileResult
 	{
 		public readonly Buffer<CompileError> errors;
-		internal readonly Executable<Tuple0> executable;
+		internal readonly Executable executable;
 
-		internal CompileResult(Buffer<CompileError> errors, Executable<Tuple0> executable)
+		internal CompileResult(Buffer<CompileError> errors, Executable executable)
 		{
 			this.errors = errors;
 			this.executable = executable;
 		}
 
-		public bool TryGetExecutable(out Executable<Tuple0> executable)
+		public bool TryGetExecutable(out Executable executable)
 		{
 			if (errors.count == 0)
 			{
@@ -30,7 +30,7 @@ namespace Maestro
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
 			if (errors.count == 0)
-				executable.fatAssembly.assembly.Disassemble(sb);
+				executable.assembly.Disassemble(sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
@@ -40,13 +40,13 @@ namespace Maestro
 				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
-				if (!executable.fatAssembly.assembly.source.HasContent)
+				if (!executable.assembly.source.HasContent)
 					continue;
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
 					FormattingHelper.AddHighlightSlice(
-						executable.fatAssembly.assembly.source,
+						executable.assembly.source,
 						error.slice,
 						sb
 					);
@@ -80,7 +80,7 @@ namespace Maestro
 			for (var i = stackFrames.count - 1; i >= 0; i--)
 			{
 				var frame = stackFrames.buffer[i];
-				var assembly = frame.fatAssembly.assembly;
+				var assembly = frame.executable.assembly;
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 				var sourceIndex = assembly.sourceSlices.buffer[codeIndex].index;
 

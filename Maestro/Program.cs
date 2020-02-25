@@ -67,31 +67,14 @@ namespace Maestro
 				compileResult.FormatDisassembledByteCode(sb);
 				System.Console.WriteLine(sb);
 
-				var testCommand = engine.InstantiateCommand<Tuple1>(compileResult, "#my-command");
-				if (testCommand.isSome)
+				System.Console.WriteLine("RUN\n");
+				var executeResult = engine.ExecuteScope().Execute(executable);
+				if (executeResult.error.isSome)
 				{
-					System.Console.WriteLine("RUN MY COMMAND\n");
-					using var executeScope = engine.ExecuteScope();
-					var executeResult = executeScope.Execute(testCommand.value, "from C#");
-					if (executeResult.error.isSome)
-					{
-						sb.Clear();
-						executeResult.FormatError(sb);
-						executeResult.FormatCallStackTrace(sb);
-						System.Console.WriteLine(sb);
-					}
-				}
-				else
-				{
-					System.Console.WriteLine("RUN ENTIRE BINARY\n");
-					var executeResult = engine.ExecuteScope().Execute(executable, default);
-					if (executeResult.error.isSome)
-					{
-						sb.Clear();
-						executeResult.FormatError(sb);
-						executeResult.FormatCallStackTrace(sb);
-						System.Console.WriteLine(sb);
-					}
+					sb.Clear();
+					executeResult.FormatError(sb);
+					executeResult.FormatCallStackTrace(sb);
+					System.Console.WriteLine(sb);
 				}
 
 				System.Console.WriteLine("FINISH");

@@ -35,7 +35,7 @@ public sealed class ReturnTests
 		var compiled = TestHelper.Compile(engine, source);
 		using (var s = compiled.ExecuteScope())
 		{
-			s.Run(default, expected.Length);
+			s.Run(expected.Length);
 
 			var returns = new Value[s.scope.StackCount];
 			for (var i = 0; i < returns.Length; i++)

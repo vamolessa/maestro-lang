@@ -1,14 +1,16 @@
 namespace Maestro
 {
-	public readonly struct Executable<T> where T : struct, ITuple
+	public readonly struct Executable
 	{
-		internal readonly FatAssembly fatAssembly;
-		internal readonly int commandIndex;
+		public readonly Assembly assembly;
+		internal readonly Executable[] dependencies;
+		internal readonly NativeCommandCallback[] nativeCommandInstances;
 
-		internal Executable(FatAssembly fatAssembly, int commandIndex)
+		internal Executable(Assembly assembly, Executable[] dependencies, NativeCommandCallback[] nativeCommandInstances)
 		{
-			this.fatAssembly = fatAssembly;
-			this.commandIndex = commandIndex;
+			this.assembly = assembly;
+			this.dependencies = dependencies;
+			this.nativeCommandInstances = nativeCommandInstances;
 		}
 	}
 
@@ -42,10 +44,8 @@ namespace Maestro
 			return vm.stack.PopLast();
 		}
 
-		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
+		public ExecuteResult Execute(in Executable executable)
 		{
-			var command = executable.fatAssembly.assembly.commandDefinitions.buffer[executable.commandIndex];
-
 			var frameStackIndex = vm.stack.count;
 
 			vm.tupleSizes.count = 0;
@@ -54,30 +54,24 @@ namespace Maestro
 			vm.inputSlices.count = 0;
 			vm.inputSlices.PushBackUnchecked(new Slice(0, frameStackIndex));
 
-			vm.stack.GrowUnchecked(args.Size);
-			args.Write(vm.stack.buffer, frameStackIndex);
-
 			vm.stackFrames.ZeroClear();
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				executable.fatAssembly,
-				executable.fatAssembly.assembly.bytes.count - 1,
+				executable,
+				executable.assembly.bytes.count - 1,
 				0,
-				0
+				-1
 			));
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				executable.fatAssembly,
-				command.codeIndex,
+				executable,
+				0,
 				frameStackIndex,
-				executable.commandIndex
+				-1
 			));
 
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnBegin(vm);
 
-			var maybeExecuteError = vm.Execute(
-				executable.fatAssembly,
-				-command.nativeCommandSlice.index
-			);
+			var maybeExecuteError = vm.Execute(executable);
 
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnEnd(vm);

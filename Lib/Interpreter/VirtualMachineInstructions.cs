@@ -4,13 +4,13 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, FatAssembly fa, int nativeCommandInstancesIndexOffset)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, Executable executable)
 		{
 #if DEBUG_TRACE
 			var debugSb = new System.Text.StringBuilder();
 #endif
 
-			var bytes = fa.assembly.bytes.buffer;
+			var bytes = executable.assembly.bytes.buffer;
 			var stack = vm.stack;
 
 			var tupleSizes = vm.tupleSizes;
@@ -41,7 +41,7 @@ namespace Maestro
 					vm.stack = stack;
 					vm.stackFrames.buffer[vm.stackFrames.count - 1].stackIndex = frame.stackIndex;
 					vm.TraceStack(debugSb);
-					fa.assembly.DisassembleInstruction(frame.codeIndex, debugSb);
+					executable.assembly.DisassembleInstruction(frame.codeIndex, debugSb);
 					System.Console.WriteLine(debugSb);
 					break;
 				}
@@ -58,10 +58,10 @@ namespace Maestro
 					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + nativeCommandInstancesIndexOffset;
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 
-						var definitionIndex = fa.assembly.nativeCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = fa.assembly.dependencyNativeCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var definitionIndex = executable.assembly.nativeCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = executable.assembly.dependencyNativeCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -69,7 +69,7 @@ namespace Maestro
 
 						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						fa.nativeCommandInstances[index].Invoke(ref context);
+						executable.nativeCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
 						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);
@@ -84,7 +84,7 @@ namespace Maestro
 				case Instruction.ExecuteCommand:
 					{
 						var index = bytes[frame.codeIndex++];
-						var definition = fa.assembly.commandDefinitions.buffer[index];
+						var definition = executable.assembly.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
 
@@ -102,14 +102,14 @@ namespace Maestro
 					{
 						var dependencyIndex = bytes[frame.codeIndex++];
 						var index = bytes[frame.codeIndex++];
-						fa = fa.dependencies[dependencyIndex];
-						bytes = fa.assembly.bytes.buffer;
+						executable = executable.dependencies[dependencyIndex];
+						bytes = executable.assembly.bytes.buffer;
 
-						var definition = fa.assembly.commandDefinitions.buffer[index];
+						var definition = executable.assembly.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
 
-						frame.fatAssembly = fa;
+						frame.executable = executable;
 						frame.commandIndex = index;
 						frame.codeIndex = definition.codeIndex;
 						frame.stackIndex = stack.count - definition.parameterCount;
@@ -123,7 +123,7 @@ namespace Maestro
 				case Instruction.Return:
 					{
 						frame = vm.stackFrames.buffer[--vm.stackFrames.count - 1];
-						bytes = frame.fatAssembly.assembly.bytes.buffer;
+						bytes = frame.executable.assembly.bytes.buffer;
 						MoveTail(inputSlices.PopLast().index, tupleSizes.buffer[tupleSizes.count - 1]);
 						break;
 					}
@@ -156,7 +156,7 @@ namespace Maestro
 				case Instruction.PushLiteral:
 					{
 						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
-						stack.PushBackUnchecked(fa.assembly.literals.buffer[index]);
+						stack.PushBackUnchecked(executable.assembly.literals.buffer[index]);
 						tupleSizes.PushBackUnchecked(1);
 						break;
 					}
@@ -250,7 +250,7 @@ namespace Maestro
 				case Instruction.DebugPushVariableInfo:
 					{
 						var nameIndex = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
-						var name = fa.assembly.literals.buffer[nameIndex].asObject as string;
+						var name = executable.assembly.literals.buffer[nameIndex].asObject as string;
 						var stackIndex = frame.stackIndex + bytes[frame.codeIndex++];
 						vm.debugInfo.variableInfos.PushBack(new DebugInfo.VariableInfo(name, stackIndex));
 						break;
