@@ -43,6 +43,7 @@ namespace Maestro
 			System.Console.WriteLine("WAITING FOR CLIENT");
 			debugger.WaitForClient();
 			Run(debugger);
+			debugger.Stop();
 			/*/
 			Run(Option.None);
 			//*/
@@ -103,8 +104,6 @@ namespace Maestro
 				compileResult.FormatErrors(sb);
 				System.Console.WriteLine(sb);
 			}
-
-			//debugger.Stop();
 		}
 	}
 }
