@@ -15,6 +15,7 @@ namespace Maestro
 			this.bindingRegistry = bindingRegistry;
 
 			assembly = new Assembly(source);
+			assembly.AddCommand(new CommandDefinition("entry point", 0, new Slice(), 0));
 			compiler.Reset(assembly, mode, source);
 
 			compiler.BeginScope(ScopeType.Normal);
@@ -27,8 +28,6 @@ namespace Maestro
 			compiler.EmitInstruction(Instruction.PushEmptyTuple);
 			compiler.EmitInstruction(Instruction.Return);
 			compiler.EmitInstruction(Instruction.Halt);
-
-			assemblyRegistry.Register(assembly);
 
 			return compiler.errors;
 		}

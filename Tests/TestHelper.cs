@@ -50,18 +50,18 @@ public sealed class AssertCleanupDebugger : IDebugger
 		this.expectedStackCount = expectedStackCount;
 	}
 
-	public void OnBegin(VirtualMachine vm, Assembly assembly)
+	public void OnBegin(VirtualMachine vm)
 	{
 	}
 
-	public void OnEnd(VirtualMachine vm, Assembly assembly)
+	public void OnEnd(VirtualMachine vm)
 	{
 		Assert.Equal(expectedStackCount, vm.stack.count);
 		Assert.Equal(0, vm.debugInfo.frames.count);
 		Assert.Equal(0, vm.debugInfo.variableInfos.count);
 	}
 
-	public void OnHook(VirtualMachine vm, Assembly assembly)
+	public void OnHook(VirtualMachine vm)
 	{
 	}
 }
@@ -178,7 +178,7 @@ public readonly struct TestExecuteScope<T> : System.IDisposable where T : struct
 
 public static class TestHelper
 {
-	public static readonly Mode CompilerMode = Mode.Debug;
+	public static readonly Mode CompileMode = Mode.Debug;
 
 	public static object[] ToObjectArray(params Value[] values)
 	{
@@ -215,7 +215,7 @@ public static class TestHelper
 
 	public static TestCompiled Compile(Engine engine, string source)
 	{
-		var compileResult = engine.CompileSource(new Source("source", source), CompilerMode);
+		var compileResult = engine.CompileSource(new Source("source", source), CompileMode);
 		if (compileResult.errors.count > 0)
 			throw new CompileErrorException(compileResult);
 		return new TestCompiled(engine, compileResult);

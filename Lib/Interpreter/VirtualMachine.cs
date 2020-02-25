@@ -4,12 +4,14 @@ namespace Maestro
 {
 	public struct StackFrame
 	{
+		public FatAssembly fatAssembly;
 		public int codeIndex;
 		public int stackIndex;
 		public int commandIndex;
 
-		public StackFrame(int codeIndex, int stackIndex, int commandIndex)
+		public StackFrame(FatAssembly fatAssembly, int codeIndex, int stackIndex, int commandIndex)
 		{
+			this.fatAssembly = fatAssembly;
 			this.codeIndex = codeIndex;
 			this.stackIndex = stackIndex;
 			this.commandIndex = commandIndex;
@@ -72,19 +74,6 @@ namespace Maestro
 
 		public DebugInfo debugInfo;
 		internal Option<IDebugger> debugger;
-
-		public RuntimeError NewError(Assembly assembly, string message)
-		{
-			var ip = -1;
-			if (stackFrames.count > 0)
-				ip = stackFrames.buffer[stackFrames.count - 1].codeIndex;
-
-			return new RuntimeError(
-				ip,
-				ip >= 0 ? assembly.sourceSlices.buffer[ip] : new Slice(),
-				message
-			);
-		}
 
 		public Option<int> FindVariableIndex(int stackIndex)
 		{

@@ -121,26 +121,27 @@ namespace Maestro.Debug
 						for (var i = vm.stackFrames.count - 1; i >= 1; i--)
 						{
 							var frame = vm.stackFrames.buffer[i];
+							var assembly = frame.fatAssembly.assembly;
 							var command = assembly.commandDefinitions.buffer[frame.commandIndex];
 							var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 							var sourceContentIndex = assembly.sourceSlices.buffer[codeIndex].index;
-							var sourceIndex = assembly.FindSourceIndex(codeIndex);
-							var source = assembly.sources.buffer[sourceIndex];
 							var pos = FormattingHelper.GetLineAndColumn(
-								source.content,
+								assembly.source.content,
 								sourceContentIndex
 							);
 
-							var responseSourceObject = new Json.Object();
-							if (TryMatchSourcePath(source.uri, out var sourcePath))
-								responseSourceObject.Add("path", sourcePath);
-							else
-								responseSourceObject.Add("sourceReference", sourceIndex + 1);
+							var responseSource = new Json.Value();
+							if (TryMatchSourcePath(assembly.source.uri, out var sourcePath))
+							{
+								responseSource = new Json.Object {
+									{"path", sourcePath}
+								};
+							}
 
 							stackFrames.Add(new Json.Object {
 								{"id", i},
 								{"name", command.name},
-								{"source", responseSourceObject},
+								{"source", responseSource},
 								{"line", helper.ConvertDebuggerLineToClient(pos.lineIndex)},
 								{"column", helper.ConvertDebuggerColumnToClient(pos.columnIndex)},
 							});
@@ -227,18 +228,7 @@ namespace Maestro.Debug
 				}
 				break;
 			case "source":
-				{
-					if (!arguments["source"]["sourceReference"].TryGet(out int reference))
-					{
-						server.SendErrorResponse(request, $"could not load source");
-						return;
-					}
-
-					var source = assembly.sources.buffer[reference - 1];
-					server.SendResponse(request, new Json.Object {
-						{"content", source.content}
-					});
-				}
+				server.SendResponse(request);
 				break;
 			case "threads":
 				server.SendResponse(request, new Json.Object {

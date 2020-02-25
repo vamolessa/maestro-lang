@@ -30,7 +30,7 @@ namespace Maestro
 		public void FormatDisassembledByteCode(StringBuilder sb)
 		{
 			if (errors.count == 0)
-				executable.assembly.Disassemble(sb);
+				executable.fatAssembly.assembly.Disassemble(sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)
@@ -40,13 +40,13 @@ namespace Maestro
 				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
-				if (!executable.assembly.source.HasContent)
+				if (!executable.fatAssembly.assembly.source.HasContent)
 					continue;
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
 					FormattingHelper.AddHighlightSlice(
-						executable.assembly.source,
+						executable.fatAssembly.assembly.source,
 						error.slice,
 						sb
 					);
@@ -58,26 +58,18 @@ namespace Maestro
 	public readonly struct ExecuteResult
 	{
 		public readonly Option<RuntimeError> error;
-		internal readonly Assembly assembly;
 		internal readonly Buffer<StackFrame> stackFrames;
 
-		internal ExecuteResult(Option<RuntimeError> error, Assembly assembly, Buffer<StackFrame> stackFrames)
+		internal ExecuteResult(Option<RuntimeError> error, Buffer<StackFrame> stackFrames)
 		{
 			this.error = error;
-			this.assembly = assembly;
 			this.stackFrames = stackFrames;
 		}
 
 		public void FormatError(StringBuilder sb)
 		{
-			if (!error.isSome)
-				return;
-
-			sb.Append(error.value.message);
-			if (error.value.instructionIndex >= 0 && assembly.source.HasContent)
-			{
-				FormattingHelper.AddHighlightSlice(assembly.source, error.value.slice, sb);
-			}
+			if (error.isSome)
+				sb.Append(error.value.message);
 		}
 
 		public void FormatCallStackTrace(StringBuilder sb)
@@ -88,6 +80,7 @@ namespace Maestro
 			for (var i = stackFrames.count - 1; i >= 0; i--)
 			{
 				var frame = stackFrames.buffer[i];
+				var assembly = frame.fatAssembly.assembly;
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 				var sourceIndex = assembly.sourceSlices.buffer[codeIndex].index;
 

@@ -2,6 +2,18 @@ using System.Diagnostics;
 
 namespace Maestro
 {
+	public readonly struct FatAssembly
+	{
+		public readonly Assembly assembly;
+		public readonly FatAssembly[] dependencies;
+
+		public FatAssembly(Assembly assembly, FatAssembly[] dependencies)
+		{
+			this.assembly = assembly;
+			this.dependencies = dependencies;
+		}
+	}
+
 	[DebuggerTypeProxy(typeof(AssemblyDebugView))]
 	public sealed class Assembly
 	{
@@ -19,7 +31,6 @@ namespace Maestro
 		internal Assembly(Source source)
 		{
 			this.source = source;
-			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry point", 0, new Slice(), 0));
 		}
 
 		internal void WriteByte(byte value, Slice slice)

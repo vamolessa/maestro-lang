@@ -49,7 +49,12 @@ namespace Maestro
 				ref errors
 			);
 
-			return new CompileResult(errors, new Executable<Tuple0>(assembly, dependencies, instances, 0));
+			var fa = new FatAssembly(assembly, dependencies);
+
+			if (errors.count == 0)
+				assemblyRegistry.Register(fa);
+
+			return new CompileResult(errors, new Executable<Tuple0>(fa, instances, 0));
 		}
 
 		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
@@ -59,7 +64,7 @@ namespace Maestro
 
 			var parameterCount = default(T).Size;
 
-			var assembly = result.executable.assembly;
+			var assembly = result.executable.fatAssembly.assembly;
 			for (var i = 0; i < assembly.commandDefinitions.count; i++)
 			{
 				var definition = assembly.commandDefinitions.buffer[i];
@@ -70,12 +75,6 @@ namespace Maestro
 					return Option.None;
 
 				var errors = new Buffer<CompileError>();
-				var dependencies = EngineHelper.FindDependencyAssemblies(
-					assemblyRegistry,
-					assembly,
-					ref errors
-				);
-
 				var instances = EngineHelper.InstantiateNativeCommands(
 					bindingRegistry,
 					assembly,
@@ -86,7 +85,7 @@ namespace Maestro
 				if (errors.count > 0)
 					return Option.None;
 
-				return new Executable<T>(result.executable.assembly, dependencies, instances, i);
+				return new Executable<T>(result.executable.fatAssembly, instances, i);
 			}
 
 			return Option.None;

@@ -39,7 +39,6 @@ namespace Maestro.Debug
 		private Buffer<SourcePosition> breakpoints = new Buffer<SourcePosition>();
 
 		private VirtualMachine vm;
-		private Assembly assembly;
 		private bool isConnected = false;
 		private State state = State.Paused;
 		private SourcePosition lastPosition = new SourcePosition();
@@ -73,10 +72,9 @@ namespace Maestro.Debug
 			}
 		}
 
-		void IDebugger.OnBegin(VirtualMachine vm, Assembly assembly)
+		void IDebugger.OnBegin(VirtualMachine vm)
 		{
 			this.vm = vm;
-			this.assembly = assembly;
 
 			lock (this)
 			{
@@ -84,23 +82,21 @@ namespace Maestro.Debug
 			}
 		}
 
-		void IDebugger.OnEnd(VirtualMachine vm, Assembly assembly)
+		void IDebugger.OnEnd(VirtualMachine vm)
 		{
 		}
 
-		void IDebugger.OnHook(VirtualMachine vm, Assembly assembly)
+		void IDebugger.OnHook(VirtualMachine vm)
 		{
-			var codeIndex = vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex;
+			var frame = vm.stackFrames.buffer[vm.stackFrames.count - 1];
+			var assembly = frame.fatAssembly.assembly;
+			var codeIndex = frame.codeIndex;
 			if (codeIndex < 0)
 				return;
-			var sourceIndex = assembly.FindSourceIndex(codeIndex);
-			if (sourceIndex < 0)
-				return;
 
-			var source = assembly.sources.buffer[sourceIndex];
 			var slice = assembly.sourceSlices.buffer[codeIndex];
-			var line = (ushort)(FormattingHelper.GetLineAndColumn(source.content, slice.index).lineIndex + 1);
-			var position = new SourcePosition(source.uri, line);
+			var line = (ushort)(FormattingHelper.GetLineAndColumn(assembly.source.content, slice.index).lineIndex + 1);
+			var position = new SourcePosition(assembly.source.uri, line);
 
 			switch (state)
 			{

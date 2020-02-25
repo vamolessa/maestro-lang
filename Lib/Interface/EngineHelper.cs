@@ -8,32 +8,32 @@ namespace Maestro
 
 	public interface IDebugger
 	{
-		void OnBegin(VirtualMachine vm, Assembly assembly);
-		void OnEnd(VirtualMachine vm, Assembly assembly);
-		void OnHook(VirtualMachine vm, Assembly assembly);
+		void OnBegin(VirtualMachine vm);
+		void OnEnd(VirtualMachine vm);
+		void OnHook(VirtualMachine vm);
 	}
 
 	internal sealed class AssemblyRegistry
 	{
-		internal Buffer<Assembly> assemblies = new Buffer<Assembly>();
+		internal Buffer<FatAssembly> assemblies = new Buffer<FatAssembly>();
 
-		internal bool Register(Assembly assembly)
+		internal bool Register(FatAssembly fa)
 		{
-			var existingAssembly = Find(assembly.source.uri);
+			var existingAssembly = Find(fa.assembly.source.uri);
 			if (existingAssembly.isSome)
 				return false;
 
-			assemblies.PushBack(assembly);
+			assemblies.PushBack(fa);
 			return true;
 		}
 
-		internal Option<Assembly> Find(string name)
+		internal Option<FatAssembly> Find(string name)
 		{
 			for (var i = 0; i < assemblies.count; i++)
 			{
-				var assembly = assemblies.buffer[i];
-				if (assembly.source.uri == name)
-					return assembly;
+				var fa = assemblies.buffer[i];
+				if (fa.assembly.source.uri == name)
+					return fa;
 			}
 
 			return Option.None;
@@ -69,12 +69,12 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static Assembly[] FindDependencyAssemblies(AssemblyRegistry assemblyRegistry, Assembly assembly, ref Buffer<CompileError> errors)
+		internal static FatAssembly[] FindDependencyAssemblies(AssemblyRegistry assemblyRegistry, Assembly assembly, ref Buffer<CompileError> errors)
 		{
 			if (assembly.dependencyUris.count == 0)
 				return null;
 
-			var dependencies = new Assembly[assembly.dependencyUris.count];
+			var dependencies = new FatAssembly[assembly.dependencyUris.count];
 			for (var i = 0; i < dependencies.Length; i++)
 			{
 				var uri = assembly.dependencyUris.buffer[i];

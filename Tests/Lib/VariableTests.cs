@@ -23,7 +23,6 @@ public sealed class VariableTests
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -36,7 +35,6 @@ public sealed class VariableTests
 		Assert.Throws<CompileErrorException>(() => {
 			var engine = new Engine();
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-			source = "native command bypass 0;\n" + source;
 			TestHelper.Compile(engine, source).Run();
 		});
 	}
@@ -57,7 +55,6 @@ public sealed class VariableTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		assertCommand.AssertExpectedInputs();

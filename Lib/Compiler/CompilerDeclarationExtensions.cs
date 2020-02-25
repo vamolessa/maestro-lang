@@ -100,7 +100,7 @@ namespace Maestro
 		{
 			for (var i = 0; i < assemblyRegistry.assemblies.count; i++)
 			{
-				var assembly = assemblyRegistry.assemblies.buffer[i];
+				var assembly = assemblyRegistry.assemblies.buffer[i].assembly;
 				var index = self.ResolveToCommandIndex(assembly, slice);
 				if (index.isSome)
 				{

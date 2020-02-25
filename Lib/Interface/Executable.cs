@@ -2,15 +2,13 @@ namespace Maestro
 {
 	public readonly struct Executable<T> where T : struct, ITuple
 	{
-		internal readonly Assembly assembly;
-		internal readonly Assembly[] dependencies;
+		internal readonly FatAssembly fatAssembly;
 		internal readonly NativeCommandCallback[] nativeCommandInstances;
 		internal readonly int commandIndex;
 
-		internal Executable(Assembly assembly, Assembly[] dependencies, NativeCommandCallback[] nativeCommandInstances, int commandIndex)
+		internal Executable(FatAssembly fatAssembly, NativeCommandCallback[] nativeCommandInstances, int commandIndex)
 		{
-			this.assembly = assembly;
-			this.dependencies = dependencies;
+			this.fatAssembly = fatAssembly;
 			this.nativeCommandInstances = nativeCommandInstances;
 			this.commandIndex = commandIndex;
 		}
@@ -48,7 +46,7 @@ namespace Maestro
 
 		public ExecuteResult Execute<T>(in Executable<T> executable, T args) where T : struct, ITuple
 		{
-			var command = executable.assembly.commandDefinitions.buffer[executable.commandIndex];
+			var command = executable.fatAssembly.assembly.commandDefinitions.buffer[executable.commandIndex];
 
 			var frameStackIndex = vm.stack.count;
 
@@ -61,31 +59,33 @@ namespace Maestro
 			vm.stack.GrowUnchecked(args.Size);
 			args.Write(vm.stack.buffer, frameStackIndex);
 
-			vm.stackFrames.count = 0;
+			vm.stackFrames.ZeroClear();
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
-				executable.assembly.bytes.count - 1,
+				executable.fatAssembly,
+				executable.fatAssembly.assembly.bytes.count - 1,
 				0,
 				0
 			));
 			vm.stackFrames.PushBackUnchecked(new StackFrame(
+				executable.fatAssembly,
 				command.codeIndex,
 				frameStackIndex,
 				executable.commandIndex
 			));
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnBegin(vm, executable.assembly);
+				vm.debugger.value.OnBegin(vm);
 
 			var maybeExecuteError = vm.Execute(
-				executable.assembly,
+				executable.fatAssembly,
 				executable.nativeCommandInstances,
 				-command.nativeCommandSlice.index
 			);
 
 			if (vm.debugger.isSome)
-				vm.debugger.value.OnEnd(vm, executable.assembly);
+				vm.debugger.value.OnEnd(vm);
 
-			return new ExecuteResult(maybeExecuteError, executable.assembly, vm.stackFrames);
+			return new ExecuteResult(maybeExecuteError, vm.stackFrames);
 		}
 
 		public void Dispose()

@@ -5,26 +5,22 @@ namespace Maestro
 	[DebuggerTypeProxy(typeof(BufferDebugView<>))]
 	public struct Buffer<T>
 	{
-		public const int MinCapacity = 1;
+		public const int MinCapacity = 4;
 
 		public int count;
 		public T[] buffer;
 
 		public Buffer(int capacity)
 		{
-			buffer = new T[capacity >= MinCapacity ? capacity : MinCapacity];
 			count = 0;
+			buffer = new T[capacity >= MinCapacity ? capacity : MinCapacity];
 		}
 
 		public void ZeroClear()
 		{
-			if (buffer != null)
-			{
-				for (var i = 0; i < buffer.Length; i++)
-					buffer[i] = default;
-			}
-
 			count = 0;
+			if (buffer != null)
+				System.Array.Clear(buffer, 0, buffer.Length);
 		}
 
 		public void Grow(int size)

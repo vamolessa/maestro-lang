@@ -35,14 +35,10 @@ namespace Maestro
 
 	public readonly struct RuntimeError
 	{
-		public readonly int instructionIndex;
-		public readonly Slice slice;
 		public readonly string message;
 
-		public RuntimeError(int instructionIndex, Slice slice, string message)
+		public RuntimeError(string message)
 		{
-			this.instructionIndex = instructionIndex;
-			this.slice = slice;
 			this.message = message;
 		}
 	}

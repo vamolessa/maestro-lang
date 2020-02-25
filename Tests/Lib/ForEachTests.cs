@@ -36,7 +36,6 @@ public sealed class ForEachTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("increment", () => incrementCommand);
-		source = "native command bypass 0;native command increment 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 		Assert.Equal(expectedIterationCount, incrementCommand.iterationCount);
 	}
@@ -54,7 +53,6 @@ public sealed class ForEachTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("append", () => appendCommand);
-		source = "native command bypass 0;native command append 1;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		Assert.Equal(expected, TestHelper.ToObjectArray(appendCommand.elements.ToArray()));

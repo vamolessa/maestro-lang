@@ -15,7 +15,6 @@ public sealed class PipingTests
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 		assertCommand.AssertExpectedInputs();
 	}
@@ -33,7 +32,6 @@ public sealed class PipingTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		var compiled = TestHelper.Compile(engine, source);
 
 		using (var s = compiled.ExecuteScope())

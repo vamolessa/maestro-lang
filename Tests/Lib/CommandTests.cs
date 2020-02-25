@@ -12,7 +12,6 @@ public sealed class CommandTests
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -25,7 +24,6 @@ public sealed class CommandTests
 		Assert.Throws<CompileErrorException>(() => {
 			var engine = new Engine();
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-			source = "native command bypass 0;\n" + source;
 			TestHelper.Compile(engine, source).Run();
 		});
 	}
@@ -57,7 +55,6 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -71,7 +68,6 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		var compiled = TestHelper.Compile(engine, source);
 		var command = compiled.Intantiate<Tuple2>("c");
 		TestHelper.Run(command, (arg0, arg1));
@@ -91,7 +87,6 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "native command assert 0;native command bypass 0;\n" + source;
 		var compiled = TestHelper.Compile(engine, source);
 		var command = compiled.Intantiate<Tuple0>("c");
 
