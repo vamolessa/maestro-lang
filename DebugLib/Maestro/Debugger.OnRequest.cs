@@ -32,7 +32,7 @@ namespace Maestro.Debug
 						{"supportsEvaluateForHovers", false},
 						{"exceptionBreakpointFilters", new Json.Array()},
 						{"supportsStepBack", false},
-						{"supportsSetVariable", false},
+						{"supportsSetVariable", true},
 						{"supportsRestartFrame", false},
 						{"supportsGotoTargetsRequest", false},
 						{"supportsStepInTargetsRequest", false},
@@ -122,7 +122,9 @@ namespace Maestro.Debug
 						{
 							var frame = vm.stackFrames.buffer[i];
 							var assembly = frame.executable.assembly;
-							var command = assembly.commandDefinitions.buffer[frame.commandIndex];
+							var commandName = "<entry-point>";
+							if (frame.commandIndex >= 0)
+								commandName = assembly.commandDefinitions.buffer[frame.commandIndex].name;
 							var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 							var sourceContentIndex = assembly.sourceSlices.buffer[codeIndex].index;
 							var pos = FormattingHelper.GetLineAndColumn(
@@ -140,7 +142,7 @@ namespace Maestro.Debug
 
 							stackFrames.Add(new Json.Object {
 								{"id", i},
-								{"name", command.name},
+								{"name", commandName},
 								{"source", responseSource},
 								{"line", helper.ConvertDebuggerLineToClient(pos.lineIndex)},
 								{"column", helper.ConvertDebuggerColumnToClient(pos.columnIndex)},
@@ -248,17 +250,23 @@ namespace Maestro.Debug
 					var bps = new Json.Array();
 					lock (this)
 					{
+						for (var i = breakpoints.count - 1; i >= 0; i--)
+						{
+							if (breakpoints.buffer[i].sourceUri == sourcePath)
+								breakpoints.SwapRemove(i);
+						}
+
 						foreach (var bp in arguments["breakpoints"])
 						{
 							if (!bp["line"].TryGet(out int line))
 								continue;
 
+							breakpoints.PushBack(new SourcePosition(sourcePath, line));
+
 							bps.Add(new Json.Object {
 								{"verified", true},
 								{"line", line}
 							});
-
-							breakpoints.PushBack(new SourcePosition(sourcePath, line));
 						}
 					}
 
@@ -275,6 +283,54 @@ namespace Maestro.Debug
 				break;
 			case "evaluate":
 				server.SendResponse(request);
+				break;
+			case "setVariable":
+				{
+					var name = arguments["name"].GetOr("");
+					var value = arguments["value"].GetOr("");
+
+					var success = false;
+					for (var i = vm.stackFrames.count - 1; i >= 0; i--)
+					{
+						var variableIndex = vm.FindVariableIndex(i);
+						if (variableIndex.isSome)
+						{
+							var variableInfo = vm.debugInfo.variableInfos.buffer[variableIndex.value];
+							if (variableInfo.name != name)
+								continue;
+
+							if (!Json.TryDeserialize(value, out var parsedValue))
+								break;
+
+							var newValue = new Value();
+							success = true;
+							switch (parsedValue.wrapped)
+							{
+							case null: break;
+							case bool b: newValue = new Value(b); break;
+							case int n: newValue = new Value(n); break;
+							case float f: newValue = new Value(f); break;
+							case string s: newValue = new Value(s); break;
+							default: success = false; break;
+							}
+
+							if (success)
+							{
+								vm.stack.buffer[variableInfo.stackIndex] = newValue;
+								var sb = new StringBuilder();
+								newValue.AppendTo(sb);
+								server.SendResponse(request, new Json.Object {
+									{"value", sb.ToString()},
+									{"type", newValue.GetTypeName()},
+								});
+							}
+							break;
+						}
+					}
+
+					if (!success)
+						server.SendErrorResponse(request, $"could not parse new value '{value}' for variable {name}");
+				}
 				break;
 			default:
 				server.SendErrorResponse(request, $"could not handle request '{request}'");

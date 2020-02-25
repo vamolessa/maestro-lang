@@ -2,6 +2,4 @@ command my-command $arg {
 	$arg | print;
 }
 
-5.09 | my-command 5.09;
-
-trigger find "obj" | print;
+my-command -5.09;

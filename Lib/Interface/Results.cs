@@ -84,7 +84,7 @@ namespace Maestro
 				var codeIndex = System.Math.Max(frame.codeIndex - 1, 0);
 				var sourceIndex = assembly.sourceSlices.buffer[codeIndex].index;
 
-				var commandName = string.Empty;
+				var commandName = "<entry-point>";
 				if (frame.commandIndex >= 0)
 					commandName = assembly.commandDefinitions.buffer[frame.commandIndex].name;
 

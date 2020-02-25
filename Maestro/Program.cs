@@ -38,7 +38,7 @@ namespace Maestro
 
 		public static void Main(string[] args)
 		{
-			/*
+			//*
 			var debugger = new Debug.Debugger();
 			debugger.Start(47474);
 			System.Console.WriteLine("WAITING FOR CLIENT");
