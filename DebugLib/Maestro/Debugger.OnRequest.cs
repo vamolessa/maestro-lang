@@ -15,10 +15,21 @@ namespace Maestro.Debug
 			});
 		}
 
+		private bool TryMatchSourcePath(string sourceUri, out string sourcePath)
+		{
+			for (var i = 0; i < breakpoints.count; i++)
+			{
+				sourcePath = breakpoints.buffer[i].sourcePath;
+				if (PathHelper.EndsWith(sourcePath, sourceUri))
+					return true;
+			}
+
+			sourcePath = null;
+			return false;
+		}
+
 		private void OnRequest(Request request, Json.Value arguments)
 		{
-			System.Console.WriteLine("DEBUGGER REQUEST: {0} [{1}] ARGS: {2}", request.command, request.seq, Json.Serialize(arguments));
-
 			switch (request.command)
 			{
 			case "initialize":
@@ -67,6 +78,9 @@ namespace Maestro.Debug
 				{
 					isConnected = true;
 				}
+
+				if (state == State.Paused)
+					SendStoppedEvent("entry");
 				break;
 			case "attach":
 				server.SendResponse(request);
@@ -112,6 +126,7 @@ namespace Maestro.Debug
 					state = State.Paused;
 				}
 				server.SendResponse(request);
+				SendStoppedEvent("pause");
 				break;
 			case "stackTrace":
 				{
@@ -252,7 +267,7 @@ namespace Maestro.Debug
 					{
 						for (var i = breakpoints.count - 1; i >= 0; i--)
 						{
-							if (breakpoints.buffer[i].sourceUri == sourcePath)
+							if (breakpoints.buffer[i].sourcePath == sourcePath)
 								breakpoints.SwapRemove(i);
 						}
 
@@ -261,7 +276,7 @@ namespace Maestro.Debug
 							if (!bp["line"].TryGet(out int line))
 								continue;
 
-							breakpoints.PushBack(new SourcePosition(sourcePath, line));
+							breakpoints.PushBack(new Breakpoint(sourcePath, line));
 
 							bps.Add(new Json.Object {
 								{"verified", true},
@@ -279,9 +294,6 @@ namespace Maestro.Debug
 				server.SendResponse(request);
 				break;
 			case "setExceptionBreakpoints":
-				server.SendResponse(request);
-				break;
-			case "evaluate":
 				server.SendResponse(request);
 				break;
 			case "setVariable":

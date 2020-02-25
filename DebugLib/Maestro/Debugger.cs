@@ -1,4 +1,3 @@
-using System.IO;
 using System.Net;
 using System.Threading;
 
@@ -12,6 +11,18 @@ namespace Maestro.Debug
 		public SourcePosition(string sourceUri, int line)
 		{
 			this.sourceUri = sourceUri;
+			this.line = line;
+		}
+	}
+
+	public readonly struct Breakpoint
+	{
+		public readonly string sourcePath;
+		public readonly int line;
+
+		public Breakpoint(string sourcePath, int line)
+		{
+			this.sourcePath = sourcePath;
 			this.line = line;
 		}
 	}
@@ -36,7 +47,7 @@ namespace Maestro.Debug
 		private readonly ProtocolServer server;
 		private DebugSessionHelper helper = default;
 
-		private Buffer<SourcePosition> breakpoints = new Buffer<SourcePosition>();
+		private Buffer<Breakpoint> breakpoints = new Buffer<Breakpoint>();
 
 		private VirtualMachine vm;
 		private bool isConnected = false;
@@ -50,7 +61,13 @@ namespace Maestro.Debug
 
 		public void Start(ushort port)
 		{
-			server.Start(IPAddress.Parse("127.0.0.1"), port);
+			server.Start(IPAddress.Loopback, port);
+		}
+
+		public void Start(IPAddress address, ushort port)
+		{
+
+			server.Start(address, port);
 		}
 
 		public void Stop()
@@ -106,14 +123,14 @@ namespace Maestro.Debug
 					for (var i = 0; i < breakpoints.count; i++)
 					{
 						var breakpoint = breakpoints.buffer[i];
-						var wasOnBreakpoint =
-							// lastPosition.sourceUri == breakpoint.sourceUri &&
-							lastPosition.line == breakpoint.line;
-
-						if (!wasOnBreakpoint && position.line == breakpoint.line)
+						if (
+							(lastPosition.sourceUri != position.sourceUri ||
+							lastPosition.line != position.line) &&
+							position.line == breakpoint.line &&
+							PathHelper.EndsWith(breakpoint.sourcePath, position.sourceUri)
+						)
 						{
 							state = State.Paused;
-							System.Console.WriteLine("SEND STOPPED FORM CONTINUING AT LINE {0}", position.line);
 							SendStoppedEvent("breakpoint");
 							break;
 						}
@@ -126,7 +143,6 @@ namespace Maestro.Debug
 					lock (this)
 					{
 						state = State.Paused;
-						System.Console.WriteLine("SEND STOPPED FORM STEPPING");
 						SendStoppedEvent("step");
 					}
 					break;
@@ -146,22 +162,6 @@ namespace Maestro.Debug
 			}
 
 			lastPosition = position;
-		}
-
-		private bool TryMatchSourcePath(string sourceUri, out string sourcePath)
-		{
-			sourceUri = sourceUri.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
-			for (var i = 0; i < breakpoints.count; i++)
-			{
-				sourcePath = breakpoints.buffer[i].sourceUri;
-				sourcePath = sourcePath.Replace(Path.AltDirectorySeparatorChar, Path.PathSeparator);
-
-				if (sourcePath.EndsWith(sourceUri))
-					return true;
-			}
-
-			sourcePath = null;
-			return false;
 		}
 	}
 }
