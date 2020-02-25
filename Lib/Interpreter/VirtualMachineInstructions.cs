@@ -1,14 +1,13 @@
 // #define DEBUG_TRACE
-using System.Text;
 
 namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, FatAssembly fa, NativeCommandCallback[] nativeCommandInstances, int nativeCommandInstancesIndexOffset)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, FatAssembly fa, int nativeCommandInstancesIndexOffset)
 		{
 #if DEBUG_TRACE
-			var debugSb = new StringBuilder();
+			var debugSb = new System.Text.StringBuilder();
 #endif
 
 			var bytes = fa.assembly.bytes.buffer;
@@ -70,7 +69,7 @@ namespace Maestro
 
 						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						nativeCommandInstances[index].Invoke(ref context);
+						fa.nativeCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
 						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);

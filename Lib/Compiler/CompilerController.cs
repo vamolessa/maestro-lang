@@ -409,7 +409,7 @@ namespace Maestro
 				}
 				else
 				{
-					compiler.EmitExecuteCommand(commandIndex);
+					compiler.EmitExecuteExternalCommand(externalCommandReference.dependencyIndex, externalCommandReference.commandIndex);
 				}
 			}
 			else

@@ -5,12 +5,14 @@ namespace Maestro
 	public readonly struct FatAssembly
 	{
 		public readonly Assembly assembly;
-		public readonly FatAssembly[] dependencies;
+		internal readonly FatAssembly[] dependencies;
+		internal readonly NativeCommandCallback[] nativeCommandInstances;
 
-		public FatAssembly(Assembly assembly, FatAssembly[] dependencies)
+		internal FatAssembly(Assembly assembly, FatAssembly[] dependencies, NativeCommandCallback[] nativeCommandInstances)
 		{
 			this.assembly = assembly;
 			this.dependencies = dependencies;
+			this.nativeCommandInstances = nativeCommandInstances;
 		}
 	}
 

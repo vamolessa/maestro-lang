@@ -5,11 +5,7 @@
 47 | $message;
 
 
-# declaring native commands
-native command print 0;
-
-
-# using native commands
+# using commands
 $message | print;
 
 

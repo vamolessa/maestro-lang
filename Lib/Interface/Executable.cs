@@ -3,13 +3,11 @@ namespace Maestro
 	public readonly struct Executable<T> where T : struct, ITuple
 	{
 		internal readonly FatAssembly fatAssembly;
-		internal readonly NativeCommandCallback[] nativeCommandInstances;
 		internal readonly int commandIndex;
 
-		internal Executable(FatAssembly fatAssembly, NativeCommandCallback[] nativeCommandInstances, int commandIndex)
+		internal Executable(FatAssembly fatAssembly, int commandIndex)
 		{
 			this.fatAssembly = fatAssembly;
-			this.nativeCommandInstances = nativeCommandInstances;
 			this.commandIndex = commandIndex;
 		}
 	}
@@ -78,7 +76,6 @@ namespace Maestro
 
 			var maybeExecuteError = vm.Execute(
 				executable.fatAssembly,
-				executable.nativeCommandInstances,
 				-command.nativeCommandSlice.index
 			);
 

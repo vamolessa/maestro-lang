@@ -49,12 +49,16 @@ namespace Maestro
 				ref errors
 			);
 
-			var fa = new FatAssembly(assembly, dependencies);
+			var fatAssembly = new FatAssembly(
+				assembly,
+				dependencies,
+				instances
+			);
 
 			if (errors.count == 0)
-				assemblyRegistry.Register(fa);
+				assemblyRegistry.Register(fatAssembly);
 
-			return new CompileResult(errors, new Executable<Tuple0>(fa, instances, 0));
+			return new CompileResult(errors, new Executable<Tuple0>(fatAssembly, 0));
 		}
 
 		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
@@ -85,15 +89,21 @@ namespace Maestro
 				if (errors.count > 0)
 					return Option.None;
 
-				return new Executable<T>(result.executable.fatAssembly, instances, i);
+				var fatAssembly = new FatAssembly(
+					assembly,
+					result.executable.fatAssembly.dependencies,
+					instances
+				);
+
+				return new Executable<T>(fatAssembly, i);
 			}
 
 			return Option.None;
 		}
 
-		public void SetDebugger(IDebugger debugger)
+		public void SetDebugger(Option<IDebugger> debugger)
 		{
-			vm.debugger = Option.Some(debugger);
+			vm.debugger = debugger;
 		}
 
 		public ExecuteScope ExecuteScope()
