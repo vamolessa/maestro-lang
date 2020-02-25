@@ -65,6 +65,11 @@ namespace Maestro.CompileErrors
 
 	namespace Commands
 	{
+		internal struct ExpectedCommandKeywordAfterExport : IFormattedMessage
+		{
+			public string Format() => "Expected 'command' keyword after 'export'";
+		}
+
 		internal struct ExpectedCommandIdentifier : IFormattedMessage
 		{
 			public string Format() => "Expected command name";
@@ -114,7 +119,7 @@ namespace Maestro.CompileErrors
 		internal struct CommandNotRegistered : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Command '{name}' not registered";
+			public string Format() => $"Could not find command '{name}'. Did you forget to register/export it?";
 		}
 	}
 

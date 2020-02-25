@@ -48,10 +48,19 @@ namespace Maestro
 
 		private void Declaration()
 		{
-			if (compiler.parser.Match(TokenKind.Command))
-				CommandDeclaration();
+			if (compiler.parser.Match(TokenKind.Export))
+			{
+				compiler.parser.Consume(TokenKind.Command, new CompileErrors.Commands.ExpectedCommandKeywordAfterExport());
+				CommandDeclaration(true);
+			}
+			else if (compiler.parser.Match(TokenKind.Command))
+			{
+				CommandDeclaration(false);
+			}
 			else
+			{
 				Statement();
+			}
 		}
 
 		private void Statement()
@@ -66,7 +75,7 @@ namespace Maestro
 				ExpressionStatement();
 		}
 
-		private void CommandDeclaration()
+		private void CommandDeclaration(bool exported)
 		{
 			var skipJump = compiler.BeginEmitForwardJump(Instruction.JumpForward);
 			var commandCodeIndex = compiler.assembly.bytes.count;
@@ -129,7 +138,8 @@ namespace Maestro
 			var success = compiler.assembly.AddCommand(new CommandDefinition(
 				name,
 				commandCodeIndex,
-				(byte)parameterCount
+				(byte)parameterCount,
+				exported
 			));
 
 			if (!success)
@@ -371,7 +381,7 @@ namespace Maestro
 					compiler.EmitExecuteNativeCommand(nativeCommandIndex, slice);
 				}
 			}
-			else if (compiler.ResolveToCommandIndex(compiler.assembly, commandSlice).TryGet(out var commandIndex))
+			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))
 			{
 				var command = compiler.assembly.commandDefinitions.buffer[commandIndex];
 				if (argCount != command.parameterCount)

@@ -73,12 +73,14 @@ namespace Maestro
 		public readonly string name;
 		public readonly int codeIndex;
 		public readonly byte parameterCount;
+		public readonly bool exported;
 
-		public CommandDefinition(string name, int codeIndex, byte parameterCount)
+		public CommandDefinition(string name, int codeIndex, byte parameterCount, bool exported)
 		{
 			this.name = name;
 			this.codeIndex = codeIndex;
 			this.parameterCount = parameterCount;
+			this.exported = exported;
 		}
 
 		public bool IsEqualTo(NativeCommandDefinition other)
