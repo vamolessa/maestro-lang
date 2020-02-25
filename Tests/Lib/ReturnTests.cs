@@ -18,7 +18,7 @@ public sealed class ReturnTests
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("called", () => assertCalledCommand);
 		engine.RegisterCommand("not-called", () => assertNotCalledCommand);
-		source = "external command bypass 0;external command called 0;external command not-called 0;\n" + source;
+		source = "native command bypass 0;native command called 0;native command not-called 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		assertCalledCommand.AssertExpectedInputs();

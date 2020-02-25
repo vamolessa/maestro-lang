@@ -4,23 +4,6 @@ namespace Maestro.StdLib
 	{
 		public static void RegisterOperationCommands(this Engine engine)
 		{
-			engine.RegisterLibrary(new Source("ops",
-				"external command and 0;" +
-				"external command or 0;" +
-				"external command not 0;" +
-
-				"external command + 1;" +
-				"external command - 1;" +
-				"external command * 1;" +
-				"external command / 1;" +
-
-				"external command < 1;" +
-				"external command > 1;" +
-				"external command = 1;" +
-
-				""
-			));
-
 			engine.RegisterSingletonCommand("and", new AndCommand());
 			engine.RegisterSingletonCommand("or", new OrCommand());
 			engine.RegisterSingletonCommand("not", new NotCommand());

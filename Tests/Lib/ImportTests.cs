@@ -12,8 +12,8 @@ public sealed class ImportTests
 		engine.RegisterLibrary(new Source("lib", libSource));
 
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		libSource = "external command bypass 0;\n" + libSource;
-		source = "external command bypass 0;import \"lib\";\n" + source;
+		libSource = "native command bypass 0;\n" + libSource;
+		source = "native command bypass 0;import \"lib\";\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -21,13 +21,12 @@ public sealed class ImportTests
 	[InlineData("", "import \"lib\";")]
 	public void ImportFail(string libSource, string source)
 	{
-		Assert.Throws<CompileErrorException>(() =>
-		{
+		Assert.Throws<CompileErrorException>(() => {
 			var engine = new Engine();
 
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-			libSource = "external command bypass 0;\n" + libSource;
-			source = "external command bypass 0;\n" + source;
+			libSource = "native command bypass 0;\n" + libSource;
+			source = "native command bypass 0;\n" + source;
 			TestHelper.Compile(engine, source).Run();
 		});
 	}

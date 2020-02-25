@@ -70,7 +70,7 @@ public sealed class OperationCommandTests
 		var engine = new Engine();
 		engine.RegisterOperationCommands();
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "import \"ops\";external command assert 0;\n" + source;
+		source = "import \"ops\";native command assert 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		assertCommand.AssertExpectedInputs();

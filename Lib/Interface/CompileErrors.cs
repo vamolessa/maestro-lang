@@ -23,73 +23,43 @@ namespace Maestro.CompileErrors
 		}
 	}
 
-	namespace Imports
+	namespace Assembly
 	{
-		internal struct ExpectedImportPathString : IFormattedMessage
+		internal struct TooManyDependencies : IFormattedMessage
 		{
-			public string Format() => "Expected import path string";
+			public string Format() => $"Too many dependencies. Max is {byte.MaxValue}";
 		}
 
-		internal struct CouldNotResolveImport : IFormattedMessage
+		internal struct DependencyAssemblyNotFound : IFormattedMessage
 		{
-			public string importUri;
-			public string Format() => $"Could not resolve source '{importUri}'";
-		}
-
-		internal struct ExpectedSemiColonAfterImport : IFormattedMessage
-		{
-			public string Format() => "Expected ';' after import";
+			public string dependencyUri;
+			public string Format() => $"Could not find dependency assembly '{dependencyUri}'";
 		}
 	}
 
-	namespace ExternalCommands
+	namespace NativeCommands
 	{
-		internal struct ExpectedCommandKeyword : IFormattedMessage
-		{
-			public string Format() => "Expected 'command' keyword";
-		}
-
-		internal struct ExpectedExternalCommandIdentifier : IFormattedMessage
-		{
-			public string Format() => "Expected external command name";
-		}
-
-		internal struct ExpectedExternalCommandParameterCount : IFormattedMessage
-		{
-			public string Format() => "Expected external command parameter count number";
-		}
-
-		internal struct TooManyExternalCommandParameters : IFormattedMessage
-		{
-			public string Format() => $"Too many external command parameters. Max is {byte.MaxValue}";
-		}
-
-		internal struct ExpectedSemiColonAfterExternalCommand : IFormattedMessage
-		{
-			public string Format() => "Expected ';' after external command declaration";
-		}
-
-		internal struct WrongNumberOfExternalCommandArguments : IFormattedMessage
+		internal struct WrongNumberOfNativeCommandArguments : IFormattedMessage
 		{
 			public string commandName;
 			public int expected;
 			public int got;
-			public string Format() => $"Wrong number of arguments for external command '{commandName}'. Expected {expected}. Got {got}";
+			public string Format() => $"Wrong number of arguments for native command '{commandName}'. Expected {expected}. Got {got}";
 		}
 
-		internal struct ExternalCommandHasNoBinding : IFormattedMessage
+		internal struct NativeCommandHasNoBinding : IFormattedMessage
 		{
 			public string name;
-			public string Format() => $"Could not find a binding for external command '{name}'";
+			public string Format() => $"Could not find a binding for native command '{name}'";
 		}
 
-		internal struct IncompatibleExternalCommand : IFormattedMessage
+		internal struct IncompatibleNativeCommand : IFormattedMessage
 		{
 			public string name;
 			public int expectedParameterCount;
 			public int gotParameterCount;
 
-			public string Format() => $"Incompatible binding for external command '{name}'. Expected {expectedParameterCount} parameters. Got {gotParameterCount}";
+			public string Format() => $"Incompatible binding for native command '{name}'. Expected {expectedParameterCount} parameters. Got {gotParameterCount}";
 		}
 	}
 
@@ -112,7 +82,7 @@ namespace Maestro.CompileErrors
 			public string Format() => $"Command '{commandName}' already has a parameter variable named '{parameterName}'";
 		}
 
-		internal struct TooManyExternalCommandParameterVariables : IFormattedMessage
+		internal struct TooManyNativeCommandParameterVariables : IFormattedMessage
 		{
 			public string Format() => $"Too many command parameter variables. Max is {byte.MaxValue}";
 		}
@@ -120,6 +90,17 @@ namespace Maestro.CompileErrors
 		internal struct ExpectedOpenCurlyBracesBeforeCommandBody : IFormattedMessage
 		{
 			public string Format() => "Expected '{' before command body";
+		}
+
+		internal struct CommandNameDuplicated : IFormattedMessage
+		{
+			public string name;
+			public string Format() => $"There is alreay a command named '{name}'";
+		}
+
+		internal struct TooManyCommandsDefined : IFormattedMessage
+		{
+			public string Format() => $"Too many command defined. Max is {byte.MaxValue}";
 		}
 
 		internal struct WrongNumberOfCommandArguments : IFormattedMessage
@@ -134,12 +115,6 @@ namespace Maestro.CompileErrors
 		{
 			public string name;
 			public string Format() => $"Command '{name}' not registered";
-		}
-
-		internal struct CommandNameDuplicated : IFormattedMessage
-		{
-			public string name;
-			public string Format() => $"There is alreay a command named '{name}'";
 		}
 	}
 

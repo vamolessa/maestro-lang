@@ -30,40 +30,38 @@ namespace Maestro
 		void Execute(ref Context context, T args);
 	}
 
-	internal delegate void ExternalCommandCallback(ref Context context);
+	internal delegate void NativeCommandCallback(ref Context context);
 
-	internal readonly struct ExternalCommandBinding
+	internal readonly struct NativeCommandBinding
 	{
-		public readonly ExternalCommandDefinition definition;
-		public readonly System.Func<ExternalCommandCallback> factory;
+		public readonly NativeCommandDefinition definition;
+		public readonly System.Func<NativeCommandCallback> factory;
 
-		public ExternalCommandBinding(ExternalCommandDefinition definition, System.Func<ExternalCommandCallback> factory)
+		public NativeCommandBinding(NativeCommandDefinition definition, System.Func<NativeCommandCallback> factory)
 		{
 			this.definition = definition;
 			this.factory = factory;
 		}
 	}
 
-	internal readonly struct ExternalCommandInstance
+	internal readonly struct NativeCommandInstance
 	{
 		public readonly int definitionIndex;
-		public readonly int sourceIndex;
 		public readonly Slice slice;
 
-		public ExternalCommandInstance(int definitionIndex, int sourceIndex, Slice slice)
+		public NativeCommandInstance(int definitionIndex, Slice slice)
 		{
 			this.definitionIndex = definitionIndex;
-			this.sourceIndex = sourceIndex;
 			this.slice = slice;
 		}
 	}
 
-	public readonly struct ExternalCommandDefinition
+	public readonly struct NativeCommandDefinition
 	{
 		public readonly string name;
 		public readonly byte parameterCount;
 
-		public ExternalCommandDefinition(string name, byte parameterCount)
+		public NativeCommandDefinition(string name, byte parameterCount)
 		{
 			this.name = name;
 			this.parameterCount = parameterCount;
@@ -74,18 +72,18 @@ namespace Maestro
 	{
 		public readonly string name;
 		public readonly int codeIndex;
-		public readonly Slice externalCommandSlice;
+		public readonly Slice nativeCommandSlice;
 		public readonly byte parameterCount;
 
-		public CommandDefinition(string name, int codeIndex, Slice externalCommandSlice, byte parameterCount)
+		public CommandDefinition(string name, int codeIndex, Slice nativeCommandSlice, byte parameterCount)
 		{
 			this.name = name;
 			this.codeIndex = codeIndex;
-			this.externalCommandSlice = externalCommandSlice;
+			this.nativeCommandSlice = nativeCommandSlice;
 			this.parameterCount = parameterCount;
 		}
 
-		public bool IsEqualTo(ExternalCommandDefinition other)
+		public bool IsEqualTo(NativeCommandDefinition other)
 		{
 			return name == other.name && parameterCount == other.parameterCount;
 		}

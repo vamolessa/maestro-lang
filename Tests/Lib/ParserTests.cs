@@ -31,7 +31,7 @@ public sealed class ParserTests
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple1>());
-		source = "external command bypass 1;\n" + source;
+		source = "native command bypass 1;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -44,11 +44,10 @@ public sealed class ParserTests
 	[InlineData("(0;);")]
 	public void FailStatement(string source)
 	{
-		Assert.Throws<CompileErrorException>(() =>
-		{
+		Assert.Throws<CompileErrorException>(() => {
 			var engine = new Engine();
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple1>());
-			source = "external command bypass 1;\n" + source;
+			source = "native command bypass 1;\n" + source;
 			TestHelper.Compile(engine, source);
 		});
 	}

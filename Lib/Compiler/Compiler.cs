@@ -2,35 +2,15 @@ namespace Maestro
 {
 	internal sealed class Compiler
 	{
-		private readonly struct State
-		{
-			public readonly int sourceIndex;
-			public readonly int tokenizerIndex;
-			public readonly Token previousToken;
-			public readonly Token currentToken;
-
-			public State(int sourceIndex, int tokenizerIndex, Token previousToken, Token currentToken)
-			{
-				this.sourceIndex = sourceIndex;
-				this.tokenizerIndex = tokenizerIndex;
-				this.previousToken = previousToken;
-				this.currentToken = currentToken;
-			}
-		}
-
-		public Mode mode;
 		public readonly Parser parser;
-		public Assembly assembly;
 
-		public int sourceIndex;
+		public Assembly assembly;
+		public Mode mode;
 		public bool isInPanicMode;
 
 		public Buffer<CompileError> errors = new Buffer<CompileError>();
-
 		public Buffer<Variable> variables = new Buffer<Variable>(256);
 		public Buffer<Scope> scopes = new Buffer<Scope>(1);
-
-		private Buffer<State> stateStack = new Buffer<State>();
 
 		public Compiler()
 		{
@@ -42,67 +22,24 @@ namespace Maestro
 			parser = new Parser(AddTokenizerError);
 		}
 
-		public void Reset(Mode mode, Assembly assembly)
+		public void Reset(Assembly assembly, Mode mode, Source source)
 		{
-			this.mode = mode;
 			this.assembly = assembly;
+			this.mode = mode;
+			isInPanicMode = false;
 
 			errors.ZeroClear();
-			stateStack.ZeroClear();
-		}
+			variables.count = 0;
+			scopes.count = 0;
 
-		private void RestoreState(State state)
-		{
-			var sourceContent = assembly.sources.buffer[state.sourceIndex].content;
-			parser.tokenizer.Reset(sourceContent, state.tokenizerIndex);
-			parser.Reset(state.previousToken, state.currentToken);
-			sourceIndex = state.sourceIndex;
-
-			isInPanicMode = false;
-		}
-
-		public void BeginSource(Source source)
-		{
-			var sourceIndex = assembly.sources.count;
-			assembly.sources.PushBack(source);
-
-			assembly.sourceStartIndexes.PushBack(assembly.bytes.count);
-
-			stateStack.PushBack(new State(
-				this.sourceIndex,
-				parser.tokenizer.nextIndex,
-				parser.previousToken,
-				parser.currentToken
-			));
-
-			RestoreState(new State(
-				sourceIndex,
-				0,
-				new Token(TokenKind.End, new Slice()),
-				new Token(TokenKind.End, new Slice())
-			));
-
-			this.BeginScope(ScopeType.Normal);
-		}
-
-		public void EndSource()
-		{
-			var current = stateStack.PopLast();
-			this.EndScope();
-			RestoreState(current);
-
-			if (stateStack.count == 0)
-			{
-				this.EmitInstruction(Instruction.PushEmptyTuple);
-				this.EmitInstruction(Instruction.Return);
-				this.EmitInstruction(Instruction.Halt);
-			}
+			parser.tokenizer.Reset(source.content);
+			parser.Reset();
 		}
 
 		public void AddSoftError(Slice slice, IFormattedMessage error)
 		{
 			if (!isInPanicMode)
-				errors.PushBack(new CompileError(sourceIndex, slice, error));
+				errors.PushBack(new CompileError(slice, error));
 		}
 
 		public void AddHardError(Slice slice, IFormattedMessage error)
@@ -110,7 +47,7 @@ namespace Maestro
 			if (!isInPanicMode)
 			{
 				isInPanicMode = true;
-				errors.PushBack(new CompileError(sourceIndex, slice, error));
+				errors.PushBack(new CompileError(slice, error));
 			}
 		}
 	}

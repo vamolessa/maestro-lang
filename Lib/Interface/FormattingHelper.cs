@@ -23,13 +23,11 @@ namespace Maestro
 
 	public readonly struct CompileError
 	{
-		public readonly int sourceIndex;
 		public readonly Slice slice;
 		public readonly IFormattedMessage message;
 
-		public CompileError(int sourceIndex, Slice slice, IFormattedMessage message)
+		public CompileError(Slice slice, IFormattedMessage message)
 		{
-			this.sourceIndex = sourceIndex;
 			this.slice = slice;
 			this.message = message;
 		}
@@ -126,17 +124,17 @@ namespace Maestro
 			return new Slice(lineStartIndex, lineEndIndex - lineStartIndex);
 		}
 
-		public static void AddHighlightSlice(string sourceName, string source, Slice slice, StringBuilder sb)
+		public static void AddHighlightSlice(Source source, Slice slice, StringBuilder sb)
 		{
-			var startPosition = GetLineAndColumn(source, slice.index);
-			var endPosition = GetLineAndColumn(source, slice.index + slice.length);
+			var startPosition = GetLineAndColumn(source.content, slice.index);
+			var endPosition = GetLineAndColumn(source.content, slice.index + slice.length);
 
 			if (slice.length == 0)
 				slice = new Slice(slice.index, (ushort)1);
 
 			sb.AppendLine();
 			sb.Append("  ");
-			sb.Append(sourceName);
+			sb.Append(source.uri);
 			sb.Append(':');
 			sb.Append(startPosition.lineIndex + 1);
 			sb.Append(':');
@@ -146,11 +144,11 @@ namespace Maestro
 			sb.AppendLine("    |");
 			for (var i = startPosition.lineIndex; i <= endPosition.lineIndex; i++)
 			{
-				var lineSlice = GetLineSlice(source, i);
+				var lineSlice = GetLineSlice(source.content, i);
 
 				sb.AppendFormat("{0,4}", i + 1);
 				sb.Append("| ");
-				sb.Append(source, lineSlice.index, lineSlice.length);
+				sb.Append(source.content, lineSlice.index, lineSlice.length);
 				sb.AppendLine();
 
 				sb.Append("    | ");
@@ -160,18 +158,18 @@ namespace Maestro
 					sb.Append(' ', startPosition.formattedColumnIndex);
 					var endColumnIndex = startPosition.lineIndex == endPosition.lineIndex ?
 						endPosition.formattedColumnIndex :
-						GetLineAndColumn(source, lineSlice.index + lineSlice.length).formattedColumnIndex;
+						GetLineAndColumn(source.content, lineSlice.index + lineSlice.length).formattedColumnIndex;
 
 					sb.Append('^', endColumnIndex - startPosition.formattedColumnIndex);
 				}
 				else if (i == endPosition.lineIndex)
 				{
-					var endColumnIndex = GetLineAndColumn(source, slice.index + slice.length).formattedColumnIndex;
+					var endColumnIndex = GetLineAndColumn(source.content, slice.index + slice.length).formattedColumnIndex;
 					sb.Append('^', endColumnIndex);
 				}
 				else
 				{
-					var endColumnIndex = GetLineAndColumn(source, lineSlice.index + lineSlice.length).formattedColumnIndex;
+					var endColumnIndex = GetLineAndColumn(source.content, lineSlice.index + lineSlice.length).formattedColumnIndex;
 					sb.Append('^', endColumnIndex);
 				}
 				sb.AppendLine();

@@ -4,31 +4,6 @@ namespace Maestro.StdLib
 	{
 		public static void RegisterTypeCommands(this Engine engine)
 		{
-			engine.RegisterLibrary(new Source("types",
-				"external command is-null 0;" +
-				"external command is-bool 0;" +
-				"external command is-int 0;" +
-				"external command is-float 0;" +
-				"external command is-string 0;" +
-				"external command is-object 0;" +
-
-				"external command only-nulls 0;" +
-				"external command only-bools 0;" +
-				"external command only-ints 0;" +
-				"external command only-floats 0;" +
-				"external command only-strings 0;" +
-				"external command only-objects 0;" +
-
-				"external command except-nulls 0;" +
-				"external command except-bools 0;" +
-				"external command except-ints 0;" +
-				"external command except-floats 0;" +
-				"external command except-strings 0;" +
-				"external command except-objects 0;" +
-
-				""
-			));
-
 			engine.RegisterSingletonCommand("is-null", new IsNullCommand());
 			engine.RegisterSingletonCommand("is-bool", new IsBoolCommand());
 			engine.RegisterSingletonCommand("is-int", new IsIntCommand());

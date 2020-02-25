@@ -18,13 +18,11 @@ namespace Maestro
 			new ExactScanner("false").ForToken(TokenKind.False),
 			new ExactScanner("true").ForToken(TokenKind.True),
 
-			new ExactScanner("import").ForToken(TokenKind.Import),
 			new ExactScanner("if").ForToken(TokenKind.If),
 			new ExactScanner("else").ForToken(TokenKind.Else),
 			new ExactScanner("foreach").ForToken(TokenKind.ForEach),
 			new ExactScanner("in").ForToken(TokenKind.In),
 			new ExactScanner("command").ForToken(TokenKind.Command),
-			new ExactScanner("external").ForToken(TokenKind.External),
 			new ExactScanner("return").ForToken(TokenKind.Return),
 
 			new IdentifierScanner("", "_+-*/<>=").ForToken(TokenKind.Identifier),

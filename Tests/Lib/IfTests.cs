@@ -28,7 +28,7 @@ public sealed class IfTests
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "external command assert 0;external command bypass 0;\n" + source;
+		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 		assertCommand.AssertExpectedInputs();
 	}
@@ -51,7 +51,7 @@ public sealed class IfTests
 		var engine = new Engine();
 		engine.RegisterCommand("assert", () => assertCommand);
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "external command assert 0;external command bypass 0;\n" + source;
+		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 		assertCommand.AssertNotCalled();
 	}

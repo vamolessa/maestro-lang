@@ -27,13 +27,11 @@ namespace Maestro
 			Set(TokenKind.CloseCurlyBrackets, null, null, Precedence.None);
 			Set(TokenKind.Pipe, null, null, Precedence.None);
 			Set(TokenKind.Comma, null, CompilerController.Comma, Precedence.Comma);
-			Set(TokenKind.Import, null, null, Precedence.None);
 			Set(TokenKind.If, null, null, Precedence.None);
 			Set(TokenKind.Else, null, null, Precedence.None);
 			Set(TokenKind.ForEach, null, null, Precedence.None);
 			Set(TokenKind.In, null, null, Precedence.None);
 			Set(TokenKind.Command, null, null, Precedence.None);
-			Set(TokenKind.External, null, null, Precedence.None);
 			Set(TokenKind.Return, null, null, Precedence.None);
 			Set(TokenKind.Identifier, CompilerController.Command, null, Precedence.None);
 			Set(TokenKind.Variable, CompilerController.LoadLocal, null, Precedence.None);

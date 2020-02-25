@@ -5,19 +5,21 @@ namespace Maestro
 	[DebuggerTypeProxy(typeof(AssemblyDebugView))]
 	public sealed class Assembly
 	{
-		public Buffer<Source> sources = new Buffer<Source>(0);
+		public readonly Source source;
+		public Buffer<string> dependencyUris = new Buffer<string>();
+
 		public Buffer<byte> bytes = new Buffer<byte>(256);
 		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
-		public Buffer<int> sourceStartIndexes = new Buffer<int>();
 
 		public Buffer<Value> literals = new Buffer<Value>(32);
-		public Buffer<ExternalCommandDefinition> externalCommandDefinitions = new Buffer<ExternalCommandDefinition>(16);
-		internal Buffer<ExternalCommandInstance> externalCommandInstances = new Buffer<ExternalCommandInstance>(32);
+		public Buffer<NativeCommandDefinition> dependencyNativeCommandDefinitions = new Buffer<NativeCommandDefinition>(16);
+		internal Buffer<NativeCommandInstance> nativeCommandInstances = new Buffer<NativeCommandInstance>(32);
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
 
-		internal Assembly()
+		internal Assembly(Source source)
 		{
-			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry-point", 0, new Slice(), 0));
+			this.source = source;
+			commandDefinitions.PushBackUnchecked(new CommandDefinition("entry point", 0, new Slice(), 0));
 		}
 
 		internal void WriteByte(byte value, Slice slice)
@@ -38,11 +40,11 @@ namespace Maestro
 			return literals.count - 1;
 		}
 
-		internal bool AddExternalCommand(ExternalCommandDefinition definition)
+		internal bool AddNativeCommand(NativeCommandDefinition definition)
 		{
-			for (var i = 0; i < externalCommandDefinitions.count; i++)
+			for (var i = 0; i < dependencyNativeCommandDefinitions.count; i++)
 			{
-				if (definition.name == externalCommandDefinitions.buffer[i].name)
+				if (definition.name == dependencyNativeCommandDefinitions.buffer[i].name)
 					return false;
 			}
 
@@ -52,15 +54,15 @@ namespace Maestro
 					return false;
 			}
 
-			externalCommandDefinitions.PushBack(definition);
+			dependencyNativeCommandDefinitions.PushBack(definition);
 			return true;
 		}
 
 		internal bool AddCommand(CommandDefinition definition)
 		{
-			for (var i = 0; i < externalCommandDefinitions.count; i++)
+			for (var i = 0; i < dependencyNativeCommandDefinitions.count; i++)
 			{
-				if (definition.name == externalCommandDefinitions.buffer[i].name)
+				if (definition.name == dependencyNativeCommandDefinitions.buffer[i].name)
 					return false;
 			}
 

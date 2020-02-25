@@ -10,13 +10,13 @@ namespace Maestro
 		public Tokenizer(Scanner[] scanners)
 		{
 			this.scanners = scanners;
-			Reset(string.Empty, 0);
+			Reset(string.Empty);
 		}
 
-		public void Reset(string source, int nextIndex)
+		public void Reset(string source)
 		{
 			this.source = source;
-			this.nextIndex = nextIndex;
+			this.nextIndex = 0;
 		}
 
 		public Token Next()

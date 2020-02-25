@@ -67,7 +67,7 @@ public sealed class TypeCommandTests
 		engine.RegisterCommand("assert", () => assertCommand);
 		engine.RegisterSingletonCommand("null", new NullCommand());
 		engine.RegisterSingletonCommand("object", new ObjectCommand());
-		source = "import \"types\";external command assert 0;external command null 0;external command object 0;\n" + source;
+		source = "import \"types\";native command assert 0;native command null 0;native command object 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		assertCommand.AssertExpectedInputs();

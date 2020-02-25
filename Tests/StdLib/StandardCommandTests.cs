@@ -49,7 +49,7 @@ public sealed class StandardCommandTests
 		var engine = new Engine();
 		engine.RegisterStandardCommands(t => { });
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "import \"std\";external command assert 0;\n" + source;
+		source = "import \"std\";native command assert 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 
 		assertCommand.AssertExpectedInputs();
@@ -61,8 +61,7 @@ public sealed class StandardCommandTests
 	[InlineData("error \"this is an error!\";")]
 	public void Error(string source)
 	{
-		Assert.Throws<RuntimeErrorException>(() =>
-		{
+		Assert.Throws<RuntimeErrorException>(() => {
 			var engine = new Engine();
 			engine.RegisterStandardCommands(t => { });
 			source = "import \"std\";\n" + source;

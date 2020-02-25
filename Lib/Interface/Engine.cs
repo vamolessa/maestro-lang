@@ -6,13 +6,8 @@ namespace Maestro
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly ExternalCommandBindingRegistry bindingRegistry = new ExternalCommandBindingRegistry();
-		internal readonly SourceCollection librarySources = new SourceCollection();
-
-		public void RegisterLibrary(Source source)
-		{
-			librarySources.AddSource(source);
-		}
+		internal readonly AssemblyRegistry assemblyRegistry = new AssemblyRegistry();
+		internal readonly NativeCommandBindingRegistry bindingRegistry = new NativeCommandBindingRegistry();
 
 		public bool RegisterSingletonCommand<T>(string name, ICommand<T> command) where T : struct, ITuple
 		{
@@ -21,8 +16,8 @@ namespace Maestro
 
 		public bool RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
-			return bindingRegistry.Register(new ExternalCommandBinding(
-				new ExternalCommandDefinition(
+			return bindingRegistry.Register(new NativeCommandBinding(
+				new NativeCommandDefinition(
 					name,
 					default(T).Size
 				),
@@ -39,17 +34,22 @@ namespace Maestro
 
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
-			var assembly = new Assembly();
-			var errors = controller.CompileSource(assembly, librarySources, mode, source);
+			var errors = controller.CompileSource(mode, source, assemblyRegistry, bindingRegistry, out var assembly);
 
-			var instances = EngineHelper.InstantiateExternalCommands(
-				bindingRegistry,
+			var dependencies = EngineHelper.FindDependencyAssemblies(
+				assemblyRegistry,
 				assembly,
-				new Slice(0, assembly.externalCommandInstances.count),
 				ref errors
 			);
 
-			return new CompileResult(errors, new Executable<Tuple0>(assembly, instances, 0));
+			var instances = EngineHelper.InstantiateNativeCommands(
+				bindingRegistry,
+				assembly,
+				new Slice(0, assembly.nativeCommandInstances.count),
+				ref errors
+			);
+
+			return new CompileResult(errors, new Executable<Tuple0>(assembly, dependencies, instances, 0));
 		}
 
 		public Option<Executable<T>> InstantiateCommand<T>(in CompileResult result, string name) where T : struct, ITuple
@@ -70,17 +70,23 @@ namespace Maestro
 					return Option.None;
 
 				var errors = new Buffer<CompileError>();
-				var instances = EngineHelper.InstantiateExternalCommands(
+				var dependencies = EngineHelper.FindDependencyAssemblies(
+					assemblyRegistry,
+					assembly,
+					ref errors
+				);
+
+				var instances = EngineHelper.InstantiateNativeCommands(
 					bindingRegistry,
 					assembly,
-					definition.externalCommandSlice,
+					definition.nativeCommandSlice,
 					ref errors
 				);
 
 				if (errors.count > 0)
 					return Option.None;
 
-				return new Executable<T>(result.executable.assembly, instances, i);
+				return new Executable<T>(result.executable.assembly, dependencies, instances, i);
 			}
 
 			return Option.None;

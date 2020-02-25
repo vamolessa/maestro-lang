@@ -11,14 +11,13 @@ namespace Maestro
 		public Parser(System.Action<Slice, IFormattedMessage> onError)
 		{
 			this.onError = onError;
-
-			Reset(new Token(TokenKind.End, new Slice()), new Token(TokenKind.End, new Slice()));
+			Reset();
 		}
 
-		public void Reset(Token previousToken, Token currentToken)
+		public void Reset()
 		{
-			this.previousToken = previousToken;
-			this.currentToken = currentToken;
+			this.previousToken = new Token(TokenKind.End, new Slice());
+			this.currentToken = new Token(TokenKind.End, new Slice());
 		}
 
 		public void Next()

@@ -12,7 +12,7 @@ public sealed class CommandTests
 	{
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-		source = "external command bypass 0;\n" + source;
+		source = "native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -22,11 +22,10 @@ public sealed class CommandTests
 	[InlineData("command c {} command c {}")]
 	public void FailDeclaration(string source)
 	{
-		Assert.Throws<CompileErrorException>(() =>
-		{
+		Assert.Throws<CompileErrorException>(() => {
 			var engine = new Engine();
 			engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
-			source = "external command bypass 0;\n" + source;
+			source = "native command bypass 0;\n" + source;
 			TestHelper.Compile(engine, source).Run();
 		});
 	}
@@ -58,7 +57,7 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "external command assert 0;external command bypass 0;\n" + source;
+		source = "native command assert 0;native command bypass 0;\n" + source;
 		TestHelper.Compile(engine, source).Run();
 	}
 
@@ -72,7 +71,7 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "external command assert 0;external command bypass 0;\n" + source;
+		source = "native command assert 0;native command bypass 0;\n" + source;
 		var compiled = TestHelper.Compile(engine, source);
 		var command = compiled.Intantiate<Tuple2>("c");
 		TestHelper.Run(command, (arg0, arg1));
@@ -92,7 +91,7 @@ public sealed class CommandTests
 		var engine = new Engine();
 		engine.RegisterCommand("bypass", () => new BypassCommand<Tuple0>());
 		engine.RegisterCommand("assert", () => assertCommand);
-		source = "external command assert 0;external command bypass 0;\n" + source;
+		source = "native command assert 0;native command bypass 0;\n" + source;
 		var compiled = TestHelper.Compile(engine, source);
 		var command = compiled.Intantiate<Tuple0>("c");
 

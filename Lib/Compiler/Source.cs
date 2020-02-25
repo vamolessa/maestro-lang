@@ -10,28 +10,10 @@ namespace Maestro
 			this.uri = uri;
 			this.content = content;
 		}
-	}
 
-	public sealed class SourceCollection
-	{
-		private Buffer<Source> sources = new Buffer<Source>();
-
-		public void AddSource(Source source)
+		public bool HasContent
 		{
-			if (!GetSource(source.uri).isSome)
-				sources.PushBack(source);
-		}
-
-		public Option<Source> GetSource(string uri)
-		{
-			for (var i = 0; i < sources.count; i++)
-			{
-				var source = sources.buffer[i];
-				if (source.uri == uri)
-					return source;
-			}
-
-			return Option.None;
+			get { return !string.IsNullOrEmpty(content); }
 		}
 	}
 }

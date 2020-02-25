@@ -2,31 +2,35 @@ namespace Maestro
 {
 	internal sealed class CompilerController
 	{
-		public readonly Compiler compiler = new Compiler();
+		internal readonly Compiler compiler = new Compiler();
+		internal readonly ParseRules parseRules = new ParseRules();
 
-		private readonly ParseRules parseRules = new ParseRules();
-		private SourceCollection librarySources = new SourceCollection();
-		private Buffer<Slice> slicesCache = new Buffer<Slice>(1);
+		internal Buffer<Slice> slicesCache = new Buffer<Slice>(1);
+		internal AssemblyRegistry assemblyRegistry;
+		internal NativeCommandBindingRegistry bindingRegistry;
 
-		public Buffer<CompileError> CompileSource(Assembly assembly, SourceCollection librarySources, Mode mode, Source source)
+		internal Buffer<CompileError> CompileSource(Mode mode, Source source, AssemblyRegistry assemblyRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
 		{
-			this.librarySources = librarySources;
+			this.assemblyRegistry = assemblyRegistry;
+			this.bindingRegistry = bindingRegistry;
 
-			compiler.Reset(mode, assembly);
-			Compile(source);
+			assembly = new Assembly(source);
+			compiler.Reset(assembly, mode, source);
 
-			return compiler.errors;
-		}
-
-		private void Compile(Source source)
-		{
-			compiler.BeginSource(source);
+			compiler.BeginScope(ScopeType.Normal);
 
 			compiler.parser.Next();
 			while (!compiler.parser.Match(TokenKind.End))
 				Declaration();
 
-			compiler.EndSource();
+			compiler.EndScope();
+			compiler.EmitInstruction(Instruction.PushEmptyTuple);
+			compiler.EmitInstruction(Instruction.Return);
+			compiler.EmitInstruction(Instruction.Halt);
+
+			assemblyRegistry.Register(assembly);
+
+			return compiler.errors;
 		}
 
 		private void Syncronize()
@@ -46,36 +50,10 @@ namespace Maestro
 
 		private void Declaration()
 		{
-			if (compiler.parser.Match(TokenKind.Import))
-				ImportDeclaration();
-			else if (compiler.parser.Match(TokenKind.External))
-				ExternalCommandDeclaration();
-			else if (compiler.parser.Match(TokenKind.Command))
+			if (compiler.parser.Match(TokenKind.Command))
 				CommandDeclaration();
 			else
 				Statement();
-		}
-
-		private void ImportDeclaration()
-		{
-			var slice = compiler.parser.previousToken.slice;
-			compiler.parser.Consume(TokenKind.StringLiteral, new CompileErrors.Imports.ExpectedImportPathString());
-			var importUri = CompilerHelper.GetParsedString(compiler);
-			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.Imports.ExpectedSemiColonAfterImport());
-			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-
-			for (var i = 0; i < compiler.assembly.sources.count; i++)
-			{
-				if (compiler.assembly.sources.buffer[i].uri == importUri)
-					return;
-			}
-
-			var importSource = librarySources.GetSource(importUri);
-			if (importSource.isSome)
-				Compile(importSource.value);
-			else
-				compiler.AddSoftError(slice, new CompileErrors.Imports.CouldNotResolveImport { importUri = importUri });
 		}
 
 		private void Statement()
@@ -88,31 +66,6 @@ namespace Maestro
 				ReturnStatement();
 			else
 				ExpressionStatement();
-		}
-
-		private void ExternalCommandDeclaration()
-		{
-			var slice = compiler.parser.previousToken.slice;
-
-			compiler.parser.Consume(TokenKind.Command, new CompileErrors.ExternalCommands.ExpectedCommandKeyword());
-			compiler.parser.Consume(TokenKind.Identifier, new CompileErrors.ExternalCommands.ExpectedExternalCommandIdentifier());
-			var nameSlice = compiler.parser.previousToken.slice;
-			var name = CompilerHelper.GetSlice(compiler, nameSlice);
-
-			compiler.parser.Consume(TokenKind.IntLiteral, new CompileErrors.ExternalCommands.ExpectedExternalCommandParameterCount());
-			var parameterCount = CompilerHelper.GetParsedInt(compiler);
-			if (parameterCount > byte.MaxValue)
-			{
-				compiler.AddSoftError(compiler.parser.previousToken.slice, new CompileErrors.ExternalCommands.TooManyExternalCommandParameters());
-				parameterCount = byte.MaxValue;
-			}
-
-			slice = slice.ExpandedTo(compiler.parser.previousToken.slice);
-			CompilerHelper.ConsumeSemicolon(compiler, slice, new CompileErrors.ExternalCommands.ExpectedSemiColonAfterExternalCommand());
-
-			var success = compiler.assembly.AddExternalCommand(new ExternalCommandDefinition(name, (byte)parameterCount));
-			if (!success)
-				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
 		}
 
 		private void CommandDeclaration()
@@ -161,11 +114,11 @@ namespace Maestro
 
 			if (parameterCount > byte.MaxValue)
 			{
-				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyExternalCommandParameterVariables());
+				compiler.AddSoftError(parametersSlice, new CompileErrors.Commands.TooManyNativeCommandParameterVariables());
 				parameterCount = byte.MaxValue;
 			}
 
-			var externalCommandInstancesBaseIndex = compiler.assembly.externalCommandInstances.count;
+			var nativeCommandInstancesBaseIndex = compiler.assembly.nativeCommandInstances.count;
 
 			compiler.parser.Consume(TokenKind.OpenCurlyBrackets, new CompileErrors.Commands.ExpectedOpenCurlyBracesBeforeCommandBody());
 			Block();
@@ -181,14 +134,17 @@ namespace Maestro
 				name,
 				commandCodeIndex,
 				new Slice(
-					externalCommandInstancesBaseIndex,
-					compiler.assembly.externalCommandInstances.count - externalCommandInstancesBaseIndex
+					nativeCommandInstancesBaseIndex,
+					compiler.assembly.nativeCommandInstances.count - nativeCommandInstancesBaseIndex
 				),
 				(byte)parameterCount
 			));
 
 			if (!success)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
+
+			if (compiler.assembly.commandDefinitions.count > byte.MaxValue)
+				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.TooManyCommandsDefined());
 		}
 
 		private void IfStatement()
@@ -406,26 +362,43 @@ namespace Maestro
 				argCount += 1;
 			}
 
-			if (compiler.ResolveToExternalCommandIndex(commandSlice).TryGet(out var externalCommandIndex))
+			if (compiler.ResolveToNativeCommandIndex(bindingRegistry, commandSlice).TryGet(out var nativeCommandIndex))
 			{
-				var externalCommand = compiler.assembly.externalCommandDefinitions.buffer[externalCommandIndex];
-				if (argCount != externalCommand.parameterCount)
+				var nativeCommand = compiler.assembly.dependencyNativeCommandDefinitions.buffer[nativeCommandIndex];
+				if (argCount != nativeCommand.parameterCount)
 				{
-					compiler.AddSoftError(slice, new CompileErrors.ExternalCommands.WrongNumberOfExternalCommandArguments
+					compiler.AddSoftError(slice, new CompileErrors.NativeCommands.WrongNumberOfNativeCommandArguments
 					{
-						commandName = externalCommand.name,
-						expected = externalCommand.parameterCount,
+						commandName = nativeCommand.name,
+						expected = nativeCommand.parameterCount,
 						got = argCount
 					});
 				}
 				else
 				{
-					compiler.EmitExecuteExternalCommand(externalCommandIndex, slice);
+					compiler.EmitExecuteNativeCommand(nativeCommandIndex, slice);
 				}
 			}
-			else if (compiler.ResolveToCommandIndex(commandSlice).TryGet(out var commandIndex))
+			else if (compiler.ResolveToCommandIndex(compiler.assembly, commandSlice).TryGet(out var commandIndex))
 			{
 				var command = compiler.assembly.commandDefinitions.buffer[commandIndex];
+				if (argCount != command.parameterCount)
+				{
+					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments
+					{
+						commandName = command.name,
+						expected = command.parameterCount,
+						got = argCount
+					});
+				}
+				else
+				{
+					compiler.EmitExecuteCommand(commandIndex);
+				}
+			}
+			else if (compiler.ResolveToExternalCommandIndex(assemblyRegistry, commandSlice).TryGet(out var externalCommandReference))
+			{
+				var command = externalCommandReference.assembly.commandDefinitions.buffer[externalCommandReference.commandIndex];
 				if (argCount != command.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments

@@ -5,6 +5,7 @@ namespace Maestro
 		Halt,
 		ExecuteNativeCommand,
 		ExecuteCommand,
+		ExecuteExternalCommand,
 		Return,
 		PushEmptyTuple,
 		PopTupleKeeping,

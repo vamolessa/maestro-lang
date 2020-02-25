@@ -1,5 +1,19 @@
 namespace Maestro
 {
+	internal readonly struct ExternalCommandReference
+	{
+		public readonly Assembly assembly;
+		public readonly byte dependencyIndex;
+		public readonly byte commandIndex;
+
+		public ExternalCommandReference(Assembly assembly, byte dependencyIndex, byte commandIndex)
+		{
+			this.assembly = assembly;
+			this.dependencyIndex = dependencyIndex;
+			this.commandIndex = commandIndex;
+		}
+	}
+
 	internal static class CompilerDeclarationExtensions
 	{
 		public static int AddVariable(this Compiler self, Slice slice, VariableFlag flag)
@@ -45,25 +59,74 @@ namespace Maestro
 			return Option.None;
 		}
 
-		public static Option<int> ResolveToExternalCommandIndex(this Compiler self, Slice slice)
+		public static Option<int> ResolveToNativeCommandIndex(this Compiler self, NativeCommandBindingRegistry bindingRegistry, Slice slice)
 		{
-			for (var i = 0; i < self.assembly.externalCommandDefinitions.count; i++)
+			for (var i = 0; i < self.assembly.dependencyNativeCommandDefinitions.count; i++)
 			{
-				var command = self.assembly.externalCommandDefinitions.buffer[i];
+				var command = self.assembly.dependencyNativeCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 					return i;
+			}
+
+			for (var i = 0; i < bindingRegistry.bindings.count; i++)
+			{
+				var definition = bindingRegistry.bindings.buffer[i].definition;
+				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, definition.name))
+				{
+					var index = self.assembly.dependencyNativeCommandDefinitions.count;
+					if (self.assembly.AddNativeCommand(definition))
+						return index;
+					else
+						break;
+				}
 			}
 
 			return Option.None;
 		}
 
-		public static Option<int> ResolveToCommandIndex(this Compiler self, Slice slice)
+		public static Option<byte> ResolveToCommandIndex(this Compiler self, Assembly assembly, Slice slice)
 		{
-			for (var i = 0; i < self.assembly.commandDefinitions.count; i++)
+			for (var i = 0; i < assembly.commandDefinitions.count; i++)
 			{
-				var command = self.assembly.commandDefinitions.buffer[i];
+				var command = assembly.commandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
-					return i;
+					return i < byte.MaxValue ? (byte)i : byte.MaxValue;
+			}
+
+			return Option.None;
+		}
+
+		public static Option<ExternalCommandReference> ResolveToExternalCommandIndex(this Compiler self, AssemblyRegistry assemblyRegistry, Slice slice)
+		{
+			for (var i = 0; i < assemblyRegistry.assemblies.count; i++)
+			{
+				var assembly = assemblyRegistry.assemblies.buffer[i];
+				var index = self.ResolveToCommandIndex(assembly, slice);
+				if (index.isSome)
+				{
+					var dependencyIndex = -1;
+					for (var j = 0; j < self.assembly.dependencyUris.count; j++)
+					{
+						var uri = self.assembly.dependencyUris.buffer[j];
+						if (uri == assembly.source.uri)
+						{
+							dependencyIndex = j;
+							break;
+						}
+					}
+					if (dependencyIndex < 0)
+					{
+						dependencyIndex = self.assembly.dependencyUris.count;
+						self.assembly.dependencyUris.PushBack(assembly.source.uri);
+						if (dependencyIndex > byte.MaxValue)
+							self.AddSoftError(slice, new CompileErrors.Assembly.TooManyDependencies());
+					}
+
+					if (dependencyIndex > byte.MaxValue)
+						dependencyIndex = byte.MaxValue;
+
+					return new ExternalCommandReference(assembly, (byte)dependencyIndex, index.value);
+				}
 			}
 
 			return Option.None;

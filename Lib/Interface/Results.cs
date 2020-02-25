@@ -40,15 +40,13 @@ namespace Maestro
 				var error = errors.buffer[i];
 				sb.Append(error.message.Format());
 
-				if (executable.assembly.sources.count == 0)
+				if (!executable.assembly.source.HasContent)
 					continue;
 
 				if (error.slice.index > 0 || error.slice.length > 0)
 				{
-					var source = executable.assembly.sources.buffer[error.sourceIndex];
 					FormattingHelper.AddHighlightSlice(
-						source.uri,
-						source.content,
+						executable.assembly.source,
 						error.slice,
 						sb
 					);
@@ -76,12 +74,10 @@ namespace Maestro
 				return;
 
 			sb.Append(error.value.message);
-
-			if (error.value.instructionIndex < 0 || assembly.sources.count == 0)
-				return;
-
-			var source = assembly.sources.buffer[assembly.FindSourceIndex(error.value.instructionIndex)];
-			FormattingHelper.AddHighlightSlice(source.uri, source.content, error.value.slice, sb);
+			if (error.value.instructionIndex >= 0 && assembly.source.HasContent)
+			{
+				FormattingHelper.AddHighlightSlice(assembly.source, error.value.slice, sb);
+			}
 		}
 
 		public void FormatCallStackTrace(StringBuilder sb)
@@ -99,16 +95,14 @@ namespace Maestro
 				if (frame.commandIndex >= 0)
 					commandName = assembly.commandDefinitions.buffer[frame.commandIndex].name;
 
-				if (assembly.sources.count == 0)
+				if (!assembly.source.HasContent)
 				{
 					sb.AppendLine(commandName);
 					continue;
 				}
 
-				var source = assembly.sources.buffer[assembly.FindSourceIndex(codeIndex)];
-
 				var pos = FormattingHelper.GetLineAndColumn(
-					source.content,
+					assembly.source.content,
 					sourceIndex
 				);
 				sb.Append("[line ");
@@ -117,9 +111,9 @@ namespace Maestro
 				sb.Append(commandName);
 				sb.Append(": ");
 
-				var slice = FormattingHelper.GetLineSlice(source.content, pos.lineIndex);
-				slice = FormattingHelper.Trim(source.content, slice);
-				sb.Append(source.content, slice.index, slice.length);
+				var slice = FormattingHelper.GetLineSlice(assembly.source.content, pos.lineIndex);
+				slice = FormattingHelper.Trim(assembly.source.content, slice);
+				sb.Append(assembly.source.content, slice.index, slice.length);
 				sb.AppendLine();
 			}
 		}

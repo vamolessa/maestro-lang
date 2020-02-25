@@ -1,6 +1,6 @@
-external command elements 0;
-external command print 0;
-external command test-command 2;
+native command elements 0;
+native command print 0;
+native command test-command 2;
 
 4 | $var;
 $var | print;

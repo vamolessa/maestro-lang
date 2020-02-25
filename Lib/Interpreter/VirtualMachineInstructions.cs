@@ -5,7 +5,7 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, Assembly assembly, ExternalCommandCallback[] externalCommandInstances, int externalCommandInstancesIndexOffset)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, Assembly assembly, NativeCommandCallback[] nativeCommandInstances, int nativeCommandInstancesIndexOffset)
 		{
 #if DEBUG_TRACE
 			var debugSb = new StringBuilder();
@@ -59,10 +59,10 @@ namespace Maestro
 					return Option.None;
 				case Instruction.ExecuteNativeCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + externalCommandInstancesIndexOffset;
+						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]) + nativeCommandInstancesIndexOffset;
 
-						var definitionIndex = assembly.externalCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = assembly.externalCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var definitionIndex = assembly.nativeCommandInstances.buffer[index].definitionIndex;
+						var parameterCount = assembly.dependencyNativeCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -70,7 +70,7 @@ namespace Maestro
 
 						context.startIndex = stack.count - (context.inputCount + parameterCount);
 
-						externalCommandInstances[index].Invoke(ref context);
+						nativeCommandInstances[index].Invoke(ref context);
 						stack = context.stack;
 
 						var returnCount = stack.count - (context.startIndex + context.inputCount + parameterCount);
@@ -84,7 +84,7 @@ namespace Maestro
 					}
 				case Instruction.ExecuteCommand:
 					{
-						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
+						var index = bytes[frame.codeIndex++];
 						var definition = assembly.commandDefinitions.buffer[index];
 
 						vm.stackFrames.buffer[vm.stackFrames.count - 1].codeIndex = frame.codeIndex;
@@ -99,6 +99,8 @@ namespace Maestro
 						vm.stackFrames.PushBackUnchecked(frame);
 						break;
 					}
+				case Instruction.ExecuteExternalCommand:
+					break;
 				case Instruction.Return:
 					{
 						frame = vm.stackFrames.buffer[--vm.stackFrames.count - 1];
