@@ -11,3 +11,18 @@ $message | print;
 
 # printing multiple values
 23, "some string", true, $message | print;
+
+
+# if
+if true {
+	"this will be executed" | print;
+} else {
+	"this will not" | print;
+}
+
+
+# foreach
+foreach $it in 1, 2, 3 {
+	"this will print 1, then 2, then 3" | print;
+	$it | print;
+}
