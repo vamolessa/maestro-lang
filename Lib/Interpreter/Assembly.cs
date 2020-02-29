@@ -12,9 +12,10 @@ namespace Maestro
 		public Buffer<Slice> sourceSlices = new Buffer<Slice>(256);
 
 		public Buffer<Value> literals = new Buffer<Value>(32);
-		public Buffer<NativeCommandDefinition> dependencyNativeCommandDefinitions = new Buffer<NativeCommandDefinition>(16);
-		internal Buffer<NativeCommandInstance> nativeCommandInstances = new Buffer<NativeCommandInstance>(32);
+		public Buffer<NativeCommandDefinition> nativeCommandDefinitions = new Buffer<NativeCommandDefinition>(8);
+		internal Buffer<NativeCommandInstance> nativeCommandInstances = new Buffer<NativeCommandInstance>(8);
 		public Buffer<CommandDefinition> commandDefinitions = new Buffer<CommandDefinition>(8);
+		public Buffer<ExternalCommandInstance> externalCommandInstances = new Buffer<ExternalCommandInstance>(8);
 
 		internal Assembly(Source source)
 		{
@@ -41,9 +42,9 @@ namespace Maestro
 
 		internal bool AddNativeCommand(NativeCommandDefinition definition)
 		{
-			for (var i = 0; i < dependencyNativeCommandDefinitions.count; i++)
+			for (var i = 0; i < nativeCommandDefinitions.count; i++)
 			{
-				if (definition.name == dependencyNativeCommandDefinitions.buffer[i].name)
+				if (definition.name == nativeCommandDefinitions.buffer[i].name)
 					return false;
 			}
 
@@ -53,15 +54,15 @@ namespace Maestro
 					return false;
 			}
 
-			dependencyNativeCommandDefinitions.PushBack(definition);
+			nativeCommandDefinitions.PushBack(definition);
 			return true;
 		}
 
 		internal bool AddCommand(CommandDefinition definition)
 		{
-			for (var i = 0; i < dependencyNativeCommandDefinitions.count; i++)
+			for (var i = 0; i < nativeCommandDefinitions.count; i++)
 			{
-				if (definition.name == dependencyNativeCommandDefinitions.buffer[i].name)
+				if (definition.name == nativeCommandDefinitions.buffer[i].name)
 					return false;
 			}
 

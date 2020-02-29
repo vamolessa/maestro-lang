@@ -3,13 +3,11 @@ namespace Maestro
 	public readonly struct Executable
 	{
 		public readonly Assembly assembly;
-		internal readonly Executable[] dependencies;
 		internal readonly NativeCommandCallback[] nativeCommandInstances;
 
-		internal Executable(Assembly assembly, Executable[] dependencies, NativeCommandCallback[] nativeCommandInstances)
+		internal Executable(Assembly assembly, NativeCommandCallback[] nativeCommandInstances)
 		{
 			this.assembly = assembly;
-			this.dependencies = dependencies;
 			this.nativeCommandInstances = nativeCommandInstances;
 		}
 	}
@@ -17,10 +15,12 @@ namespace Maestro
 	public readonly struct ExecuteScope : System.IDisposable
 	{
 		private readonly VirtualMachine vm;
+		private readonly Executable[] executableRegistry;
 
-		internal ExecuteScope(VirtualMachine vm)
+		internal ExecuteScope(VirtualMachine vm, Executable[] executableRegistry)
 		{
 			this.vm = vm;
+			this.executableRegistry = executableRegistry;
 		}
 
 		public int StackCount
@@ -71,7 +71,7 @@ namespace Maestro
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnBegin(vm);
 
-			var maybeExecuteError = vm.Execute(executable);
+			var maybeExecuteError = vm.Execute(executable, executableRegistry);
 
 			if (vm.debugger.isSome)
 				vm.debugger.value.OnEnd(vm);

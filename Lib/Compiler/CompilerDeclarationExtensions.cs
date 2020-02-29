@@ -61,9 +61,9 @@ namespace Maestro
 
 		public static Option<int> ResolveToNativeCommandIndex(this Compiler self, NativeCommandBindingRegistry bindingRegistry, Slice slice)
 		{
-			for (var i = 0; i < self.assembly.dependencyNativeCommandDefinitions.count; i++)
+			for (var i = 0; i < self.assembly.nativeCommandDefinitions.count; i++)
 			{
-				var command = self.assembly.dependencyNativeCommandDefinitions.buffer[i];
+				var command = self.assembly.nativeCommandDefinitions.buffer[i];
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 					return i;
 			}
@@ -73,7 +73,7 @@ namespace Maestro
 				var definition = bindingRegistry.bindings.buffer[i].definition;
 				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, definition.name))
 				{
-					var index = self.assembly.dependencyNativeCommandDefinitions.count;
+					var index = self.assembly.nativeCommandDefinitions.count;
 					if (self.assembly.AddNativeCommand(definition))
 						return index;
 					else

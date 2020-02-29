@@ -95,12 +95,15 @@ namespace Maestro
 
 		internal static NativeCommandCallback[] InstantiateNativeCommands(NativeCommandBindingRegistry bindingRegistry, Assembly assembly, Slice instancesSlice, ref Buffer<CompileError> errors)
 		{
+			if (instancesSlice.length == 0)
+				return null;
+
 			var instances = new NativeCommandCallback[instancesSlice.length];
 
 			for (var i = 0; i < instancesSlice.length; i++)
 			{
 				var instance = assembly.nativeCommandInstances.buffer[i + instancesSlice.index];
-				var definition = assembly.dependencyNativeCommandDefinitions.buffer[instance.definitionIndex];
+				var definition = assembly.nativeCommandDefinitions.buffer[instance.definitionIndex];
 
 				var binding = bindingRegistry.Find(definition.name);
 				if (!binding.isSome)

@@ -181,7 +181,7 @@ namespace Maestro
 			);
 
 			var instance = assembly.nativeCommandInstances.buffer[instanceIndex];
-			var definition = assembly.dependencyNativeCommandDefinitions.buffer[instance.definitionIndex];
+			var definition = assembly.nativeCommandDefinitions.buffer[instance.definitionIndex];
 
 			sb.Append(instruction.ToString());
 			sb.Append(" '");
@@ -206,18 +206,17 @@ namespace Maestro
 
 		private static int ExecuteExternalCommandInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
-			var dependencyIndex = assembly.bytes.buffer[++index];
+			var dependencyIndex = BytesHelper.BytesToUShort(
+				assembly.bytes.buffer[++index],
+				assembly.bytes.buffer[++index]
+			);
 			var definitionIndex = assembly.bytes.buffer[++index];
 
-			var dependencyUri = assembly.dependencyUris.buffer[dependencyIndex];
-			var definition = assembly.commandDefinitions.buffer[definitionIndex];
-
 			sb.Append(instruction.ToString());
-			sb.Append(" '");
-			sb.Append(definition.name);
-			sb.Append("' [");
-			sb.Append(dependencyUri);
-			sb.Append("]");
+			sb.Append("dependency ");
+			sb.Append(dependencyIndex);
+			sb.Append(" definition ");
+			sb.Append(definitionIndex);
 
 			return ++index;
 		}

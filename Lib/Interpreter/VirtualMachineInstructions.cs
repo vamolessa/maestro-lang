@@ -4,7 +4,7 @@ namespace Maestro
 {
 	internal static class VirtualMachineInstructions
 	{
-		public static Option<RuntimeError> Execute(this VirtualMachine vm, Executable executable)
+		public static Option<RuntimeError> Execute(this VirtualMachine vm, Executable executable, Executable[] registry)
 		{
 #if DEBUG_TRACE
 			var debugSb = new System.Text.StringBuilder();
@@ -61,7 +61,7 @@ namespace Maestro
 						var index = BytesHelper.BytesToUShort(bytes[frame.codeIndex++], bytes[frame.codeIndex++]);
 
 						var definitionIndex = executable.assembly.nativeCommandInstances.buffer[index].definitionIndex;
-						var parameterCount = executable.assembly.dependencyNativeCommandDefinitions.buffer[definitionIndex].parameterCount;
+						var parameterCount = executable.assembly.nativeCommandDefinitions.buffer[definitionIndex].parameterCount;
 
 						var context = default(Context);
 						context.stack = stack;
@@ -100,9 +100,12 @@ namespace Maestro
 					}
 				case Instruction.ExecuteExternalCommand:
 					{
-						var dependencyIndex = bytes[frame.codeIndex++];
+						var dependencyIndex = BytesHelper.BytesToUShort(
+							bytes[frame.codeIndex++],
+							bytes[frame.codeIndex++]
+						);
 						var index = bytes[frame.codeIndex++];
-						executable = executable.dependencies[dependencyIndex];
+						executable = registry[dependencyIndex];
 						bytes = executable.assembly.bytes.buffer;
 
 						var definition = executable.assembly.commandDefinitions.buffer[index];

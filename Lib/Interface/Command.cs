@@ -82,10 +82,19 @@ namespace Maestro
 			this.parameterCount = parameterCount;
 			this.exported = exported;
 		}
+	}
 
-		public bool IsEqualTo(NativeCommandDefinition other)
+	public readonly struct ExternalCommandInstance
+	{
+		public readonly string name;
+		public readonly int instructionIndex;
+		public readonly byte argumentCount;
+
+		public ExternalCommandInstance(string name, int instructionIndex, byte argumentCount)
 		{
-			return name == other.name && parameterCount == other.parameterCount;
+			this.name = name;
+			this.instructionIndex = instructionIndex;
+			this.argumentCount = argumentCount;
 		}
 	}
 }

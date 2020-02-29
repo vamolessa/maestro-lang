@@ -6,7 +6,7 @@ namespace Maestro
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly ExecutableRegistry executableRegistry = new ExecutableRegistry();
+		internal readonly Buffer<Executable> executableRegistry = new Buffer<Executable>();
 		internal readonly NativeCommandBindingRegistry bindingRegistry = new NativeCommandBindingRegistry();
 
 		public bool RegisterSingletonCommand<T>(string name, ICommand<T> command) where T : struct, ITuple
@@ -39,18 +39,32 @@ namespace Maestro
 
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
-			var errors = controller.CompileSource(mode, source, executableRegistry, bindingRegistry, out var assembly);
+			var errors = controller.CompileSource(mode, source, bindingRegistry, out var assembly);
 			return new CompileResult(errors, assembly);
 		}
 
 		public LinkResult LinkAssembly(Assembly assembly)
 		{
 			var errors = new Buffer<CompileError>();
+
+			for (var i = 0; i < executableRegistry.count; i++)
+			{
+				var uri = executableRegistry.buffer[i].assembly.source.uri;
+				if (assembly.source.uri == uri)
+				{
+					errors.PushBack(new CompileError(new Slice(), new CompileErrors.Assembly.DuplicatedAssembly { uri = uri }));
+					return new LinkResult(errors, new Executable(assembly, null));
+				}
+			}
+
 			var dependencies = EngineHelper.FindDependencyExecutables(
 				executableRegistry,
 				assembly,
 				ref errors
 			);
+
+			if (errors.count > 0)
+				return new LinkResult(errors, new Executable(assembly, null));
 
 			var instances = EngineHelper.InstantiateNativeCommands(
 				bindingRegistry,
@@ -61,19 +75,18 @@ namespace Maestro
 
 			var executable = new Executable(
 				assembly,
-				dependencies,
 				instances
 			);
 
 			if (errors.count == 0)
-				executableRegistry.Register(executable);
+				executableRegistry.PushBack(executable);
 
 			return new LinkResult(errors, executable);
 		}
 
 		public ExecuteScope ExecuteScope()
 		{
-			return new ExecuteScope(vm);
+			return new ExecuteScope(vm, executableRegistry.buffer);
 		}
 	}
 }

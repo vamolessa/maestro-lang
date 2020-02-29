@@ -25,6 +25,12 @@ namespace Maestro.CompileErrors
 
 	namespace Assembly
 	{
+		internal struct DuplicatedAssembly : IFormattedMessage
+		{
+			public string uri;
+			public string Format() => $"There is alreay an assembly '{uri}'";
+		}
+
 		internal struct TooManyDependencies : IFormattedMessage
 		{
 			public string Format() => $"Too many dependencies. Max is {byte.MaxValue}";
@@ -97,7 +103,7 @@ namespace Maestro.CompileErrors
 			public string Format() => "Expected '{' before command body";
 		}
 
-		internal struct CommandNameDuplicated : IFormattedMessage
+		internal struct DuplicatedCommandName : IFormattedMessage
 		{
 			public string name;
 			public string Format() => $"There is alreay a command named '{name}'";
@@ -114,6 +120,13 @@ namespace Maestro.CompileErrors
 			public int expected;
 			public int got;
 			public string Format() => $"Wrong number of arguments for command '{commandName}'. Expected {expected}. Got {got}";
+		}
+
+
+		internal struct TooManyCommandArguments : IFormattedMessage
+		{
+			public string commandName;
+			public string Format() => $"Too many arguments passed to command '{commandName}'. Max is {byte.MaxValue}";
 		}
 
 		internal struct CommandNotRegistered : IFormattedMessage

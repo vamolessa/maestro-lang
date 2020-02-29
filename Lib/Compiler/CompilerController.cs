@@ -6,12 +6,10 @@ namespace Maestro
 		internal readonly ParseRules parseRules = new ParseRules();
 
 		internal Buffer<Slice> slicesCache = new Buffer<Slice>(1);
-		internal ExecutableRegistry executableRegistry;
 		internal NativeCommandBindingRegistry bindingRegistry;
 
-		internal Buffer<CompileError> CompileSource(Mode mode, Source source, ExecutableRegistry executableRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
+		internal Buffer<CompileError> CompileSource(Mode mode, Source source, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
 		{
-			this.executableRegistry = executableRegistry;
 			this.bindingRegistry = bindingRegistry;
 
 			assembly = new Assembly(source);
@@ -143,7 +141,7 @@ namespace Maestro
 			));
 
 			if (!success)
-				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.CommandNameDuplicated { name = name });
+				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.DuplicatedCommandName { name = name });
 
 			if (compiler.assembly.commandDefinitions.count > byte.MaxValue)
 				compiler.AddSoftError(nameSlice, new CompileErrors.Commands.TooManyCommandsDefined());
@@ -366,7 +364,7 @@ namespace Maestro
 
 			if (compiler.ResolveToNativeCommandIndex(bindingRegistry, commandSlice).TryGet(out var nativeCommandIndex))
 			{
-				var nativeCommand = compiler.assembly.dependencyNativeCommandDefinitions.buffer[nativeCommandIndex];
+				var nativeCommand = compiler.assembly.nativeCommandDefinitions.buffer[nativeCommandIndex];
 				if (argCount != nativeCommand.parameterCount)
 				{
 					compiler.AddSoftError(slice, new CompileErrors.NativeCommands.WrongNumberOfNativeCommandArguments
@@ -398,27 +396,46 @@ namespace Maestro
 					compiler.EmitExecuteCommand(commandIndex);
 				}
 			}
-			else if (compiler.ResolveToExternalCommandIndex(executableRegistry, commandSlice).TryGet(out var externalCommandReference))
-			{
-				var command = externalCommandReference.assembly.commandDefinitions.buffer[externalCommandReference.commandIndex];
-				if (argCount != command.parameterCount)
-				{
-					compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments
-					{
-						commandName = command.name,
-						expected = command.parameterCount,
-						got = argCount
-					});
-				}
-				else
-				{
-					compiler.EmitExecuteExternalCommand(externalCommandReference.dependencyIndex, externalCommandReference.commandIndex);
-				}
-			}
 			else
 			{
-				compiler.AddSoftError(slice, new CompileErrors.Commands.CommandNotRegistered { name = CompilerHelper.GetSlice(compiler, commandSlice) });
+				var commandName = CompilerHelper.GetSlice(compiler, commandSlice);
+
+				if (argCount > byte.MaxValue)
+				{
+					argCount = byte.MaxValue;
+					compiler.AddSoftError(slice, new CompileErrors.Commands.TooManyCommandArguments { commandName = commandName });
+				}
+
+				compiler.EmitExecuteExternalCommand(0, 0);
+				var instructionIndex = compiler.assembly.bytes.count - 4;
+				compiler.assembly.externalCommandInstances.PushBack(new ExternalCommandInstance(
+					commandName,
+					instructionIndex,
+					(byte)argCount
+				));
 			}
+
+			// else if (compiler.ResolveToExternalCommandIndex(executableRegistry, commandSlice).TryGet(out var externalCommandReference))
+			// {
+			// 	var command = externalCommandReference.assembly.commandDefinitions.buffer[externalCommandReference.commandIndex];
+			// 	if (argCount != command.parameterCount)
+			// 	{
+			// 		compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments
+			// 		{
+			// 			commandName = command.name,
+			// 			expected = command.parameterCount,
+			// 			got = argCount
+			// 		});
+			// 	}
+			// 	else
+			// 	{
+			// 		compiler.EmitExecuteExternalCommand(externalCommandReference.dependencyIndex, externalCommandReference.commandIndex);
+			// 	}
+			// }
+			// else
+			// {
+			// 	compiler.AddSoftError(slice, new CompileErrors.Commands.CommandNotRegistered { name = CompilerHelper.GetSlice(compiler, commandSlice) });
+			// }
 		}
 
 		private void AssignLocals(bool canAssign)
