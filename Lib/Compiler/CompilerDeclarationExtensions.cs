@@ -86,56 +86,13 @@ namespace Maestro
 
 		public static Option<byte> ResolveToCommandIndex(this Compiler self, Slice slice)
 		{
-			return self.ResolveToCommandIndex(self.assembly, slice, false);
-		}
-
-		private static Option<byte> ResolveToCommandIndex(this Compiler self, Assembly assembly, Slice slice, bool onlyExported)
-		{
-			for (var i = 0; i < assembly.commandDefinitions.count; i++)
+			for (var i = 0; i < self.assembly.commandDefinitions.count; i++)
 			{
-				var command = assembly.commandDefinitions.buffer[i];
-				if (
-					CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name) &&
-					(!onlyExported || command.exported)
-				)
+				var command = self.assembly.commandDefinitions.buffer[i];
+				if (CompilerHelper.AreEqual(self.parser.tokenizer.source, slice, command.name))
 				{
 					return i < byte.MaxValue ? (byte)i : byte.MaxValue;
 				}
-			}
-
-			return Option.None;
-		}
-
-		public static Option<ExternalCommandReference> ResolveToExternalCommandIndex(this Compiler self, ExecutableRegistry executableRegistry, Slice slice)
-		{
-			int GetDependencyIndex(Assembly assembly)
-			{
-				for (var i = 0; i < self.assembly.dependencyUris.count; i++)
-				{
-					var uri = self.assembly.dependencyUris.buffer[i];
-					if (uri == assembly.source.uri)
-						return i;
-				}
-
-				var index = self.assembly.dependencyUris.count;
-				self.assembly.dependencyUris.PushBack(assembly.source.uri);
-				if (index > byte.MaxValue)
-					self.AddSoftError(slice, new CompileErrors.Assembly.TooManyDependencies());
-				return index;
-			}
-
-			for (var i = 0; i < executableRegistry.executables.count; i++)
-			{
-				var assembly = executableRegistry.executables.buffer[i].assembly;
-				var index = self.ResolveToCommandIndex(assembly, slice, true);
-				if (!index.isSome)
-					continue;
-
-				var dependencyIndex = GetDependencyIndex(assembly);
-				if (dependencyIndex > byte.MaxValue)
-					dependencyIndex = byte.MaxValue;
-
-				return new ExternalCommandReference(assembly, (byte)dependencyIndex, index.value);
 			}
 
 			return Option.None;

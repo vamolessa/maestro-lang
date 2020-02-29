@@ -414,28 +414,6 @@ namespace Maestro
 					(byte)argCount
 				));
 			}
-
-			// else if (compiler.ResolveToExternalCommandIndex(executableRegistry, commandSlice).TryGet(out var externalCommandReference))
-			// {
-			// 	var command = externalCommandReference.assembly.commandDefinitions.buffer[externalCommandReference.commandIndex];
-			// 	if (argCount != command.parameterCount)
-			// 	{
-			// 		compiler.AddSoftError(slice, new CompileErrors.Commands.WrongNumberOfCommandArguments
-			// 		{
-			// 			commandName = command.name,
-			// 			expected = command.parameterCount,
-			// 			got = argCount
-			// 		});
-			// 	}
-			// 	else
-			// 	{
-			// 		compiler.EmitExecuteExternalCommand(externalCommandReference.dependencyIndex, externalCommandReference.commandIndex);
-			// 	}
-			// }
-			// else
-			// {
-			// 	compiler.AddSoftError(slice, new CompileErrors.Commands.CommandNotRegistered { name = CompilerHelper.GetSlice(compiler, commandSlice) });
-			// }
 		}
 
 		private void AssignLocals(bool canAssign)

@@ -13,33 +13,6 @@ namespace Maestro
 		void OnHook(VirtualMachine vm);
 	}
 
-	internal sealed class ExecutableRegistry
-	{
-		internal Buffer<Executable> executables = new Buffer<Executable>();
-
-		internal bool Register(Executable executable)
-		{
-			var registeredExecutable = Find(executable.assembly.source.uri);
-			if (registeredExecutable.isSome)
-				return false;
-
-			executables.PushBack(executable);
-			return true;
-		}
-
-		internal Option<Executable> Find(string name)
-		{
-			for (var i = 0; i < executables.count; i++)
-			{
-				var executable = executables.buffer[i];
-				if (executable.assembly.source.uri == name)
-					return executable;
-			}
-
-			return Option.None;
-		}
-	}
-
 	internal sealed class NativeCommandBindingRegistry
 	{
 		internal Buffer<NativeCommandBinding> bindings = new Buffer<NativeCommandBinding>();
@@ -69,40 +42,61 @@ namespace Maestro
 
 	internal static class EngineHelper
 	{
-		internal static Executable[] FindDependencyExecutables(ExecutableRegistry executableRegistry, Assembly assembly, ref Buffer<CompileError> errors)
+		internal static void LinkAssembly(Buffer<Executable> executableRegistry, Assembly assembly, ref Buffer<CompileError> errors)
 		{
-			if (assembly.dependencyUris.count == 0)
-				return null;
-
-			var dependencies = new Executable[assembly.dependencyUris.count];
-			for (var i = 0; i < dependencies.Length; i++)
+			for (var i = 0; i < assembly.externalCommandInstances.count; i++)
 			{
-				var uri = assembly.dependencyUris.buffer[i];
-				var dependency = executableRegistry.Find(uri);
-				if (!dependency.isSome)
+				var instance = assembly.externalCommandInstances.buffer[i];
+				for (var j = 0; j < executableRegistry.count; j++)
 				{
-					errors.PushBack(new CompileError(new Slice(), new CompileErrors.Assembly.DependencyAssemblyNotFound
+					var executable = executableRegistry.buffer[j];
+					var found = false;
+					for (var k = 0; k < executable.assembly.commandDefinitions.count; k++)
 					{
-						dependencyUri = uri
-					}));
+						var definition = executable.assembly.commandDefinitions.buffer[k];
+						if (instance.name != definition.name || !definition.exported)
+							continue;
+
+						if (instance.argumentCount == definition.parameterCount)
+						{
+							BytesHelper.UShortToBytes(
+								(ushort)j,
+								out assembly.bytes.buffer[instance.instructionIndex + 1],
+								out assembly.bytes.buffer[instance.instructionIndex + 2]
+							);
+							assembly.bytes.buffer[instance.instructionIndex + 3] = (byte)k;
+						}
+						else
+						{
+							errors.PushBack(new CompileError(new Slice(), new CompileErrors.Commands.WrongNumberOfCommandArguments
+							{
+								commandName = definition.name,
+								expected = definition.parameterCount,
+								got = instance.argumentCount
+							}));
+						}
+						found = true;
+						break;
+					}
+
+					if (!found)
+					{
+						errors.PushBack(new CompileError(new Slice(), new CompileErrors.Commands.CommandNotRegistered { name = instance.name }));
+					}
 				}
-
-				dependencies[i] = dependency.value;
 			}
-
-			return dependencies;
 		}
 
-		internal static NativeCommandCallback[] InstantiateNativeCommands(NativeCommandBindingRegistry bindingRegistry, Assembly assembly, Slice instancesSlice, ref Buffer<CompileError> errors)
+		internal static NativeCommandCallback[] InstantiateNativeCommands(NativeCommandBindingRegistry bindingRegistry, Assembly assembly, ref Buffer<CompileError> errors)
 		{
-			if (instancesSlice.length == 0)
+			if (assembly.externalCommandInstances.count == 0)
 				return null;
 
-			var instances = new NativeCommandCallback[instancesSlice.length];
+			var instances = new NativeCommandCallback[assembly.externalCommandInstances.count];
 
-			for (var i = 0; i < instancesSlice.length; i++)
+			for (var i = 0; i < instances.Length; i++)
 			{
-				var instance = assembly.nativeCommandInstances.buffer[i + instancesSlice.index];
+				var instance = assembly.nativeCommandInstances.buffer[i];
 				var definition = assembly.nativeCommandDefinitions.buffer[instance.definitionIndex];
 
 				var binding = bindingRegistry.Find(definition.name);

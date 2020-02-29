@@ -40,6 +40,8 @@ namespace Maestro
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
 			var errors = controller.CompileSource(mode, source, bindingRegistry, out var assembly);
+			if (errors.count == 0)
+				executableRegistry.PushBack(new Executable(assembly, null));
 			return new CompileResult(errors, assembly);
 		}
 
@@ -57,29 +59,28 @@ namespace Maestro
 				}
 			}
 
-			var dependencies = EngineHelper.FindDependencyExecutables(
-				executableRegistry,
-				assembly,
-				ref errors
-			);
-
+			EngineHelper.LinkAssembly(executableRegistry, assembly, ref errors);
 			if (errors.count > 0)
 				return new LinkResult(errors, new Executable(assembly, null));
 
 			var instances = EngineHelper.InstantiateNativeCommands(
 				bindingRegistry,
 				assembly,
-				new Slice(0, assembly.nativeCommandInstances.count),
 				ref errors
 			);
 
-			var executable = new Executable(
-				assembly,
-				instances
-			);
-
+			var executable = new Executable(assembly, instances);
 			if (errors.count == 0)
-				executableRegistry.PushBack(executable);
+			{
+				for (var i = 0; i < executableRegistry.count; i++)
+				{
+					if (executableRegistry.buffer[i].assembly == assembly)
+					{
+						executableRegistry.buffer[i] = executable;
+						break;
+					}
+				}
+			}
 
 			return new LinkResult(errors, executable);
 		}
