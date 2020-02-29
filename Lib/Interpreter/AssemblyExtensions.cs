@@ -206,17 +206,25 @@ namespace Maestro
 
 		private static int ExecuteExternalCommandInstruction(Assembly assembly, Instruction instruction, int index, StringBuilder sb)
 		{
+			var instructionIndex = index;
 			var dependencyIndex = BytesHelper.BytesToUShort(
 				assembly.bytes.buffer[++index],
 				assembly.bytes.buffer[++index]
 			);
 			var definitionIndex = assembly.bytes.buffer[++index];
 
-			sb.Append(instruction.ToString());
-			sb.Append("dependency ");
-			sb.Append(dependencyIndex);
-			sb.Append(" definition ");
-			sb.Append(definitionIndex);
+			for (var i = 0; i < assembly.externalCommandInstances.count; i++)
+			{
+				var instance = assembly.externalCommandInstances.buffer[i];
+				if (instance.instructionIndex == instructionIndex)
+				{
+					sb.Append(instruction.ToString());
+					sb.Append(" '");
+					sb.Append(instance.name);
+					sb.Append("'");
+					break;
+				}
+			}
 
 			return ++index;
 		}

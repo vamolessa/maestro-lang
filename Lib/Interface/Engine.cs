@@ -6,8 +6,8 @@ namespace Maestro
 	{
 		internal readonly CompilerController controller = new CompilerController();
 		internal readonly VirtualMachine vm = new VirtualMachine();
-		internal readonly Buffer<Executable> executableRegistry = new Buffer<Executable>();
 		internal readonly NativeCommandBindingRegistry bindingRegistry = new NativeCommandBindingRegistry();
+		internal Buffer<Executable> executableRegistry = new Buffer<Executable>();
 
 		public bool RegisterSingletonCommand<T>(string name, ICommand<T> command) where T : struct, ITuple
 		{
@@ -37,24 +37,25 @@ namespace Maestro
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
 			var errors = controller.CompileSource(mode, source, bindingRegistry, out var assembly);
-			if (errors.count == 0)
-				executableRegistry.PushBack(new Executable(assembly, null));
-			return new CompileResult(errors, assembly);
-		}
-
-		public LinkResult LinkAssembly(Assembly assembly)
-		{
-			var errors = new Buffer<CompileError>();
-
 			for (var i = 0; i < executableRegistry.count; i++)
 			{
 				var uri = executableRegistry.buffer[i].assembly.source.uri;
 				if (assembly.source.uri == uri)
 				{
 					errors.PushBack(new CompileError(new Slice(), new CompileErrors.Assembly.DuplicatedAssembly { uri = uri }));
-					return new LinkResult(errors, new Executable(assembly, null));
+					break;
 				}
 			}
+
+			if (errors.count == 0)
+				executableRegistry.PushBack(new Executable(assembly, null));
+
+			return new CompileResult(errors, assembly);
+		}
+
+		public LinkResult LinkAssembly(Assembly assembly)
+		{
+			var errors = new Buffer<CompileError>();
 
 			EngineHelper.LinkAssembly(executableRegistry, assembly, ref errors);
 			if (errors.count > 0)

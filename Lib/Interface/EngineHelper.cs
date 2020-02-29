@@ -46,11 +46,11 @@ namespace Maestro
 		{
 			for (var i = 0; i < assembly.externalCommandInstances.count; i++)
 			{
+				var found = false;
 				var instance = assembly.externalCommandInstances.buffer[i];
 				for (var j = 0; j < executableRegistry.count; j++)
 				{
 					var executable = executableRegistry.buffer[j];
-					var found = false;
 					for (var k = 0; k < executable.assembly.commandDefinitions.count; k++)
 					{
 						var definition = executable.assembly.commandDefinitions.buffer[k];
@@ -79,10 +79,13 @@ namespace Maestro
 						break;
 					}
 
-					if (!found)
-					{
-						errors.PushBack(new CompileError(new Slice(), new CompileErrors.Commands.CommandNotRegistered { name = instance.name }));
-					}
+					if (found)
+						break;
+				}
+
+				if (!found)
+				{
+					errors.PushBack(new CompileError(new Slice(), new CompileErrors.Commands.CommandNotRegistered { name = instance.name }));
 				}
 			}
 		}
