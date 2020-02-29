@@ -17,10 +17,7 @@ namespace Maestro
 		public bool RegisterCommand<T>(string name, System.Func<ICommand<T>> commandFactory) where T : struct, ITuple
 		{
 			return bindingRegistry.Register(new NativeCommandBinding(
-				new NativeCommandDefinition(
-					name,
-					default(T).Size
-				),
+				new NativeCommandDefinition(name, default(T).Size),
 				() => {
 					var command = commandFactory();
 					return (ref Context context) => {

@@ -94,10 +94,15 @@ namespace Maestro
 
 		public BufferDebugView(Buffer<T> buffer)
 		{
-			var count = buffer.count >= 0 ? buffer.count : 0;
-			elements = new T[count];
 			if (buffer.buffer != null)
-				System.Array.Copy(buffer.buffer, elements, count);
+			{
+				elements = new T[buffer.count];
+				System.Array.Copy(buffer.buffer, elements, buffer.count);
+			}
+			else
+			{
+				elements = new T[0];
+			}
 		}
 	}
 }
