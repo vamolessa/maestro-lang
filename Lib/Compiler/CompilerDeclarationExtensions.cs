@@ -89,7 +89,7 @@ namespace Maestro
 			return self.ResolveToCommandIndex(self.assembly, slice, false);
 		}
 
-		public static Option<byte> ResolveToCommandIndex(this Compiler self, Assembly assembly, Slice slice, bool onlyExported)
+		private static Option<byte> ResolveToCommandIndex(this Compiler self, Assembly assembly, Slice slice, bool onlyExported)
 		{
 			for (var i = 0; i < assembly.commandDefinitions.count; i++)
 			{

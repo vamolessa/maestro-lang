@@ -16,7 +16,7 @@ namespace Maestro
 
 	public static class AssemblyExtensions
 	{
-		internal static void Disassemble(this Assembly self, StringBuilder sb)
+		public static void Disassemble(this Assembly self, StringBuilder sb)
 		{
 			sb.Append("== ");
 			sb.Append(self.bytes.count);
@@ -209,7 +209,7 @@ namespace Maestro
 			var dependencyIndex = assembly.bytes.buffer[++index];
 			var definitionIndex = assembly.bytes.buffer[++index];
 
-			var dependencyUri = assembly.dependencyUris.buffer[definitionIndex];
+			var dependencyUri = assembly.dependencyUris.buffer[dependencyIndex];
 			var definition = assembly.commandDefinitions.buffer[definitionIndex];
 
 			sb.Append(instruction.ToString());

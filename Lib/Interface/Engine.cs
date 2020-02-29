@@ -32,10 +32,20 @@ namespace Maestro
 			));
 		}
 
+		public void SetDebugger(Option<IDebugger> debugger)
+		{
+			vm.debugger = debugger;
+		}
+
 		public CompileResult CompileSource(Source source, Mode mode)
 		{
 			var errors = controller.CompileSource(mode, source, executableRegistry, bindingRegistry, out var assembly);
+			return new CompileResult(errors, assembly);
+		}
 
+		public LinkResult LinkAssembly(Assembly assembly)
+		{
+			var errors = new Buffer<CompileError>();
 			var dependencies = EngineHelper.FindDependencyExecutables(
 				executableRegistry,
 				assembly,
@@ -58,12 +68,7 @@ namespace Maestro
 			if (errors.count == 0)
 				executableRegistry.Register(executable);
 
-			return new CompileResult(errors, executable);
-		}
-
-		public void SetDebugger(Option<IDebugger> debugger)
-		{
-			vm.debugger = debugger;
+			return new LinkResult(errors, executable);
 		}
 
 		public ExecuteScope ExecuteScope()

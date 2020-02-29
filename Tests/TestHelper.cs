@@ -83,6 +83,23 @@ public sealed class CompileErrorException : System.Exception
 	}
 }
 
+public sealed class LinkErrorException : System.Exception
+{
+	public readonly LinkResult result;
+
+	public LinkErrorException(LinkResult result) : base(GetErrorString(result))
+	{
+		this.result = result;
+	}
+
+	private static string GetErrorString(LinkResult result)
+	{
+		var sb = new StringBuilder();
+		result.FormatErrors(sb);
+		return sb.ToString();
+	}
+}
+
 public sealed class RuntimeErrorException : System.Exception
 {
 	public readonly ExecuteResult result;
@@ -110,15 +127,15 @@ public sealed class CommandNotFound : System.Exception
 	}
 }
 
-public readonly struct TestCompiled
+public readonly struct TestExecutable
 {
 	public readonly Engine engine;
-	public readonly CompileResult result;
+	public readonly Executable executable;
 
-	public TestCompiled(Engine engine, CompileResult result)
+	public TestExecutable(Engine engine, Executable executable)
 	{
 		this.engine = engine;
-		this.result = result;
+		this.executable = executable;
 	}
 
 	public TestExecuteScope ExecuteScope()
@@ -126,7 +143,7 @@ public readonly struct TestCompiled
 		return new TestExecuteScope(
 			engine,
 			engine.ExecuteScope(),
-			result.executable
+			executable
 		);
 	}
 }
@@ -192,15 +209,18 @@ public static class TestHelper
 		return array;
 	}
 
-	public static TestCompiled Compile(Engine engine, string source)
+	public static TestExecutable Compile(Engine engine, string source)
 	{
 		var compileResult = engine.CompileSource(new Source("source", source), CompileMode);
-		if (compileResult.errors.count > 0)
+		if (!compileResult.TryGetAssembly(out var assembly))
 			throw new CompileErrorException(compileResult);
-		return new TestCompiled(engine, compileResult);
+		var linkResult = engine.LinkAssembly(assembly);
+		if (!linkResult.TryGetExecutable(out var executable))
+			throw new LinkErrorException(linkResult);
+		return new TestExecutable(engine, executable);
 	}
 
-	public static void Run(this TestCompiled compiled, int expectedStackCount = 0)
+	public static void Run(this TestExecutable compiled, int expectedStackCount = 0)
 	{
 		using var scope = compiled.ExecuteScope();
 		scope.Run(expectedStackCount);

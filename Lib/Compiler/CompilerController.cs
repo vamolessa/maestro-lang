@@ -9,9 +9,9 @@ namespace Maestro
 		internal ExecutableRegistry executableRegistry;
 		internal NativeCommandBindingRegistry bindingRegistry;
 
-		internal Buffer<CompileError> CompileSource(Mode mode, Source source, ExecutableRegistry assemblyRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
+		internal Buffer<CompileError> CompileSource(Mode mode, Source source, ExecutableRegistry executableRegistry, NativeCommandBindingRegistry bindingRegistry, out Assembly assembly)
 		{
-			this.executableRegistry = assemblyRegistry;
+			this.executableRegistry = executableRegistry;
 			this.bindingRegistry = bindingRegistry;
 
 			assembly = new Assembly(source);

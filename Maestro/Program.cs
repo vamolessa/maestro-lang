@@ -61,23 +61,33 @@ namespace Maestro
 
 			var sb = new StringBuilder();
 			var compileResult = engine.CompileSource(source, Mode.Debug);
-			if (compileResult.TryGetExecutable(out var executable))
+			if (compileResult.TryGetAssembly(out var assembly))
 			{
 				sb.Clear();
-				compileResult.FormatDisassembledByteCode(sb);
+				assembly.Disassemble(sb);
 				System.Console.WriteLine(sb);
 
-				System.Console.WriteLine("RUN\n");
-				var executeResult = engine.ExecuteScope().Execute(executable);
-				if (executeResult.error.isSome)
+				var linkResult = engine.LinkAssembly(assembly);
+				if (linkResult.TryGetExecutable(out var executable))
+				{
+					System.Console.WriteLine("RUN\n");
+					var executeResult = engine.ExecuteScope().Execute(executable);
+					if (executeResult.error.isSome)
+					{
+						sb.Clear();
+						executeResult.FormatError(sb);
+						executeResult.FormatCallStackTrace(sb);
+						System.Console.WriteLine(sb);
+					}
+
+					System.Console.WriteLine("FINISH");
+				}
+				else
 				{
 					sb.Clear();
-					executeResult.FormatError(sb);
-					executeResult.FormatCallStackTrace(sb);
+					linkResult.FormatErrors(sb);
 					System.Console.WriteLine(sb);
 				}
-
-				System.Console.WriteLine("FINISH");
 			}
 			else
 			{

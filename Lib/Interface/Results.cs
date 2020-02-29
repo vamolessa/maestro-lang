@@ -5,9 +5,56 @@ namespace Maestro
 	public readonly struct CompileResult
 	{
 		public readonly Buffer<CompileError> errors;
+		internal readonly Assembly assembly;
+
+		internal CompileResult(Buffer<CompileError> errors, Assembly assembly)
+		{
+			this.errors = errors;
+			this.assembly = assembly;
+		}
+
+		public bool TryGetAssembly(out Assembly assembly)
+		{
+			if (errors.count == 0)
+			{
+				assembly = this.assembly;
+				return true;
+			}
+			else
+			{
+				assembly = default;
+				return false;
+			}
+		}
+
+		public void FormatErrors(StringBuilder sb)
+		{
+			for (var i = 0; i < errors.count; i++)
+			{
+				var error = errors.buffer[i];
+				sb.Append(error.message.Format());
+
+				if (!assembly.source.HasContent)
+					continue;
+
+				if (error.slice.index > 0 || error.slice.length > 0)
+				{
+					FormattingHelper.AddHighlightSlice(
+						assembly.source,
+						error.slice,
+						sb
+					);
+				}
+			}
+		}
+	}
+
+	public readonly struct LinkResult
+	{
+		public readonly Buffer<CompileError> errors;
 		internal readonly Executable executable;
 
-		internal CompileResult(Buffer<CompileError> errors, Executable executable)
+		internal LinkResult(Buffer<CompileError> errors, Executable executable)
 		{
 			this.errors = errors;
 			this.executable = executable;
@@ -25,12 +72,6 @@ namespace Maestro
 				executable = default;
 				return false;
 			}
-		}
-
-		public void FormatDisassembledByteCode(StringBuilder sb)
-		{
-			if (errors.count == 0)
-				executable.assembly.Disassemble(sb);
 		}
 
 		public void FormatErrors(StringBuilder sb)

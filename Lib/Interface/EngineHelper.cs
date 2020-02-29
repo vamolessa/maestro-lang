@@ -19,8 +19,8 @@ namespace Maestro
 
 		internal bool Register(Executable executable)
 		{
-			var existingAssembly = Find(executable.assembly.source.uri);
-			if (existingAssembly.isSome)
+			var registeredExecutable = Find(executable.assembly.source.uri);
+			if (registeredExecutable.isSome)
 				return false;
 
 			executables.PushBack(executable);
