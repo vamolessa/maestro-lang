@@ -89,10 +89,10 @@ namespace Maestro
 
 		internal static NativeCommandCallback[] InstantiateNativeCommands(NativeCommandBindingRegistry bindingRegistry, Assembly assembly, ref Buffer<CompileError> errors)
 		{
-			if (assembly.externalCommandInstances.count == 0)
+			if (assembly.nativeCommandInstances.count == 0)
 				return null;
 
-			var instances = new NativeCommandCallback[assembly.externalCommandInstances.count];
+			var instances = new NativeCommandCallback[assembly.nativeCommandInstances.count];
 
 			for (var i = 0; i < instances.Length; i++)
 			{
