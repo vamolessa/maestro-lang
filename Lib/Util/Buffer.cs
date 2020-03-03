@@ -77,14 +77,12 @@ namespace Maestro
 
 		public T[] ToArray()
 		{
-			if (buffer != null && count > 0)
-			{
-				var array = new T[count];
-				System.Array.Copy(buffer, 0, array, 0, array.Length);
-				return array;
-			}
+			if (buffer == null || count == 0)
+				return new T[0];
 
-			return new T[0];
+			var array = new T[count];
+			System.Array.Copy(buffer, 0, array, 0, array.Length);
+			return array;
 		}
 	}
 
