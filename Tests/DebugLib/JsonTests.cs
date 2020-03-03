@@ -17,7 +17,7 @@ public sealed class JsonTests
 	[InlineData("\"\\/\b\f\n\r\t", "\"\\\"\\\\/\\b\\f\\n\\r\\t\"")]
 	public void SerializeValue(object value, string expectedJson)
 	{
-		Json.Value jsonValue = value switch
+		JsonValue jsonValue = value switch
 		{
 			bool b => b,
 			int i => i,
@@ -34,22 +34,22 @@ public sealed class JsonTests
 	[Fact]
 	public void SerializeComplex()
 	{
-		var obj = new Json.Object {
-			{"array", new Json.Array {
+		var obj = new JsonObject {
+			{"array", new JsonArray {
 				{"string"},
 				{false},
 				{null},
 				{0.25f},
-				{new Json.Object{
+				{new JsonObject{
 					{"int", 7},
 					{"bool", false},
 					{"null", null},
 					{"string", "some text"}
 				}},
-				{new Json.Array()}
+				{new JsonArray()}
 			}},
 			{"str", "asdad"},
-			{"empty", new Json.Object()}
+			{"empty", new JsonObject()}
 		};
 
 		var sb = new StringBuilder();
@@ -72,6 +72,7 @@ public sealed class JsonTests
 	[InlineData("99.25", 99.25f)]
 	[InlineData("99.125", 99.125f)]
 	[InlineData("\"string\"", "string")]
+	// [InlineData("\"\\ufa90\"", "\ufa90")]
 	[InlineData("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", "\"\\/\b\f\n\r\t")]
 	public void DeserializeValue(string json, object expectedValue)
 	{

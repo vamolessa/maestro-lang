@@ -6,7 +6,7 @@ namespace Maestro.Debug
 		private readonly bool clientColumnsStartAt1;
 		private readonly bool clientPathsAreUri;
 
-		public DebugSessionHelper(Json.Value arguments)
+		public DebugSessionHelper(JsonValue arguments)
 		{
 			clientLinesStartAt1 = arguments["linesStartAt1"].GetOr(true);
 			clientColumnsStartAt1 = arguments["columnsStartAt1"].GetOr(true);

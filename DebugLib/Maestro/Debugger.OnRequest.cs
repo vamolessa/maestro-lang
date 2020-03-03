@@ -8,7 +8,7 @@ namespace Maestro.Debug
 
 		private void SendStoppedEvent(string reason)
 		{
-			server.SendEvent("stopped", new Json.Object {
+			server.SendEvent("stopped", new JsonObject {
 				{"reason", reason},
 				{"description", "Paused on " + reason},
 				{"threadId", 1},
@@ -28,20 +28,20 @@ namespace Maestro.Debug
 			return false;
 		}
 
-		private void OnRequest(Request request, Json.Value arguments)
+		private void OnRequest(Request request, JsonValue arguments)
 		{
 			switch (request.command)
 			{
 			case "initialize":
 				{
 					helper = new DebugSessionHelper(arguments);
-					server.SendResponse(request, new Json.Object {
+					server.SendResponse(request, new JsonObject {
 						{"supportsConfigurationDoneRequest", true},
 						{"supportsFunctionBreakpoints", false},
 						{"supportsConditionalBreakpoints", false},
 						{"supportsHitConditionalBreakpoints", false},
 						{"supportsEvaluateForHovers", false},
-						{"exceptionBreakpointFilters", new Json.Array()},
+						{"exceptionBreakpointFilters", new JsonArray()},
 						{"supportsStepBack", false},
 						{"supportsSetVariable", true},
 						{"supportsRestartFrame", false},
@@ -130,7 +130,7 @@ namespace Maestro.Debug
 				break;
 			case "stackTrace":
 				{
-					var stackFrames = new Json.Array();
+					var stackFrames = new JsonArray();
 					lock (this)
 					{
 						for (var i = vm.stackFrames.count - 1; i >= 1; i--)
@@ -147,15 +147,15 @@ namespace Maestro.Debug
 								sourceContentIndex
 							);
 
-							var responseSource = new Json.Value();
+							var responseSource = new JsonValue();
 							if (TryMatchSourcePath(assembly.source.uri, out var sourcePath))
 							{
-								responseSource = new Json.Object {
+								responseSource = new JsonObject {
 									{"path", sourcePath}
 								};
 							}
 
-							stackFrames.Add(new Json.Object {
+							stackFrames.Add(new JsonObject {
 								{"id", i},
 								{"name", commandName},
 								{"source", responseSource},
@@ -165,7 +165,7 @@ namespace Maestro.Debug
 						}
 					}
 
-					server.SendResponse(request, new Json.Object{
+					server.SendResponse(request, new JsonObject{
 						{"stackFrames", stackFrames}
 					});
 				}
@@ -173,14 +173,14 @@ namespace Maestro.Debug
 			case "scopes":
 				{
 					var frameIndex = arguments["frameId"].GetOr(0);
-					server.SendResponse(request, new Json.Object {
-						{"scopes", new Json.Array {
-							new Json.Object {
+					server.SendResponse(request, new JsonObject {
+						{"scopes", new JsonArray {
+							new JsonObject {
 								{"name", "Input"},
 								{"variablesReference", InputScopeOffset + frameIndex},
 								{"expensive", false},
 							},
-							new Json.Object {
+							new JsonObject {
 								{"name", "Locals"},
 								{"variablesReference", frameIndex},
 								{"expensive", false},
@@ -192,7 +192,7 @@ namespace Maestro.Debug
 			case "variables":
 				{
 					var frameIndex = arguments["variablesReference"].GetOr(0);
-					var variables = new Json.Array();
+					var variables = new JsonArray();
 					var sb = new StringBuilder();
 
 					if (frameIndex >= InputScopeOffset)
@@ -205,7 +205,7 @@ namespace Maestro.Debug
 							sb.Clear();
 							value.AppendTo(sb);
 
-							variables.Add(new Json.Object {
+							variables.Add(new JsonObject {
 								{"name", i.ToString()},
 								{"value", sb.ToString()},
 								{"type", value.GetTypeName()},
@@ -229,7 +229,7 @@ namespace Maestro.Debug
 								sb.Clear();
 								value.AppendTo(sb);
 
-								variables.Add(new Json.Object {
+								variables.Add(new JsonObject {
 									{"name", variableInfo.name},
 									{"value", sb.ToString()},
 									{"type", value.GetTypeName()},
@@ -239,7 +239,7 @@ namespace Maestro.Debug
 						}
 					}
 
-					server.SendResponse(request, new Json.Object {
+					server.SendResponse(request, new JsonObject {
 						{"variables", variables}
 					});
 				}
@@ -248,9 +248,9 @@ namespace Maestro.Debug
 				server.SendResponse(request);
 				break;
 			case "threads":
-				server.SendResponse(request, new Json.Object {
-					{"threads", new Json.Array{
-						new Json.Object{
+				server.SendResponse(request, new JsonObject {
+					{"threads", new JsonArray{
+						new JsonObject{
 							{"id", 1},
 							{"name", "main"},
 						},
@@ -262,7 +262,7 @@ namespace Maestro.Debug
 					var sourceName = arguments["source"]["name"].GetOr("");
 					var sourcePath = arguments["source"]["path"].GetOr("");
 
-					var bps = new Json.Array();
+					var bps = new JsonArray();
 					lock (this)
 					{
 						for (var i = breakpoints.count - 1; i >= 0; i--)
@@ -278,14 +278,14 @@ namespace Maestro.Debug
 
 							breakpoints.PushBack(new Breakpoint(sourcePath, line));
 
-							bps.Add(new Json.Object {
+							bps.Add(new JsonObject {
 								{"verified", true},
 								{"line", line}
 							});
 						}
 					}
 
-					server.SendResponse(request, new Json.Object {
+					server.SendResponse(request, new JsonObject {
 						{"breakpoints", bps}
 					});
 				}
@@ -331,7 +331,7 @@ namespace Maestro.Debug
 								vm.stack.buffer[variableInfo.stackIndex] = newValue;
 								var sb = new StringBuilder();
 								newValue.AppendTo(sb);
-								server.SendResponse(request, new Json.Object {
+								server.SendResponse(request, new JsonObject {
 									{"value", sb.ToString()},
 									{"type", newValue.GetTypeName()},
 								});

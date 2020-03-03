@@ -5,159 +5,159 @@ using System.Text;
 
 namespace Maestro.Debug
 {
+	public struct JsonArray : IEnumerable
+	{
+		internal List<JsonValue> collection;
+
+		public void Add(JsonValue value)
+		{
+			if (collection == null)
+				collection = new List<JsonValue>();
+			collection.Add(value);
+		}
+
+		public IEnumerator GetEnumerator()
+		{
+			if (collection == null)
+				collection = new List<JsonValue>();
+			return collection.GetEnumerator();
+		}
+	}
+
+	public struct JsonObject : IEnumerable
+	{
+		internal Dictionary<string, JsonValue> collection;
+
+		public void Add(string key, JsonValue value)
+		{
+			if (collection == null)
+				collection = new Dictionary<string, JsonValue>();
+			collection.Add(key, value);
+		}
+
+		public IEnumerator GetEnumerator()
+		{
+			if (collection == null)
+				collection = new Dictionary<string, JsonValue>();
+			return collection.GetEnumerator();
+		}
+	}
+
+	public readonly struct JsonValue
+	{
+		private static readonly List<JsonValue> EmptyValues = new List<JsonValue>();
+
+		public readonly object wrapped;
+
+		private JsonValue(object value)
+		{
+			wrapped = value;
+		}
+
+		public int Count
+		{
+			get { return wrapped is List<JsonValue> l ? l.Count : 0; }
+		}
+
+		public JsonValue this[int index]
+		{
+			get { return wrapped is List<JsonValue> l ? l[index] : default; }
+			set { if (wrapped is List<JsonValue> l) l[index] = value; }
+		}
+
+		public void Add(JsonValue value)
+		{
+			if (wrapped is List<JsonValue> l)
+				l.Add(value);
+		}
+
+		public JsonValue this[string key]
+		{
+			get { return wrapped is Dictionary<string, JsonValue> d && d.TryGetValue(key, out var v) ? v : default; }
+			set { if (wrapped is Dictionary<string, JsonValue> d) d[key] = value; }
+		}
+
+		public static implicit operator JsonValue(JsonArray value)
+		{
+			return new JsonValue(value.collection ?? new List<JsonValue>());
+		}
+
+		public static implicit operator JsonValue(JsonObject value)
+		{
+			return new JsonValue(value.collection ?? new Dictionary<string, JsonValue>());
+		}
+
+		public static implicit operator JsonValue(bool value)
+		{
+			return new JsonValue(value);
+		}
+
+		public static implicit operator JsonValue(int value)
+		{
+			return new JsonValue(value);
+		}
+
+		public static implicit operator JsonValue(float value)
+		{
+			return new JsonValue(value);
+		}
+
+		public static implicit operator JsonValue(string value)
+		{
+			return new JsonValue(value);
+		}
+
+		public bool IsArray
+		{
+			get { return wrapped is List<JsonValue>; }
+		}
+
+		public bool IsObject
+		{
+			get { return wrapped is Dictionary<string, JsonValue>; }
+		}
+
+		public bool TryGet<T>(out T value)
+		{
+			if (wrapped is T v)
+			{
+				value = v;
+				return true;
+			}
+			else
+			{
+				value = default;
+				return false;
+			}
+		}
+
+		public T GetOr<T>(T defaultValue)
+		{
+			return wrapped is T value ? value : defaultValue;
+		}
+
+		public List<JsonValue>.Enumerator GetEnumerator()
+		{
+			return wrapped is List<JsonValue> l ?
+				l.GetEnumerator() :
+				EmptyValues.GetEnumerator();
+		}
+	}
+
 	public static class Json
 	{
-		public struct Array : IEnumerable
-		{
-			internal List<Value> collection;
-
-			public void Add(Value value)
-			{
-				if (collection == null)
-					collection = new List<Value>();
-				collection.Add(value);
-			}
-
-			public IEnumerator GetEnumerator()
-			{
-				if (collection == null)
-					collection = new List<Value>();
-				return collection.GetEnumerator();
-			}
-		}
-
-		public struct Object : IEnumerable
-		{
-			internal Dictionary<string, Value> collection;
-
-			public void Add(string key, Value value)
-			{
-				if (collection == null)
-					collection = new Dictionary<string, Value>();
-				collection.Add(key, value);
-			}
-
-			public IEnumerator GetEnumerator()
-			{
-				if (collection == null)
-					collection = new Dictionary<string, Value>();
-				return collection.GetEnumerator();
-			}
-		}
-
-		public readonly struct Value
-		{
-			private static readonly List<Value> EmptyValues = new List<Value>();
-
-			public readonly object wrapped;
-
-			private Value(object value)
-			{
-				wrapped = value;
-			}
-
-			public int Count
-			{
-				get { return wrapped is List<Value> l ? l.Count : 0; }
-			}
-
-			public Value this[int index]
-			{
-				get { return wrapped is List<Value> l ? l[index] : default; }
-				set { if (wrapped is List<Value> l) l[index] = value; }
-			}
-
-			public void Add(Value value)
-			{
-				if (wrapped is List<Value> l)
-					l.Add(value);
-			}
-
-			public Value this[string key]
-			{
-				get { return wrapped is Dictionary<string, Value> d && d.TryGetValue(key, out var v) ? v : default; }
-				set { if (wrapped is Dictionary<string, Value> d) d[key] = value; }
-			}
-
-			public static implicit operator Value(Array value)
-			{
-				return new Value(value.collection ?? new List<Value>());
-			}
-
-			public static implicit operator Value(Object value)
-			{
-				return new Value(value.collection ?? new Dictionary<string, Value>());
-			}
-
-			public static implicit operator Value(bool value)
-			{
-				return new Value(value);
-			}
-
-			public static implicit operator Value(int value)
-			{
-				return new Value(value);
-			}
-
-			public static implicit operator Value(float value)
-			{
-				return new Value(value);
-			}
-
-			public static implicit operator Value(string value)
-			{
-				return new Value(value);
-			}
-
-			public bool IsArray
-			{
-				get { return wrapped is List<Value>; }
-			}
-
-			public bool IsObject
-			{
-				get { return wrapped is Dictionary<string, Value>; }
-			}
-
-			public bool TryGet<T>(out T value)
-			{
-				if (wrapped is T v)
-				{
-					value = v;
-					return true;
-				}
-				else
-				{
-					value = default;
-					return false;
-				}
-			}
-
-			public T GetOr<T>(T defaultValue)
-			{
-				return wrapped is T value ? value : defaultValue;
-			}
-
-			public List<Value>.Enumerator GetEnumerator()
-			{
-				return wrapped is List<Value> l ?
-					l.GetEnumerator() :
-					EmptyValues.GetEnumerator();
-			}
-		}
-
-		private sealed class JsonParseException : System.Exception
+		private sealed class ParseException : System.Exception
 		{
 		}
 
-		public static string Serialize(Value value)
+		public static string Serialize(JsonValue value)
 		{
 			var sb = new StringBuilder();
 			Serialize(value, sb);
 			return sb.ToString();
 		}
 
-		public static void Serialize(Value value, StringBuilder sb)
+		public static void Serialize(JsonValue value, StringBuilder sb)
 		{
 			switch (value.wrapped)
 			{
@@ -191,7 +191,7 @@ namespace Maestro.Debug
 				}
 				sb.Append('"');
 				break;
-			case List<Value> l:
+			case List<JsonValue> l:
 				sb.Append('[');
 				foreach (var v in l)
 				{
@@ -202,7 +202,7 @@ namespace Maestro.Debug
 					sb.Remove(sb.Length - 1, 1);
 				sb.Append(']');
 				break;
-			case Dictionary<string, Value> d:
+			case Dictionary<string, JsonValue> d:
 				sb.Append('{');
 				foreach (var p in d)
 				{
@@ -217,7 +217,7 @@ namespace Maestro.Debug
 			}
 		}
 
-		public static bool TryDeserialize(string source, out Value value)
+		public static bool TryDeserialize(string source, out JsonValue value)
 		{
 			try
 			{
@@ -225,14 +225,14 @@ namespace Maestro.Debug
 				value = Parse(source, ref index, new StringBuilder());
 				return true;
 			}
-			catch (JsonParseException)
+			catch (ParseException)
 			{
 				value = default;
 				return false;
 			}
 		}
 
-		private static Value Parse(string source, ref int index, StringBuilder sb)
+		private static JsonValue Parse(string source, ref int index, StringBuilder sb)
 		{
 			SkipWhiteSpace(source, ref index);
 			switch (Next(source, ref index))
@@ -242,7 +242,7 @@ namespace Maestro.Debug
 				Consume(source, ref index, 'l');
 				Consume(source, ref index, 'l');
 				SkipWhiteSpace(source, ref index);
-				return new Value();
+				return new JsonValue();
 			case 'f':
 				Consume(source, ref index, 'a');
 				Consume(source, ref index, 'l');
@@ -261,7 +261,7 @@ namespace Maestro.Debug
 			case '[':
 				{
 					SkipWhiteSpace(source, ref index);
-					var array = new Array();
+					var array = new JsonArray();
 					if (!Match(source, ref index, ']'))
 					{
 						do
@@ -277,7 +277,7 @@ namespace Maestro.Debug
 			case '{':
 				{
 					SkipWhiteSpace(source, ref index);
-					var obj = new Object();
+					var obj = new JsonObject();
 					if (!Match(source, ref index, '}'))
 					{
 						do
@@ -287,7 +287,7 @@ namespace Maestro.Debug
 							var key = ConsumeString(source, ref index, sb);
 							Consume(source, ref index, ':');
 							var value = Parse(source, ref index, sb);
-							obj.Add(key.wrapped as string, value);
+							obj.Add(key, value);
 						} while (Match(source, ref index, ','));
 						Consume(source, ref index, '}');
 					}
@@ -296,16 +296,11 @@ namespace Maestro.Debug
 				}
 			default:
 				{
-					bool IsDigit(string s, int i)
-					{
-						return i < s.Length && char.IsDigit(s, i);
-					}
-
 					var negative = source[--index] == '-';
 					if (negative)
 						index++;
 					if (!IsDigit(source, index))
-						throw new JsonParseException();
+						throw new ParseException();
 
 					while (Match(source, ref index, '0'))
 						continue;
@@ -320,7 +315,7 @@ namespace Maestro.Debug
 					if (Match(source, ref index, '.'))
 					{
 						if (!IsDigit(source, index))
-							throw new JsonParseException();
+							throw new ParseException();
 
 						var fractionBase = 1.0f;
 						var fraction = 0.0f;
@@ -353,7 +348,7 @@ namespace Maestro.Debug
 		{
 			if (index < source.Length)
 				return source[index++];
-			throw new JsonParseException();
+			throw new ParseException();
 		}
 
 		private static bool Match(string source, ref int index, char c)
@@ -372,10 +367,27 @@ namespace Maestro.Debug
 		private static void Consume(string source, ref int index, char c)
 		{
 			if (index >= source.Length || source[index++] != c)
-				throw new JsonParseException();
+				throw new ParseException();
 		}
 
-		private static Value ConsumeString(string source, ref int index, StringBuilder sb)
+		private static bool IsDigit(string s, int i)
+		{
+			return i < s.Length && char.IsDigit(s, i);
+		}
+
+		public static int ConsumeHexDigit(string source, ref int index)
+		{
+			var c = Next(source, ref index);
+			if (c >= 'a' && c <= 'f')
+				return c - 'a' + 10;
+			if (c >= 'A' && c <= 'F')
+				return c - 'A' + 10;
+			if (c >= '0' && c <= '9')
+				return c - '0';
+			throw new ParseException();
+		}
+
+		private static string ConsumeString(string source, ref int index, StringBuilder sb)
 		{
 			sb.Clear();
 			while (index < source.Length)
@@ -397,8 +409,16 @@ namespace Maestro.Debug
 					case 'n': sb.Append('\n'); break;
 					case 'r': sb.Append('\r'); break;
 					case 't': sb.Append('\t'); break;
-					case 'u': throw new JsonParseException();
-					default: throw new JsonParseException();
+					case 'u':
+						sb.Append((char)(
+							ConsumeHexDigit(source, ref index) << 12 +
+							ConsumeHexDigit(source, ref index) << 8 +
+							ConsumeHexDigit(source, ref index) << 4 +
+							ConsumeHexDigit(source, ref index)
+						));
+						break;
+					default:
+						throw new ParseException();
 					}
 					break;
 				default:
@@ -406,7 +426,8 @@ namespace Maestro.Debug
 					break;
 				}
 			}
-			throw new JsonParseException();
+
+			throw new ParseException();
 		}
 	}
 }

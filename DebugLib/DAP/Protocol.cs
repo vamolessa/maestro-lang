@@ -21,7 +21,7 @@ namespace Maestro.Debug
 
 	internal sealed class ProtocolServer
 	{
-		public delegate void OnRequest(Request request, Json.Value arguments);
+		public delegate void OnRequest(Request request, JsonValue arguments);
 
 		private const int BUFFER_SIZE = 4096;
 		private const string TWO_CRLF = "\r\n\r\n";
@@ -38,18 +38,18 @@ namespace Maestro.Debug
 		private ByteBuffer rawData = new ByteBuffer();
 		private int bodyLength = -1;
 
-		public static Json.Value Response(Json.Value body = default)
+		public static JsonValue Response(JsonValue body = default)
 		{
-			return new Json.Object
+			return new JsonObject
 			{
 				{"success", true},
 				{"body", body}
 			};
 		}
 
-		public static Json.Value ErrorResponse(string errorMessage, Json.Value body = default)
+		public static JsonValue ErrorResponse(string errorMessage, JsonValue body = default)
 		{
-			return new Json.Object
+			return new JsonObject
 			{
 				{"success", false},
 				{"message", errorMessage},
@@ -119,9 +119,9 @@ namespace Maestro.Debug
 			isServing = false;
 		}
 
-		public void SendResponse(Request request, Json.Value body = default)
+		public void SendResponse(Request request, JsonValue body = default)
 		{
-			SendMessage(new Json.Object
+			SendMessage(new JsonObject
 			{
 				{"type", "response"},
 				{"request_seq", request.seq},
@@ -131,9 +131,9 @@ namespace Maestro.Debug
 			});
 		}
 
-		public void SendErrorResponse(Request request, string errorMessage, Json.Value body = default)
+		public void SendErrorResponse(Request request, string errorMessage, JsonValue body = default)
 		{
-			SendMessage(new Json.Object
+			SendMessage(new JsonObject
 			{
 				{"type", "response"},
 				{"request_seq", request.seq},
@@ -144,9 +144,9 @@ namespace Maestro.Debug
 			});
 		}
 
-		public void SendEvent(string eventName, Json.Value body = default)
+		public void SendEvent(string eventName, JsonValue body = default)
 		{
-			SendMessage(new Json.Object {
+			SendMessage(new JsonObject {
 				{"type", "event"},
 				{"event", eventName},
 				{"body", body}
@@ -214,7 +214,7 @@ namespace Maestro.Debug
 			}
 		}
 
-		private void SendMessage(Json.Value message)
+		private void SendMessage(JsonValue message)
 		{
 			message["seq"] = nextSequenceNumber++;
 
@@ -227,7 +227,7 @@ namespace Maestro.Debug
 			catch { }
 		}
 
-		private static byte[] ConvertToBytes(Json.Value message)
+		private static byte[] ConvertToBytes(JsonValue message)
 		{
 			var asJson = Json.Serialize(message);
 			var jsonBytes = Encoding.GetBytes(asJson);
