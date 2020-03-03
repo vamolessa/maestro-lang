@@ -72,7 +72,8 @@ public sealed class JsonTests
 	[InlineData("99.25", 99.25f)]
 	[InlineData("99.125", 99.125f)]
 	[InlineData("\"string\"", "string")]
-	// [InlineData("\"\\ufa90\"", "\ufa90")]
+	[InlineData("\"\\u00e1\"", "\u00e1")]
+	[InlineData("\"\\ufa09\"", "\ufa09")]
 	[InlineData("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", "\"\\/\b\f\n\r\t")]
 	public void DeserializeValue(string json, object expectedValue)
 	{

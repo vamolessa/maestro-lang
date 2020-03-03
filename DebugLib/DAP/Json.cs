@@ -410,12 +410,13 @@ namespace Maestro.Debug
 					case 'r': sb.Append('\r'); break;
 					case 't': sb.Append('\t'); break;
 					case 'u':
-						sb.Append((char)(
-							ConsumeHexDigit(source, ref index) << 12 +
-							ConsumeHexDigit(source, ref index) << 8 +
-							ConsumeHexDigit(source, ref index) << 4 +
-							ConsumeHexDigit(source, ref index)
-						));
+						{
+							var h = ConsumeHexDigit(source, ref index) << 12;
+							h += ConsumeHexDigit(source, ref index) << 8;
+							h += ConsumeHexDigit(source, ref index) << 4;
+							h += ConsumeHexDigit(source, ref index);
+							sb.Append((char)h);
+						}
 						break;
 					default:
 						throw new ParseException();
