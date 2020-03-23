@@ -18,7 +18,9 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Install dependencies
-      run: dotnet restore
+      run: |
+        dotnet nuget add source -n "github" -u "matheuslessarodrigues" -p ${{secrets.GITHUB_TOKEN}} "https://nuget.pkg.github.com/matheuslessarodrigues/index.json"
+        dotnet restore --source "github"
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Test
