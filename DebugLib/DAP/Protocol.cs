@@ -5,6 +5,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
+using PicoJson;
+using PicoJson.Untyped;
+
 namespace Maestro.Debug
 {
 	internal readonly struct Request

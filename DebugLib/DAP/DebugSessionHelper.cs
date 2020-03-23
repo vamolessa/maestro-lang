@@ -1,3 +1,5 @@
+using PicoJson.Untyped;
+
 namespace Maestro.Debug
 {
 	internal readonly struct DebugSessionHelper

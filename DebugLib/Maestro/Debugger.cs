@@ -1,6 +1,8 @@
 using System.Net;
 using System.Threading;
 
+using PicoJson.Untyped;
+
 namespace Maestro.Debug
 {
 	public readonly struct SourcePosition
